@@ -19,6 +19,11 @@
    P                              P  P            P  P            P      
   P                              P  P            P  P            P        
  P                   PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP
+---------------------------------------
+This version is from the forum
+http://www.psxdev.net/forum/viewtopic.php?f=47&t=1262&start=40
+And is developed by raman3
+ 
  
 -------------------------------------------------
 This PsNee version is meant for Arduino boards.
