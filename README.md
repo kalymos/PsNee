@@ -20,7 +20,11 @@
   P                              P  P            P  P            P        
  P                   PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP
  
- 
+--------------------------------------------------
+This version is from the forum  
+http://assemblergames.com/l/threads/psnee-a-stealth-modchip-for-all-ps1-models.57907/
+And is developed by THE FRIENDLY FRIETMAN
+
 --------------------------------------------------
 PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
 all platforms supported by Arduino, preferably ATTiny. Finally something modern!
