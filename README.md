@@ -20,7 +20,19 @@
   P                              P  P            P  P            P        
  P                   PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP
  
- 
+-------------------------------------------------
+This PsNee version is meant for Arduino boards.
+16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
+ATtinys should be able to do this as well; requires a bit of porting and testing
+
+PAL PU-41 support isn't implemented here yet. Use PsNee v6 for them.
+
+Uncomment the correct inject_SCEI(), inject_SCEA(), inject_SCEE() in loop(), depending on your console region.
+Uncomment #define PU22_MODE for PU-22, PU-23, PU-41 mainboards.
+
+
+--------------------------------------------------
+                Old readme!
 --------------------------------------------------
 PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
 all platforms supported by Arduino, preferably ATTiny. Finally something modern!
