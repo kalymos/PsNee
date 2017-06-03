@@ -26,18 +26,61 @@
 //||||||M*************************************************************M|||||
 //||||||MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM|||||
 //||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+//||||||||||||||||||||||||||||||||||||||||||||||||||| VERSION 2! |||||||||||
 //||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+//BETA BETA BETA BETA BETA BETA BETA BETA BETA BETA BETA BETA BETA BETA BETA
+//Updated on September 10, coded by TheFrietMan, as usual.
 //
 //PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
 //all platforms supported by Arduino, preferably ATTiny. Finally something modern!
 //
+//
 /////////// TO DO: /////////////
-// - Find out how the NTSC BIOS patch for SCPH-102 works and integrate it in this sketch
-//   (supposedly it forces pin 15 (data 2) on the BIOS chip (IC102) low when something happens on pin 31 (address 18) according to http://problemkaputt.de/psx-spx.htm#cdromprotectionmodchips)
 // - Make SCEx-arrays smaller by commoning up the common parts of the arrays and thus use less flash
-// - Common up the two big for-loops with an OR-statement
+// - Tidy everything up by using functions instead of code-knitting
+// - Implement what needs to be done when it is detected that PsNee is connected to a PU-22, PU-23 or PSOne
+// - Slice the data signal in sync with an internal Playstation clock (there should be one on the gate-pin,
+//   this is the 7.35kHz WFCK) instead of using a free running clock from the modchip
 ////////////////////////////////
+//
+//
+/////////// VERSION 2! :D ///////////
+//What has changed?
+// - Thanks to TriMesh, the gate-pin is now also used to determine in which model of
+//   Playstation PsNee is installed. The modchip algorithm thus can be optimized for
+//   optimal performance on specific Playstation revisions. This works by monitoring
+//   whether a clock signal is present on this pin - when there is one, the modchip is
+//   installed in a PU-22, PU-23 or PSOne Playstation, else it is installed in an older
+//   model Playstation. In this version of PsNee, nothing is actually done with this information.
+// - Thanks to -again- TriMesh, NTSC support for PAL SCPH-102 Playstations is added! This uses
+//   the same method the OneChip modchip used for achieving this:
+//     1. Monitor the XLAT signal from the CD mechanism controller chip. This requires
+//        another connection to the Playstation. When this signal is 0, the first CD copy
+//        protection is passed! After this, there is another one.
+//     2. After this, watch the Address18-pin (pin 31) on the BIOS-chip. When this signal
+//        is high, this means the second CD copy protection is about to run.
+//     3. Wait a short time.
+//     4. Pull the Data2-pin (pin 15) on the BIOS-chip to 0. This effectively blocks the
+//        execution of the region check of the inserted disc.
+//     5. The Playstation plays the inserted disc and doesn't care whether it's PAL or NTSC!
+//     6. Release the 0 of the Data2-pin.
+//   To correctly output a PAL video color signal for a PAL TV on a PAL PSOne with an NTSC disc
+//   inserted, Pin 3 of IC502 must be grounded with an external switch. The modchip also could do
+//   this, although we would need a device with more pins available.
+// - The outputted data signal is now "sliced up" to improve (or less distort) the tracking
+//   signal from the CD mechanism: later Playstations use the CD tracking signal for transmitting
+//   the SCEx-string to the Playstation instead of using a seperate connection, so when the modchip
+//   forces a 0 on the data-pin, the tracking signal also is gone temporarily. By slicing the data-
+//   signal up in little pieces at least some of the tracking signal remains and the Playstation can
+//   read discs more easily.
+// - The two big for-loops are combined into one with an OR-statement describing the two conditions
+//   modchip should be active: when flagFirstCycle = 0 or when flagFirstCycle = 1 and the lid is opened
+//   and closed again. This makes code maintenance easier.
+// - The pin-out of the modchip is changed slightly to be able to use an interrupt for the PAL=>NTSC
+//   BIOS-patch for PAL SCPH-102. Please use the revised pin-out found below with this code.
+//~TheFrietMan, The Netherlands
+/////////////////////////////////////
+//
 //
 //PLAYSTATION 1 SECURITY - HOW IT DOES IT'S THING:
 //Sony didn't really go through great lenghts to protect it's precious Playstation
@@ -79,18 +122,19 @@
 //
 //This code is verified on an ATTiny45 with the 8MHz internal oscillator using a Saleae Logic Analyser, timing is
 //reasonable important in this application.
-//Kindly coded and documented by TheFrietMan, August 20 2015, The Netherlands.
+//Version 1 was kindly coded and documented by TheFrietMan, August 20 2015, The Netherlands.
 //The Playstation is great but nothing beats our national pride, the Philips CDi! Cheesiness for the win!
 //
+//
 //PINOUT IC:
-//  ATTiny45:
-//    Pin 1: Not connected
-//    Pin 2: Not connected
-//    Pin 3: Not connected
+//  ATTiny45, DIP package:
+//    Pin 1: OUT - PAL SCPH-102 BIOS Data2
+//    Pin 2: IN - PAL SCPH-102 BIOS Address18
+//    Pin 3: IN - CD lid
 //    Pin 4: Ground
 //    Pin 5: OUT - Data
 //    Pin 6: OUT - Gate
-//    Pin 7: IN - CD lid
+//    Pin 7: IN - XLAT      !This is also where INT0 lives on ATTiny45!
 //    Pin 8: Vcc
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
  
@@ -98,23 +142,113 @@
  
 //BLOODY GLOBAL VARIABLES
 //Pins for the Arduino Uno
-int data = 8;        //The pin that outputs the SCEE SCEA SCEI string
-int gate = 9;        //The pin that gets pulled low to enable data injection on the Playstation motherboard
-int lid = 10;         //The pin that gets connected to the internal CD lid signal; active high
+//int data = 0;        //The pin that outputs the SCEE SCEA SCEI string
+//int gate = 1;        //The pin that gets pulled low to enable data injection on the Playstation motherboard
+//int xlat = 2;        //On Arduino Uno, Arduino pin 2 is connected to INT0
+//int lid = 3;         //The pin that gets connected to the internal CD lid signal; active high
+//int biosA18 = 4;     //Only used in SCPH-102 PAL mode
+//int biosD2 = 5;      //Only used in SCPH-102 PAL mode
  
-//Pins for the ATTiny45 Arduino
-//int data = 0;
-//int gate = 1;
-//int lid = 2;
-boolean flagFirstCycle = 0;    //This flag is 1 when the system completes the first cycle of SCEx-string outputting; this is done to stealth the chip up
+//SET THIS TO 1 IF YOU HAVE A PAL SCPH-102 PLAYSTATION AND WANT TO PLAY NTSC DISCS ON A PAL TV WITHOUT A BOOT DISC
+//THIS REQUIRES A MODCHIP WITH MORE PINS. I SUGGEST USING AN ATTINY2313. THE PIN-OUT FOR THIS CHIP IS FOUND A BIT UP
+boolean PALSCPH102 = 0;
+ 
+//Arduino pins for ATTiny45
+int data = 0;        //The pin that outputs the SCEE SCEA SCEI string
+int gate = 1;        //The pin that gets pulled low to enable data injection on the Playstation motherboard
+int xlat = 2;
+int biosA18 = 3;     //Only used in SCPH-102 PAL mode
+int lid = 4;         //The pin that gets connected to the internal CD lid signal; active high
+int biosD2 = 5;      //Only used in SCPH-102 PAL mode
+ 
+ 
+//Flags
+boolean flagFirstCycle = 0;               //This flag is 1 when the system completes the first cycle of SCEx-string outputting; this is done to stealth the chip up
+boolean flagNewPlaystationModel = 0;      //This flag is 1 when it is detected that the modchip is running on PU-22, PU-23 or PSOne hardware
+boolean flagBIOSAlreadyFooled = 0;        //This flag is 1 when the NTSC=>PAL BIOS-patch for PAL SCPH-102 consoles has been applied. It is reset to 0 when the lid is opened and closed again or when the console is turned off and on again.
+ 
+ 
+//The SCPH102BIOSFooler()-function fools the PAL SCPH-102 into thinking that it also can read NTSC discs
+//We execute this code when XLAT goes from high to low, indicating that the first copy protection check has been passed
+//delay() doesn't work in an interrupt handler, we use delayMicroseconds() instead, that doesn't rely on using interrupts itself
+void SCPH102BIOSFooler()
+{
+  boolean biosA18Status = digitalRead(biosA18);
+  int addressSignalWaitCounter;
+ 
+  if (flagBIOSAlreadyFooled == 0)
+  {
+    for (addressSignalWaitCounter = 0; addressSignalWaitCounter < 50; addressSignalWaitCounter = addressSignalWaitCounter + 1)
+    {
+      if (biosA18Status == 1)
+      {
+        delayMicroseconds(50);      //Wait a short time
+        pinMode(biosD2, OUTPUT);
+        digitalWrite(biosD2, 0);    //Pull the Data2-pin low for a millisecond
+        delayMicroseconds(1000);
+        pinMode(biosD2, INPUT);     //...And release it again
+        flagBIOSAlreadyFooled = 1;
+        return;
+      }      
+    }
+  }
+  else
+  {
+    return;
+  }
+}
+ 
  
 void setup()
 {
   pinMode(data, INPUT);    //The pins are high-impedance when configured as inputs so they don't interfere with the Playstation mortherboard circuitry
   pinMode(gate, INPUT);    
   pinMode(lid, INPUT);
+  pinMode(xlat, INPUT);
+ 
+  if (PALSCPH102 != 0)
+  {
+    pinMode(biosA18, INPUT);    //Only activate the BIOS-pins when connected to a PAL SCPH-102
+    pinMode(biosD2, INPUT);
    
-  delay(1200);            //Wait a second before we're really heading off  
+    //We make an interrupt for XLAT, as we need this signal to detect when we can do our BIOS-magic. The function SCPH102BIOSFooler is ran when the XLAT-pin makes
+    //a transistion from high to low, the other code is temporarily paused. Only use this when the code is used on a PAL SCPH-102
+    attachInterrupt(0, SCPH102BIOSFooler, FALLING);        //Interrupt 0 is pin 7 on ATTiny45
+  }
+ 
+  //Determine on which Playstation we are working by watching the gate-signal; we are running on a PU-22, PU-23 or PSOne when there is a clock signal present
+  //We are taking 10 samples of the gate-signal. As we can't really know the frequency of the clock signal that may or may not be present on this signal, we
+  //simply take ten samples of the signal and store them in an array. When both 0's and 1's are stored in the array, this means that there is a clock signal
+  //on the gate-pin. When all the elements in the array are the same, there is no clock signal available and PsNee is installed in an older model Playstation.
+  boolean gateSamples[10];
+  int gateSamplesCounter;
+  boolean sampleLowDetected = 0;
+  boolean sampleHighDetected = 0;
+ 
+  for (gateSamplesCounter = 0; gateSamplesCounter < 10; gateSamplesCounter = gateSamplesCounter + 1)
+  {
+    gateSamples[gateSamplesCounter] = digitalRead(gate);
+  }
+ 
+  for(gateSamplesCounter = 0; gateSamplesCounter < 10; gateSamplesCounter = gateSamplesCounter + 1)
+  {
+    if (gateSamples[gateSamplesCounter] == 0)
+    {
+      sampleLowDetected = 1;
+    }
+    else
+    {
+      sampleHighDetected = 1;
+    }
+  }  
+ 
+  if ((sampleLowDetected && sampleHighDetected) == 1)
+  {
+    flagNewPlaystationModel = 1;
+  }
+ 
+ 
+  delay(1000);            //Wait a second before we're really heading off  
 }
  
 void loop()
@@ -125,107 +259,64 @@ void loop()
   FLASH_ARRAY (boolean, SCEIData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,0,1,1,0,1,0,0);      //SCEI: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01101101 00
   int arraycounter;
   int datacounter;
+  int slicercounter;
   boolean lidstatus = digitalRead(lid);
  
-  if (flagFirstCycle == 0)
+  if ((flagFirstCycle == 0) || ((flagFirstCycle != 0) && (lidstatus != 0)))       //Only execute the modchip code when the Playstation has just booted or when a new disc needs to be inserted on an already running machine
   {
-    pinMode(gate, OUTPUT);
-    digitalWrite(gate, 0);          //Pull to ground to enable data injecting
-   
-    for (datacounter = 0; datacounter < 31; datacounter = datacounter + 1)        //One cycle of SCEx-string outputting takes approximately 744 ms; we want to go on for about 25 seconds so we output the cycle 30 times
+    if ((flagFirstCycle != 0) && (lidstatus != 0))
     {
-      for (arraycounter = 0; arraycounter < 44; arraycounter = arraycounter + 1)
-      {
-        if (SCEEData[arraycounter] == 0)
-        {
-          pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
-          digitalWrite(data, 0);
-          delay(4);                             //Send the signal for 4 ms
-        }
-        else
-        {
-          pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
-          delay(4);
-        }
-      }
-      delay(64);        //According to the logic analyser the time between two bitstreams now approximates 72 ms on an ATTiny45 with built-in 8MHz oscillator, just like the doctor ordered
-     
-      for (arraycounter = 0; arraycounter < 44; arraycounter = arraycounter + 1)
-      {
-        if (SCEAData[arraycounter] == 0)
-        {
-          pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
-          digitalWrite(data, 0);
-          delay(4);
-        }
-        else
-        {
-          pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
-          delay(4);
-        }
-      }
-      delay(64);
-     
-      for (arraycounter = 0; arraycounter < 44; arraycounter = arraycounter + 1)
-      {
-        if (SCEIData[arraycounter] == 0)
-        {
-          pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
-          digitalWrite(data, 0);
-          delay(4);
-        }
-        else
-        {
-          pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
-          delay(4);
-        }
-      }
-      delay(64);
+      flagBIOSAlreadyFooled == 0;         //When this isn't the first time the modchip does it's thing and the lid has been opened, indicate that the PAL=>NTSC BIOS-patch may be applied again
     }
-    pinMode(data, INPUT);    //Make all outputting pins high-impedance again when we're finished
-    pinMode(gate, INPUT);
-    flagFirstCycle = 1;      //We completed the initial round of SCEx-outputting; only do this again when a new CD is inserted while the Playstation is turned on!
-  }
- 
-  //Only force authentication when this isn't the first cycle and the lid has been opened and closed again
-  if ((flagFirstCycle != 0) && (lidstatus != 0))
-  {
-    delay(50);                      //Extra delay to compensate for the state-switching of the CD lid
-    if (lidstatus == 0)            //Only do your thing when the lid is closed again
-    {
-      delay(100);                     //Just wait a second until the coast is clear
-      pinMode(gate, OUTPUT);
-      digitalWrite(gate, 0);          //Pull to ground to enable data injecting
    
+    delay(50);                      //Extra delay to compensate for the state-switching of the CD lid
+    if (lidstatus == 0)             //Only do your thing when the lid is closed again
+    {
+      delay(50);                    //Just wait a second until the coast is clear
+      pinMode(gate, OUTPUT);
+      digitalWrite(gate, 0);        //Pull to ground to enable data injecting
+     
       for (datacounter = 0; datacounter < 31; datacounter = datacounter + 1)        //One cycle of SCEx-string outputting takes approximately 744 ms; we want to go on for about 25 seconds so we output the cycle 30 times
       {
         for (arraycounter = 0; arraycounter < 44; arraycounter = arraycounter + 1)
         {
           if (SCEEData[arraycounter] == 0)
           {
-            pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0d
-            digitalWrite(data, 0);
-            delay(4);
+            for (slicercounter = 0; slicercounter < 15; slicercounter = slicercounter + 1)    //This for-loop slices the data signal when it is 0 in small chunks of 130us and do this 14 times; this way, each block of sliced data is about 4ms long, of 250bps
+            {
+              pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
+              digitalWrite(data, 0);
+              delayMicroseconds(130);
+             
+              pinMode(data, INPUT);                //We make it high-impedance again to let at least some of the CD tracking signal through
+              delayMicroseconds(130);
+            }
           }
           else
           {
-            pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
+            pinMode(data, INPUT);                  //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
             delay(4);
           }
         }
-        delay(64);        //Volgens de logic analyser is de tijd tussen de twee bitstreams nu precies 72 ms op een ATTiny45 met ingebouwde 8MHz oscillator, zoals het zou moeten zijn
+        delay(64);                                //According to the logic analyser the time between two bitstreams now approximates 72 ms on an ATTiny45 with built-in 8MHz oscillator, just like the doctor ordered
        
         for (arraycounter = 0; arraycounter < 44; arraycounter = arraycounter + 1)
         {
           if (SCEAData[arraycounter] == 0)
           {
-            pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
-            digitalWrite(data, 0);
-            delay(4);
+            for (slicercounter = 0; slicercounter < 15; slicercounter = slicercounter + 1)    //This for-loop slices the data signal when it is 0 in small chunks of 130us; this way, each block of sliced data is about 4ms long, of 250bps
+            {
+              pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
+              digitalWrite(data, 0);
+              delayMicroseconds(130);
+             
+              pinMode(data, INPUT);                 //We make it high-impedance again to let at least some of the CD tracking signal through
+              delayMicroseconds(130);
+            }
           }
           else
           {
-            pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
+            pinMode(data, INPUT);                  //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
             delay(4);
           }
         }
@@ -235,20 +326,27 @@ void loop()
         {
           if (SCEIData[arraycounter] == 0)
           {
-            pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
-            digitalWrite(data, 0);
-            delay(4);
+            for (slicercounter = 0; slicercounter < 15; slicercounter = slicercounter + 1)    //This for-loop slices the data signal when it is 0 in small chunks of 130us; this way, each block of sliced data is about 4ms long, of 250bps
+            {
+              pinMode(data, OUTPUT);                //We pull the data pin to ground to force a 0
+              digitalWrite(data, 0);
+              delayMicroseconds(130);
+             
+              pinMode(data, INPUT);                 //We make it high-impedance again to let at least some of the CD tracking signal through
+              delayMicroseconds(130);
+            }
           }
           else
           {
-            pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
+            pinMode(data, INPUT);                   //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
             delay(4);
           }
         }
         delay(64);
       }
-    pinMode(data, INPUT);    //Make all outputting pins high-impedance again when we're finished
-    pinMode(gate, INPUT);
+      pinMode(data, INPUT);             //Make all outputting pins high-impedance again when we're finished
+      pinMode(gate, INPUT);
+      flagFirstCycle = 1;               //We completed the initial round of SCEx-outputting; only do this again when a new CD is inserted while the Playstation is turned on!
     }
   }
 }
