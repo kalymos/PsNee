@@ -20,8 +20,11 @@
   P                              P  P            P  P            P        
  P                   PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP
  
- 
- 
+ ------------------------------------------------
+-This version is from the forum 
+http://www.emu-land.net/forum/index.php?topic=76537.0
+And is developed by postal2201
+ -------------------------------------------------
 
 PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
 all platforms supported by Arduino, preferably ATTiny. Finally something modern!
