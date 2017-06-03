@@ -52,6 +52,15 @@ A lot!
    is available
  - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
  - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
- 
-
+--------------------------------------------------------
+            AttyNeeRC3
+--------------------------------------------------------
+I just have a lot of Attiny13a and normal firmware for them was not.
+ Modavr does not support stealth, and does not launch copies from NTSC disks on the slime.
+ Then I came across the American firmware PsNee. It can patch bios slimki for NTSC disks.
+ But it did not support Attiny13a (it exceeded the size and used the flash.h not supported in Attiny13a).
+ Plus, the firmware itself was a compilation of different authors and contained a lot of garbage occupying a precious place.
+ Also there were glitches with a fast disk change. I corrected and optimized the code well and added support for Attiny13a.
+ That's basically it :)
+ Before the firmware, pay attention to define and the function inject_SCEx (). In the comments all are indicated.
  
