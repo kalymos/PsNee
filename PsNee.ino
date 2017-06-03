@@ -19,11 +19,18 @@
 //  P                              P  P            P  P            P         
 //                     PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP   VERSION 6!
 
-//Update 7th of May 2017
-//Branched and tweaked for use with the Position 0 switch on a PSX laser.
-//(Requires a bit of sticky tape at the point where the switch touches the laser assembly.)
-//This allows deterministic SCEX injections, without relying on timing. Also gets rid of connection wires for LID and RESET.
-//WIP!
+//Update 15th of May 2017
+//PSNee now watches the subchannel data and looks at the position information contained within.
+//This allows deterministic SCEX injections. It knows (almost) exactly when to inject the SCEX string.
+//Therefore it is now a stealth modchip :)
+//Required connections: GND, VCC, data, gate, SQCL, SUBQ
+//No more need to watch the PSX reset or lid open signals or any other typical modchip points (like "sync")
+//WIP! Only tested on PU-18 board. Should work fine on PU-7, PU-8, PU-18 and PU-20.
+//Will need adaption for PU-22 to PU-41 (SCPH-750x, 900x and PSOne).
+//Note: Once this is installed in a PSX, mind the Pin13 LED that many Arduino boards have. Do not upload new sketches while the PSX is on!
+//(If the PSX is on while uploading a sketch (making the LED blink), a voltage will be fed back into the SCLK pin on the HC-05 in the PSX.
+//This didn't break my PSX in testing but it does stun the chip and halt CD operation. I'm thinking of a better method to do this but for now I need Arduino pin13..)
+//Very much recommended to install a 3.3V chip!
 
 //UPDATED AT MAY 14 2016, CODED BY THE FRIENDLY FRIETMAN :-)
 
@@ -122,10 +129,16 @@
 //                    Includes!
 //--------------------------------------------------
 #include <Flash.h>
+#include "SPI.h"
 
+byte buf [12]; // We will be capturing PSX "SUBQ" packets, and there are 12 of them per sector.
+int pos; // buffer position
+int wobbleCounter; // if treshold reached, output SCEX string
+//#define DEBUG
 //--------------------------------------------------
 //               Arduino selection!
 //--------------------------------------------------
+// ATTINY untested with SPI additions!
 //#define ATTINY        //Make that "#define ARDUINO_UNO" if you want to compile for Arduino Uno instead of ATTiny25/45/85
 #define ARDUINO_UNO        //Make that "#define ARDUINO_UNO" if you want to compile for Arduino Uno instead of ATTiny25/45/85
 
@@ -134,11 +147,11 @@
 int data = 8;         //The pin that outputs the SCEE SCEA SCEI string
 int gate = 9;         //The pin that outputs the SCEE SCEA SCEI string
 int lid = 10;         //The pin that gets connected to the internal CD lid signal; active high
-int biosA18 = 11;     //Only used in SCPH-102 PAL mode
-int biosD2 = 12;      //Only used in SCPH-102 PAL mode
+int biosA18 = 11;     //Address 18; Only used in SCPH-102 PAL mode // ToDo: rearrange. This is the MOSI pin for SPI.
+int biosD2 = 12;      //Data 2; Only used in SCPH-102 PAL mode
 int delay_ntsc = 2350;
-int delay_between_bits = 4;
-int delay_between_injections = 74;
+int delay_between_bits = 4; // 250 bits/s
+int delay_between_injections = 74; // delay for this time while keeping data line pulled low
 #endif
 
 #ifdef ATTINY
@@ -156,12 +169,15 @@ int delay_between_injections = 68;
 //--------------------------------------------------
 //              Global variables!
 //--------------------------------------------------
-//None, just like it should be!
+//None, just like it should be! // Sorry, couldn't resist
 //--------------------------------------------------
 //              Seperate functions!
 //--------------------------------------------------
 void NTSC_fix()
 {
+  //needs rework, new pin assigments
+
+ 
   //Make sure all pins are inputs
   DDRB = 0x00;
  
@@ -258,7 +274,6 @@ void inject_SCEI()
 
   pinMode(data, OUTPUT);
   digitalWrite(data, 0);
- 
   delay(delay_between_injections);
 }
 
@@ -276,7 +291,7 @@ void inject_multiple_times(int number_of_injection_cycles)
 
 void inject_playstation()
 {
-  NTSC_fix();
+  //NTSC_fix(); //needs rework, new pin assigments
  
   delay(6900);
   pinMode(data, OUTPUT);
@@ -284,7 +299,7 @@ void inject_playstation()
   digitalWrite(data, 0);
   digitalWrite(gate, 0);
 
-  for (int loop_counter = 0; loop_counter < 20; loop_counter = loop_counter + 1)
+  for (int loop_counter = 0; loop_counter < 235; loop_counter = loop_counter + 1)
   {
     inject_SCEI();
     //inject_SCEA();
@@ -304,11 +319,23 @@ void setup()
   // Arduino docs say all INPUT pins are high impedence by default. Let's be explicit!
   pinMode(data, INPUT);
   pinMode(gate, INPUT);
- 
-  //inject_playstation(); // not required when watching the POS0 switch (except when NTSC_fix() is required!)
 
-  // TODO :)
-  //attachInterrupt(digitalPinToInterrupt(2), function_name, CHANGE);
+  // We just want passive sampling of the SPI data. Never output anything nor pull lines high / low.
+  pinMode(MOSI, INPUT); // Arduino pin 11
+  pinMode(SCK, INPUT); // Arduino pin 13
+  pinMode(MISO, INPUT); // just for safety
+  pinMode(SS, INPUT); // just for safety
+ 
+  SPCR = 0b01101100; // LSBFIRST, SPI_MODE3, SPI_CLOCK_DIV4, SPI enabled, Slave mode, CPOL = 1, CPHA = 1
+ 
+  //inject_playstation(); // not required when watching subchannel data
+#ifdef DEBUG
+  Serial.begin (115200);   // debugging
+  Serial.print("SPCR setup to ");
+  Serial.println(SPCR, HEX);
+#endif
+  pos = 0;
+  wobbleCounter = 0;
 }
 
 //----------------------------------------------------------------
@@ -317,24 +344,64 @@ void setup()
 
 void loop()
 {
-  bool POS0Sense = digitalRead(A0); // Active low
+  // Hardware SPI interface requires a constant reset (for some reason. Find out why?)
+  // This toggles the SPI enable bit
+  SPCR = SPCR & 0b10111111;
+  SPCR = SPCR | 0b01000000;
+  // When not doing this regularly, the captured data gets misaligned with the PSX SCLK. Weird.
  
-  if (!POS0Sense) {
+  while(!(SPSR & (1<<SPIF))); // wait for a byte
+ 
+  byte c = SPDR;
+  if (c == 0x41) {
+    buf[0] = c; // Is this a psx data cd? if so, align buffer start to this!
+    pos = 1;
+    return;
+  }
+  if (pos == 0) return; // 0x41 byte not yet found > loop
+ 
+  buf[pos] = c;
+  pos++;
+ 
+  if(pos == 12) // 12 "packets" make up the SUBQ for one sector. pos is 12 because it got incremented once more.
+  {
+    pos = 0;
+#ifdef DEBUG
+    for (int i = 0; i<12;i++){ // print the buffer
+      Serial.print(buf[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println("");
+#endif
+    // check if this is the wobble area
+    if (buf[1] == 0x00 && ( buf[2] == 0xA2 || buf[2] == 0xA1 || buf[2] == 0xA0 ) ) { // 0x41, 0x00, 0xA0 etc appears to be the wobble area
+      //looks like it!
+      wobbleCounter++;
+    }
+    else if (wobbleCounter > 0){
+      wobbleCounter--;
+    }
+  }
+ 
+  if (wobbleCounter >= 3) {
     // Read head is in wobble area. Inject SCEX.
+#ifdef DEBUG
+    Serial.println("Inject!");
+#endif
     pinMode(gate, OUTPUT);
     digitalWrite(gate, 0);
    
-    digitalWrite(LED_BUILTIN, 1);
-   
-    // loop_counter is a tweak point. It depends on how good the contact to the POS0 switch is.
+    // loop_counter is a tweak point. More than 6 can trip antimod detection. 2 works. 1 is outputting once per sector in theory, doesn't work.
     for (int loop_counter = 0; loop_counter < 3; loop_counter = loop_counter + 1)
     {
        inject_SCEI();
        //inject_SCEA();
        //inject_SCEE();
     }
-    digitalWrite(LED_BUILTIN, 0);
+
     pinMode(gate, INPUT);
     pinMode(data, INPUT);
+   
+    wobbleCounter = 0;
   }
 }
