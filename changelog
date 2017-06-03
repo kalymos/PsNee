@@ -1,0 +1,57 @@
+
+-------------------------------------------------
+VERSION 2! :D 
+-------------------------------------------------
+What has changed?
+ - Thanks to TriMesh, the gate-pin is now also used to determine in which model of
+   Playstation PsNee is installed. The modchip algorithm thus can be optimized for
+   optimal performance on specific Playstation revisions. This works by monitoring
+   whether a clock signal is present on this pin - when there is one, the modchip is
+   installed in a PU-22, PU-23 or PSOne Playstation, else it is installed in an older
+   model Playstation. In this version of PsNee, nothing is actually done with this information.
+ - Thanks to -again- TriMesh, NTSC support for PAL SCPH-102 Playstations is added! This uses
+   the same method the OneChip modchip used for achieving this:
+     1. Monitor the XLAT signal from the CD mechanism controller chip. This requires
+        another connection to the Playstation. When this signal is 0, the first CD copy
+        protection is passed! After this, there is another one.
+     2. After this, watch the Address18-pin (pin 31) on the BIOS-chip. When this signal
+        is high, this means the second CD copy protection is about to run.
+     3. Wait a short time.
+     4. Pull the Data2-pin (pin 15) on the BIOS-chip to 0. This effectively blocks the
+        execution of the region check of the inserted disc.
+     5. The Playstation plays the inserted disc and doesn't care whether it's PAL or NTSC!
+     6. Release the 0 of the Data2-pin.
+   To correctly output a PAL video color signal for a PAL TV on a PAL PSOne with an NTSC disc
+   inserted, Pin 3 of IC502 must be grounded with an external switch. The modchip also could do
+   this, although we would need a device with more pins available.
+ - The outputted data signal is now "sliced up" to improve (or less distort) the tracking
+   signal from the CD mechanism: later Playstations use the CD tracking signal for transmitting
+   the SCEx-string to the Playstation instead of using a seperate connection, so when the modchip
+   forces a 0 on the data-pin, the tracking signal also is gone temporarily. By slicing the data-
+   signal up in little pieces at least some of the tracking signal remains and the Playstation can
+   read discs more easily.
+ - The two big for-loops are combined into one with an OR-statement describing the two conditions
+   modchip should be active: when flagFirstCycle = 0 or when flagFirstCycle = 1 and the lid is opened
+   and closed again. This makes code maintenance easier.
+ - The pin-out of the modchip is changed slightly to be able to use an interrupt for the PAL=>NTSC
+   BIOS-patch for PAL SCPH-102. Please use the revised pin-out found below with this code.
+~TheFrietMan, The Netherlands
+--------------------------------------------------------------
+     New in this version! V6
+--------------------------------------------------------------
+A lot!
+ - The PAL SCPH-102 NTSC BIOS-patch works flawlessly! For speed reasons this is implemented in bare
+   AVR C. It is functionally identical to the OneChip modchip, this modchip firmware was disassembled,
+   documented (available on request, but written in Dutch...) and analyzed with a logic analyzer to
+   make sure PsNee works just as well.
+ - The code now is segmented in functions which make the program a lot more maintable and readable
+ - Timing is perfected, all discs (both backups and originals of PAL and NTSC games) now work in the
+   PAL SCPH-102 test machine
+ - It was found out that the gate signal doesn't havbe to be hooked up to a PAL SCPH-102 Playstation
+   to circumvent the copy protection. This is not tested on other Playstation models so the signal still
+   is available
+ - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
+ - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
+ 
+
+ 
