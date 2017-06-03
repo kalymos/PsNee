@@ -1,32 +1,36 @@
-//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-//                    PPPPPPPPPPPPPPPP                  P            P      
-//                   P              P                  PP           P        
-//                  P              P                  P P          P        
-//                 P              P                  P  P         P          
-//                P              P                  P   P        P          
-//               P              P                  P    P       P            
-//              P              P                  P     P      P            
+//                    PPPPPPPPPPPPPPPP                  P            P       
+//                   P              P                  PP           P       
+//                  P              P                  P P          P         
+//                 P              P                  P  P         P         
+//                P              P                  P   P        P           
+//               P              P                  P    P       P           
+//              P              P                  P     P      P             
 //             PPPPPPPPPPPPPPPP  PPPPPPPPPPP     P      P     P  PPPPPPPPPPP  PPPPPPPPPPP
 //            P                 P               P       P    P  P            P
-//           P                 P               P        P   P  P            P  
-//          P                 P               P         P  P  P            P  
-//         P                 P               P          P P  P            P    
-//        P                 PPPPPPPPPPPPPP  P           PP  PPPPPPP      PPPPPPP    
-//       P                              P  P            P  P            P      
-//      P                              P  P            P  P            P      
-//     P                              P  P            P  P            P        
-//    P                              P  P            P  P            P        
-//   P                              P  P            P  P            P      
-//  P                              P  P            P  P            P        
+//           P                 P               P        P   P  P            P
+//          P                 P               P         P  P  P            P   
+//         P                 P               P          P P  P            P   
+//        P                 PPPPPPPPPPPPPP  P           PP  PPPPPPP      PPPPPPP   
+//       P                              P  P            P  P            P     
+//      P                              P  P            P  P            P       
+//     P                              P  P            P  P            P       
+//    P                              P  P            P  P            P       
+//   P                              P  P            P  P            P       
+//  P                              P  P            P  P            P         
 //                     PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP   VERSION 6!
- 
+
+//Update 7th of May 2017
+//Branched and tweaked for use with the Position 0 switch on a PSX laser.
+//(Requires a bit of sticky tape at the point where the switch touches the laser assembly.)
+//This allows deterministic SCEX injections, without relying on timing. Also gets rid of connection wires for LID and RESET.
+//WIP!
+
 //UPDATED AT MAY 14 2016, CODED BY THE FRIENDLY FRIETMAN :-)
- 
+
 //PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
 //all platforms supported by Arduino, preferably ATTiny. Finally something modern!
- 
- 
+
+
 //--------------------------------------------------
 //                    TL;DR
 //--------------------------------------------------
@@ -35,8 +39,8 @@
 //and the proper fuses are burnt (use Extra=>Burn bootloader for this), otherwise PsNee will malfunction. A tutorial on
 //uploading Arduino code via an Arduino Uno to an ATTiny device: http://highlowtech.org/?p=1695
 //Look at the pinout for your device and hook PsNee up to the points on your Playstation.
- 
- 
+
+
 //--------------------------------------------------
 //                 General info!
 //--------------------------------------------------
@@ -64,7 +68,7 @@
 //The text string from the disc is compared with the text string that is embedded in the Playstation
 //hardware. When these text strings are the same, the disc is interpreted to be authentic and from
 //the correct region. Bingo!
- 
+
 //HOW THE MODCHIP TRICKS THE PLAYSTATION:
 //The modchip isn't all that of a complicated device: clever reverse engineers found the point on the
 //Playstation motherboard that carried the text string from the disc and found a way to temporarily block
@@ -77,8 +81,8 @@
 //software could detect whether a modchip was installed. This is circumvented in this application by idling the
 //modchip after about 25 seconds. The text strings are only tranmitted again when the CD lid is opened and closed
 //again, to enable playing multi-disc games. This is also called a stealth modchip in marketing-speak.
- 
- 
+
+
 //--------------------------------------------------
 //               New in this version!
 //--------------------------------------------------
@@ -95,8 +99,8 @@
 //   is available
 // - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
 // - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
- 
- 
+
+
 //--------------------------------------------------
 //                  Pinouts!
 //--------------------------------------------------
@@ -106,24 +110,25 @@
 // - Arduino pin 10 = lid     = ATMega pin 16
 // - Arduino pin 11 = biosA18 = ATMega pin 17
 // - Arduino pin 12 = biosD2  = ATMega pin 18
- 
+
 //FOR ATTINY25/45/85:
 // - Arduino pin 0 = data    = ATTiny pin 5
 // - Arduino pin 1 = gate    = ATTiny pin 6
 // - Arduino pin 2 = lid     = ATTiny pin 7
 // - Arduino pin 3 = biosA18 = ATTiny pin 2
 // - Arduino pin 4 = biosD2  = ATTiny pin 3
- 
+
 //--------------------------------------------------
 //                    Includes!
 //--------------------------------------------------
 #include <Flash.h>
- 
+
 //--------------------------------------------------
 //               Arduino selection!
 //--------------------------------------------------
+//#define ATTINY        //Make that "#define ARDUINO_UNO" if you want to compile for Arduino Uno instead of ATTiny25/45/85
 #define ARDUINO_UNO        //Make that "#define ARDUINO_UNO" if you want to compile for Arduino Uno instead of ATTiny25/45/85
- 
+
 #ifdef ARDUINO_UNO
 //Pins
 int data = 8;         //The pin that outputs the SCEE SCEA SCEI string
@@ -135,7 +140,7 @@ int delay_ntsc = 2350;
 int delay_between_bits = 4;
 int delay_between_injections = 74;
 #endif
- 
+
 #ifdef ATTINY
 //Pins
 int data = 0;        //The pin that outputs the SCEE SCEA SCEI string
@@ -147,12 +152,11 @@ int delay_ntsc = 2400;
 int delay_between_bits = 4;
 int delay_between_injections = 68;
 #endif
- 
+
 //--------------------------------------------------
 //              Global variables!
 //--------------------------------------------------
 //None, just like it should be!
- 
 //--------------------------------------------------
 //              Seperate functions!
 //--------------------------------------------------
@@ -175,18 +179,18 @@ void NTSC_fix()
   delayMicroseconds(5);
   DDRB = 0x00;
 }
- 
+
 void inject_SCEE()
 {
   //SCEE-array                                                                                                                   //      Start            Data     Stop
   FLASH_ARRAY (boolean, SCEEData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0);      //SCEE: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01011101 00   44 bits total
  
   int bit_counter;
- 
+
   for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
   {
     if (SCEEData[bit_counter] == 0)
-    {        
+    {       
       pinMode(data, OUTPUT);
       digitalWrite(data, 0);
       delay(delay_between_bits);
@@ -197,23 +201,23 @@ void inject_SCEE()
       delay(delay_between_bits);
     }
   }
- 
+
   pinMode(data, OUTPUT);
   digitalWrite(data, 0);
   delay(delay_between_injections);
 }
- 
+
 void inject_SCEA()
 {
   //SCEE-array                                                                                                                   //      Start            Data     Stop
   FLASH_ARRAY (boolean, SCEAData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,1,1,0,1,0,0);      //SCEA: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01111101 00
  
   int bit_counter;
- 
+
   for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
   {
     if (SCEAData[bit_counter] == 0)
-    {        
+    {       
       pinMode(data, OUTPUT);
       digitalWrite(data, 0);
       delay(delay_between_bits);
@@ -224,15 +228,15 @@ void inject_SCEA()
       delay(delay_between_bits);
     }
   }
- 
+
   pinMode(data, OUTPUT);
   digitalWrite(data, 0);
   delay(delay_between_injections);
 }
- 
+
 void inject_SCEI()
 {
-  //SCEE-array                                                                                                                   //      Start            Data     Stop
+  //SCEI-array                                                                                                                   //      Start            Data     Stop
   FLASH_ARRAY (boolean, SCEIData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,0,1,1,0,1,0,0);      //SCEI: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01101101 00
  
   int bit_counter;
@@ -240,7 +244,7 @@ void inject_SCEI()
   for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
   {
     if (SCEIData[bit_counter] == 0)
-    {        
+    {       
       pinMode(data, OUTPUT);
       digitalWrite(data, 0);
       delay(delay_between_bits);
@@ -251,12 +255,13 @@ void inject_SCEI()
       delay(delay_between_bits);
     }
   }
- 
+
   pinMode(data, OUTPUT);
   digitalWrite(data, 0);
+ 
   delay(delay_between_injections);
 }
- 
+
 void inject_multiple_times(int number_of_injection_cycles)
 {
   int cycle_counter;
@@ -268,61 +273,68 @@ void inject_multiple_times(int number_of_injection_cycles)
     inject_SCEI();
   }
 }
- 
+
 void inject_playstation()
 {
-  //Variables
-  int loop_counter;
- 
-  //Code
   NTSC_fix();
  
   delay(6900);
-  digitalWrite(data, 0);
   pinMode(data, OUTPUT);
-  delay(100);
- 
   pinMode(gate, OUTPUT);
+  digitalWrite(data, 0);
   digitalWrite(gate, 0);
- 
-  for (loop_counter = 0; loop_counter < 25; loop_counter = loop_counter + 1)
+
+  for (int loop_counter = 0; loop_counter < 20; loop_counter = loop_counter + 1)
   {
-    inject_SCEE();
-  }
- 
-  pinMode(gate, INPUT);
-  pinMode(data, INPUT);
-  delay(11000);
- 
-  pinMode(gate, OUTPUT);
-  digitalWrite(gate, 0);
- 
-  for (loop_counter = 0; loop_counter < 60; loop_counter = loop_counter + 1)
-  {
-    inject_SCEE();
+    inject_SCEI();
+    //inject_SCEA();
+    //inject_SCEE();
   }
  
   pinMode(gate, INPUT);
   pinMode(data, INPUT);
 }
- 
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //--------------------------------------------------
 //     Setup function - execution starts here!
 //--------------------------------------------------
 void setup()
 {
-  inject_playstation();
-}
+  // Arduino docs say all INPUT pins are high impedence by default. Let's be explicit!
+  pinMode(data, INPUT);
+  pinMode(gate, INPUT);
  
+  //inject_playstation(); // not required when watching the POS0 switch (except when NTSC_fix() is required!)
+
+  // TODO :)
+  //attachInterrupt(digitalPinToInterrupt(2), function_name, CHANGE);
+}
+
 //----------------------------------------------------------------
 //   Loop function - executes after the initial injection cycle
 //----------------------------------------------------------------
+
 void loop()
 {
-  if(lid == 0)
-  {
-    while(lid != 1);      //Wait until the lid is closed again (after being opened) to initiate a new injection cycle
-    inject_playstation();
+  bool POS0Sense = digitalRead(A0); // Active low
+ 
+  if (!POS0Sense) {
+    // Read head is in wobble area. Inject SCEX.
+    pinMode(gate, OUTPUT);
+    digitalWrite(gate, 0);
+   
+    digitalWrite(LED_BUILTIN, 1);
+   
+    // loop_counter is a tweak point. It depends on how good the contact to the POS0 switch is.
+    for (int loop_counter = 0; loop_counter < 3; loop_counter = loop_counter + 1)
+    {
+       inject_SCEI();
+       //inject_SCEA();
+       //inject_SCEE();
+    }
+    digitalWrite(LED_BUILTIN, 0);
+    pinMode(gate, INPUT);
+    pinMode(data, INPUT);
   }
 }
