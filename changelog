@@ -53,5 +53,52 @@ A lot!
  - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
  - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
  
+-------------------------------------------------------------
+A minor detail: The lid detection is missing its digitalRead() ;p
+rama3
+-------------------------------------------------------------
+Update 7th of May 2017
+Branched and tweaked for use with the Position 0 switch on a PSX laser.
+(Requires a bit of sticky tape at the point where the switch touches the laser assembly.)
+This allows deterministic SCEX injections, without relying on timing. Also gets rid of connection wires for LID and RESET.
+WIP!
+rama3
+--------------------------------------------------------------
+Update 15th of May 2017
+PSNee now watches the subchannel data and looks at the position information contained within.
+This allows deterministic SCEX injections. It knows (almost) exactly when to inject the SCEX string.
+Therefore it is now a stealth modchip :)
+Required connections: GND, VCC, data, gate, SQCL, SUBQ
+No more need to watch the PSX reset or lid open signals or any other typical modchip points (like "sync")
+WIP! Only tested on PU-18 board. Should work fine on PU-7, PU-8, PU-18 and PU-20.
+Will need adaption for PU-22 to PU-41 (SCPH-750x, 900x and PSOne).
+Note: Once this is installed in a PSX, mind the Pin13 LED that many Arduino boards have. Do not upload new sketches while the PSX is on!
+(If the PSX is on while uploading a sketch (making the LED blink), a voltage will be fed back into the SCLK pin on the HC-05 in the PSX.
+This didn't break my PSX in testing but it does stun the chip and halt CD operation. I'm thinking of a better method to do this but for now I need Arduino pin13..)
+Very much recommended to install a 3.3V chip!
+rama3
+-------------------------------------------------------------
+Update 27th of May 2017
+This version is compatible with 8Mhz and 16Mhz ATmega328 / Arduino boards.
+It uses polling to grab the SUBQ packets. This works better than relying on interrupts.
+I even have a few cycles to spare on a 8Mhz chip! 
+rama3
+------------------------------------------------------------
+Update 31st May 2017
+
+- supports all motherboard versions except PU-41 (PAL) (will get to it!)
+- WFCK modulated injection method for PU-22 and up, just like the last multimode 3 chips
+- minimized CD controller interference: PsNee only ever speaks when it has to (also: full stealth)
+- not relying on BIOS delays: perfect boot disregarding extension cards etc
+- might not be bug free! I'm just one guy and testing on a dozen consoles takes time ;)
+rama3
+------------------------------------------------------------
+Update 4 June 2017
+- unified SCEX injection function / easier to read code
+- PU-22+ now work without the WFCK wire (but depends on tight timings, tested on 8 and 16Mhz mcu)
+- interrupts disabled while sampling SUBQ > much better performance capturing all events correctly
+- now blinks the built-in LED on injections for debugging
+
+
 
  
