@@ -95,8 +95,17 @@
 //   is available
 // - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
 // - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
- 
- 
+
+//--------------------------------------------------
+//          Added in the lastest newest and
+//          shinky Kalymos's version by me!
+//--------------------------------------------------
+//A little mod to use also the SCEW
+//
+//What is SCEW? SCEW is the bitstream produced by Net Yarozee (yes yes the original dev kit from Sony)
+//I think is pretty useless and i don't have any Net Yaroze boot disc to try, but maybe...
+
+
 //--------------------------------------------------
 //                  Pinouts!
 //--------------------------------------------------
@@ -256,6 +265,33 @@ void inject_SCEI()
   digitalWrite(data, 0);
   delay(delay_between_injections);
 }
+
+void inject_SCEW()
+{
+  //SCEW-array                                                                                                                   //      Start            Data     Stop
+  FLASH_ARRAY (boolean, SCEWData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,0,0,1,0,1,0,1,0,0);      //SCEW: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 00010101 00   44 bits total
+ 
+  int bit_counter;
+ 
+  for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
+  {
+    if (SCEWData[bit_counter] == 0)
+    {        
+      pinMode(data, OUTPUT);
+      digitalWrite(data, 0);
+      delay(delay_between_bits);
+    }
+    else
+    {
+      pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
+      delay(delay_between_bits);
+    }
+  }
+ 
+  pinMode(data, OUTPUT);
+  digitalWrite(data, 0);
+  delay(delay_between_injections);
+}
  
 void inject_multiple_times(int number_of_injection_cycles)
 {
@@ -266,6 +302,7 @@ void inject_multiple_times(int number_of_injection_cycles)
     inject_SCEE();
     inject_SCEA();
     inject_SCEI();
+    inject_SCEW();
   }
 }
  
