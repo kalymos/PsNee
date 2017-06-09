@@ -20,25 +20,26 @@
       P                              P  P            P  P            P        
      P                   PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP
 ---------------------------------------
-This version is from the forum
+This version is from
 http://www.psxdev.net/forum/viewtopic.php?f=47&t=1262&start=40
-And is developed by psxdev
+Is developed by the psxdev team
  
  
 -------------------------------------------------
+ This PsNee version is meant for Arduino boards.
+ 16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
+ ATtinys should be able to do this as well; requires a bit of porting and testing
 
-This PsNee version is meant for Arduino boards.
-16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
-ATtinys should be able to do this as well; requires a bit of porting and testing
+ PAL PM-41 support isn't implemented here yet. Use PsNee v6 for them.
+ NTSC-U/J PM-41 are supported with PU22_MODE.
 
-PAL PU-41 support isn't implemented here yet. Use PsNee v6 for them.
+ By default, this code is multi-region. You can optimize it for your console, if you want to.
+ Choose the correct inject_SCEX() for your console region.
+ e = Europe / PAL
+ a = North America / NTSC-U
+ i = Japan / NTSC-J
 
-By default, this code is multi-region. You can optimize it for your console, if you want to.
-Choose the correct inject_SCEX() for your console region.
-
-e = Europe / PAL
-a = North America / NTSC-U
-i = Japan / NTSC-J
+ Use #define PU22_MODE for PU-22, PU-23, PM-41 mainboards.
 
 --------------------------------------------------
                 Old readme!
