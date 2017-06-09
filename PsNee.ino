@@ -2,7 +2,8 @@
 // 16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
 // ATtinys should be able to do this as well; requires a bit of porting and testing
 
-// PAL PU-41 support isn't implemented here yet. Use PsNee v6 for them.
+// PAL PM-41 support isn't implemented here yet. Use PsNee v6 for them.
+// NTSC-U/J PM-41 are supported with PU22_MODE.
 
 // By default, this code is multi-region. You can optimize it for your console, if you want to.
 // Choose the correct inject_SCEX() for your console region.
@@ -10,7 +11,7 @@
 // a = North America / NTSC-U
 // i = Japan / NTSC-J
 
-// Uncomment #define PU22_MODE for PU-22, PU-23, PU-41 mainboards.
+// Use #define PU22_MODE for PU-22, PU-23, PM-41 mainboards.
 
 #define PU22_MODE
 
@@ -125,8 +126,8 @@ void loop()
 // yes, a goto jump label. This is to avoid a return out of critical code with interrupts disabled.
 // It prevents bad behaviour, for example running the Arduino Serial Event routine without interrupts.
 // Using a function makes shared variables messier.
-// We really want to have an 8 bit packet before doing anything else.
-timedout:
+// SUBQ sampling is essential for the rest of the functionality. It is okay for this to take as long as it does.
+start:
 
   for (byte bitpos = 0; bitpos<8; bitpos++) {
     do {
@@ -137,7 +138,7 @@ timedout:
         timeout_clock_counter = 0;
         num_resets++;
         bitpos = 0;
-        goto timedout;
+        goto start;
       }
     }
     while (bitRead(PINB, 3) == 1); // wait for clock to go low
@@ -162,7 +163,7 @@ timedout:
   bitbuf = 0;
 
   if (scpos < 12){
-    return;
+    goto start;
   }
 
   interrupts(); // end critical section
@@ -194,7 +195,7 @@ timedout:
    
     // HC-05 is waiting for a bit of silence (pin Low) before it begins decoding.
      // minimum 66ms required on SCPH-7000
-     // minimum 79ms required on SCPH-7502
+     // minimum 79ms required on SCPH-7502 // wrong! got to keep the NRZ signal in mind for PU22+ !
      delay(82);
    
     for (int loop_counter = 0; loop_counter < 2; loop_counter++)
@@ -247,5 +248,3 @@ timedout:
 //   is available
 // - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
 // - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
-
-
