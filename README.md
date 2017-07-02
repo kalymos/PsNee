@@ -26,38 +26,29 @@ Is developed by the psxdev team
  
  
 -------------------------------------------------
+
  This PsNee version is meant for Arduino boards.
  16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
- ATtinys should be able to do this as well; requires a bit of porting and testing
+ "Arduino Pro Micro" has a different pin assignment and needs porting. (ToDo)
 
- PAL PM-41 support isn't implemented here yet. Use PsNee v6 for them.
- NTSC-U/J PM-41 are supported with PU22_MODE.
+ PAL PM-41 support isn't implemented yet. (ToDo)
 
- By default, this code is multi-region. You can optimize it for your console, if you want to.
- Choose the correct inject_SCEX() for your console region.
- e = Europe / PAL
- a = North America / NTSC-U
- i = Japan / NTSC-J
+ This code is multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
 
- Use #define PU22_MODE for PU-22, PU-23, PM-41 mainboards.
+-----------------------------------------------------
 
---------------------------------------------------
-                Old readme!
---------------------------------------------------
-PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
-all platforms supported by Arduino, preferably ATTiny. Finally something modern!
- 
- 
---------------------------------------------------
-                    TL;DR
---------------------------------------------------
-Look for the "Arduino selection!" section and verify the target platform. Hook up your target device and hit Upload!
-BEWARE: when using ATTiny45, make sure the proper device is selected (Extra=>Board=>ATTiny45 (internal 8MHz clock))
-and the proper fuses are burnt (use Extra=>Burn bootloader for this), otherwise PsNee will malfunction. A tutorial on
-uploading Arduino code via an Arduino Uno to an ATTiny device: http://highlowtech.org/?p=1695
-Look at the pinout for your device and hook PsNee up to the points on your Playstation.
- 
- 
+                                Pin assignments
+
+     MultiMode V3                 PSNee ramen3                PlayStation
+ chip pin     name         Arduino pin      name          ps pin         Name
+
+pin-1  = 3.5v              Arduino pin-vin = 3.5v         3.5v         = supply
+
+pin-5  = « Gate »          Arduino pin-8   = gate_wfck 9  IC732.Pin-5  = WFCK           
+pin-6  = data output       Arduino pin-8   = data 8       IC732.Pin-42 = CEO
+                           Arduino pin-10  = subq 7       IC304.Pin-24 = SUBQ
+                           Arduino pin-11  = sqck 6       IC304.Pin-26 = SQCK
+pin-8  = gnd               Arduino Pin-Gnd = gnd          GND          = gnd
 --------------------------------------------------
                  General info!
 --------------------------------------------------
