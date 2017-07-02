@@ -98,7 +98,21 @@ Update 4 June 2017
 - PU-22+ now work without the WFCK wire (but depends on tight timings, tested on 8 and 16Mhz mcu)
 - interrupts disabled while sampling SUBQ > much better performance capturing all events correctly
 - now blinks the built-in LED on injections for debugging
+psxdev
 
+-------------------------------------------------------------
+Updat 29 June 2017
+- final modchip function I / Os: SQCK, SCLK, data, gate_wfck
+- hysteresis for injections, fixes anti-mod occasionally triggering when using worn drives
+- optimized injection timing for multi-region, multi BIOS versions (Sony added more protection checks over time)
+- first attempt to make it more portable to other Arduino variants
+- auto console detection works reliably, with and without Arduino bootloader present
+- pin assignments changed for practical / installation reasons (ICSP capability, wire routing)
+- so many changes, it surely contains all new bugs ;)
+
+Pin assignments are finalized. We can start producing final installation images / help!
+As always, I appreciate code reviews and bug fixes. I'm sorry some of it got so messy ;p
+psxdev
 
 
  
