@@ -39,7 +39,7 @@ Is developed by the psxdev team
 
                                 Pin assignments
 
-     MultiMode V3                 PSNee ramen3                PlayStation
+     MultiMode V3                  PSNee psxdev                   PlayStation
     chip pin   name            Arduino pin       name         ps pin         Name
 
     pin-1  =   3.5v            Arduino pin-vin = 3.5v         3.5v         = supply
