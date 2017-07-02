@@ -44,10 +44,10 @@ Is developed by the psxdev team
 
     pin-1  =   3.5v            Arduino pin-vin = 3.5v         3.5v         = supply
 
-    pin-5  = « Gate »          Arduino pin-8   = gate_wfck 9  IC732.Pin-5  = WFCK           
+    pin-5  = « Gate »          Arduino pin-9   = gate_wfck 9  IC732.Pin-5  = WFCK           
     pin-6  =   data output     Arduino pin-8   = data 8       IC732.Pin-42 = CEO
-                               Arduino pin-10  = subq 7       IC304.Pin-24 = SUBQ
-                               Arduino pin-11  = sqck 6       IC304.Pin-26 = SQCK
+                               Arduino pin-7   = subq 7       IC304.Pin-24 = SUBQ
+                               Arduino pin-6   = sqck 6       IC304.Pin-26 = SQCK
     pin-8  =   gnd             Arduino Pin-Gnd = gnd          GND          = gnd
 ------------------------------------------------
                  General info!
