@@ -305,7 +305,7 @@ void inject_playstation()
   pinMode(gate, INPUT);
   pinMode(data, INPUT);
 }
- 
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //--------------------------------------------------
 //     Setup function - execution starts here!
@@ -320,9 +320,11 @@ void setup()
 //----------------------------------------------------------------
 void loop()
 {
-  if(lid == 0)
+ 
+  if(digitalRead(lid) == 0)
   {
-    while(lid != 1);      //Wait until the lid is closed again (after being opened) to initiate a new injection cycle
+    while(digitalRead(lid) != 1)      //Wait until the lid is closed again (after being opened) to initiate a new injection cycle
+     
     inject_playstation();
   }
 }
