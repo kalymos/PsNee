@@ -305,6 +305,7 @@ void inject_playstation()
   pinMode(gate, INPUT);
   pinMode(data, INPUT);
 }
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //--------------------------------------------------
 //     Setup function - execution starts here!
