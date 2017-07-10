@@ -113,6 +113,24 @@ Updat 29 June 2017
 Pin assignments are finalized. We can start producing final installation images / help!
 As always, I appreciate code reviews and bug fixes. I'm sorry some of it got so messy ;p
 psxdev
+---------------------------------------------------------------
+Update 9 July 2017
 
+Sure. Consider it work in progress quality ;)
+Main changes:
+- figured out ATtiny pin assignments :p
+- RAM use reduced by only storing the "SCE" part of the license string once. Using a somewhat farfetched method. Maybe someone can make it nicer, without the recursion and over engineering? :p
+- tried getting debug prints but it doesn't look like it'll happen (on ATtiny45), too little RAM > the chip crashes
+- SUBQ sampling timing reverted to sample while clock is low, instead of right after it goes high
+
+--------------------------------------------------------------
+Update: 10 July 2017
+
+- finished porting to ATtinyX5 (25,45,85 although the 25 has too little resources. for now.)
+- store the licensing symbols in flash again, frees a lot of RAM
+- bit retrieval code lifted from AttyNee (Nice work guys!)
+- extra RAM allows SoftwareSerial debugging prints on an ATtiny45!
+- nicer intro readme ;p
+--------------------------------------------------------------
 
  
