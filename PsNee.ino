@@ -1,41 +1,60 @@
-//#include <SoftwareSerial.h>
-//SoftwareSerial mySerial(-1, 3); // RX, TX
-// This PsNee version is meant for Arduino boards.
-// 16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
-// "Arduino Pro Micro" has a different pin assignment and needs porting. (ToDo)
-
+// PsNee / psxdev.net version
+// For Arduino and ATtiny
+//
+// Quick start: Select your hardware via the #defines, compile + upload the code, install in PSX.
+// There are some pictures in the development thread ( http://www.psxdev.net/forum/viewtopic.php?f=47&t=1262&start=120 )
+//
+// Arduinos:
+//  - Arduino Pro Mini @8Mhz and @16Mhz (supported, tested)
+//  - Arduino Uno @8Mhz and @16Mhz (supported, tested)
+//  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
+//  - Use #define ARDUINO_BOARD
+// ATtiny:
+//  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
+//  - ATtiny85: Should work the same as ATtiny45 (supported, untested)
+//  - ATtiny25: Not yet supported. 2kB flash, 128 Bytes RAM. Tricky.
+//  - Use #define ATTINY_X5
+//
+// Some extra libraries might be required, depending on the board / chip used.
 // PAL PM-41 support isn't implemented yet. (ToDo)
+// This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+// You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
 
-// This code is multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+// Choose your hardware!
+// 2 main branches available:
+//  - ATmega based > easy to use, fast and nice features for development
+//  - ATtiny based > less features, internal clock has 10% variation
 
-// Use PU22_MODE for PU-22, PU-23, PM-41 mainboards.
-boolean pu22mode;
+//#define ARDUINO_BOARD
+#define ATTINY_X5
 
-//#define ARDUINO_UNO_BOARD
-#define ATTINY_CHIP
-
-#ifdef ARDUINO_UNO_BOARD
-  // board pins
+#ifdef ARDUINO_BOARD
+  // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
   #define sqck 6          // connect to PSX HC-05 SQCK pin
   #define subq 7          // connect to PSX HC-05 SUBQ pin
   #define data 8          // connect to point 6 in old modchip diagrams
   #define gate_wfck 9     // connect to point 5 in old modchip diagrams
-  // MCU input / output
-  #define SUBQPORT PIND       // Atmel MCU port for the 2 SUBQ sampling inputs
-  #define SQCKBIT 6           // ATmega PD6 "SQCK" Mechacon pin 26 (PU-7 and early PU-8 Mechacons: pin 41)
-  #define SUBQBIT 7           // ATmega PD7 "SUBQ" Mechacon pin 24 (PU-7 and early PU-8 Mechacons: pin 39)
-  #define GATEWFCKPORT PINB   // Atmel MCU port for the gate input (used for WFCK)
-  #define DATAPORT PORTB      // Atmel MCU port for the gate input (used for WFCK)
-  #define GATEWFCKBIT 1       // ATmega PB1
-  #define DATABIT 0           // ATmega PB0
+  // MCU I/O definitions
+  #define SUBQPORT PIND       // MCU port for the 2 SUBQ sampling inputs
+  #define SQCKBIT 6           // PD6 "SQCK" < Mechacon pin 26 (PU-7 and early PU-8 Mechacons: pin 41)
+  #define SUBQBIT 7           // PD7 "SUBQ" < Mechacon pin 24 (PU-7 and early PU-8 Mechacons: pin 39)
+  #define GATEWFCKPORT PINB   // MCU port for the gate input (used for WFCK)
+  #define DATAPORT PORTB      // MCU port for the gate input (used for WFCK)
+  #define GATEWFCKBIT 1       // PB1
+  #define DATABIT 0           // PB0
 #endif
-#ifdef ATTINY_CHIP
-  // board pins
+#ifdef ATTINY_X5 // ATtiny 25/45/85
+  // extras
+  #include <SoftwareSerial.h>
+  #include <avr/pgmspace.h>
+  SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
+  // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
   #define sqck 0
   #define subq 1
   #define data 2
   #define gate_wfck 4
-  // MCU input / output
+  #define debugtx 3
+  // MCU I/O definitions
   #define SUBQPORT PINB
   #define SQCKBIT 0
   #define SUBQBIT 1
@@ -45,39 +64,41 @@ boolean pu22mode;
   #define DATABIT 2
 #endif
 
+#define NOP __asm__ __volatile__ ("nop\n\t")
+
+// Setup() detects which (of 2) injection methods this PSX board requires, then stores it in pu22mode.
+boolean pu22mode;
+
 //Timing
-const int delay_between_bits = 4000;      // 250 bits/s (microseconds)
+const int delay_between_bits = 4000;      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100)
 const int delay_between_injections = 90;  // 72 in oldcrow. PU-22+ work best with 80 to 100 (milliseconds)
 
-void inject_SCEX(char region, boolean firstPart)
+// borrowed from AttyNee. Bitmagic to get to the SCEX strings stored in flash (because Harvard architecture)
+bool readBit(int index, const unsigned char *ByteSet)
+{
+  int byte_index = index >> 3;
+  byte bits = pgm_read_byte(&(ByteSet[byte_index]));
+  int bit_index = index & 0x7; // same as (index - byte_index<<3) or (index%8)
+  byte mask = 1 << bit_index;
+  return (0 != (bits & mask));
+}
+
+void inject_SCEX(char region)
 {
   //SCEE: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01011101 00
   //SCEA: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01111101 00
   //SCEI: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01101101 00
-  const boolean SCE[36] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1};
-  const boolean EData[8] = {0,1,1,1,0,1,0,0}; //SCEE
-  const boolean AData[8] = {1,1,1,1,0,1,0,0}; //SCEA
-  const boolean IData[8] = {1,0,1,1,0,1,0,0}; //SCEI
- 
-  const boolean *SCEXData;
-  byte limit;
-  if (firstPart) {
-    SCEXData = SCE;
-    limit = 36;
-  }
-  else {
-    switch (region){
-      case 'e': SCEXData = EData; break;
-      case 'a': SCEXData = AData; break;
-      case 'i': SCEXData = IData; break;
-    }
-    limit = 8;
-  }
+  //const boolean SCEEData[44] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0};
+  //const boolean SCEAData[44] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0};
+  //const boolean SCEIData[44] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0};
+  static const PROGMEM unsigned char SCEEData[] = {0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11101010, 0b00000010};
+  static const PROGMEM unsigned char SCEAData[] = {0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11111010, 0b00000010};
+  static const PROGMEM unsigned char SCEIData[] = {0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11011010, 0b00000010};
  
   // pinMode(data, OUTPUT) is used more than it has to be but that's fine.
-  for (byte bit_counter = 0; bit_counter < limit; bit_counter++)
+  for (byte bit_counter = 0; bit_counter < 44; bit_counter++)
   {
-    if (*(SCEXData+bit_counter) == 0)
+    if (readBit(bit_counter, region == 'e' ? SCEEData : region == 'a' ? SCEAData : SCEIData) == 0)
     {
       pinMode(data, OUTPUT);
       bitClear(GATEWFCKPORT,DATABIT); // data low
@@ -94,15 +115,11 @@ void inject_SCEX(char region, boolean firstPart)
         }
         while ((micros() - now) < delay_between_bits);
       }
-      else { // not PU 22 mode
+      else { // PU-18 or lower mode
         pinMode(data, INPUT);
         delayMicroseconds(delay_between_bits);
       }
     }
-  }
-
-  if (firstPart){
-    inject_SCEX(region, false);
   }
 
   pinMode(data, OUTPUT);
@@ -113,16 +130,24 @@ void inject_SCEX(char region, boolean firstPart)
 //--------------------------------------------------
 //     Setup
 //--------------------------------------------------
+
 void setup()
 {
   pinMode(data, INPUT);
   pinMode(gate_wfck, INPUT);
-  pinMode(subq, INPUT); // PSX spi data in
-  pinMode(sqck, INPUT); // PSX spi clock in
- 
-  //mySerial.begin (19200);
-  //mySerial.print("f "); mySerial.print(F_CPU);
- 
+  pinMode(subq, INPUT); // PSX subchannel bits
+  pinMode(sqck, INPUT); // PSX subchannel clock
+#ifdef ATTINY_X5
+  pinMode(debugtx, OUTPUT); // software serial tx pin
+  mySerial.begin(57600);
+  mySerial.print("f "); mySerial.println(F_CPU);
+#else
+  pinMode(LED_BUILTIN, OUTPUT); // Blink on injection / debug.
+  digitalWrite(LED_BUILTIN, HIGH); // mark begin of setup
+  Serial.begin(115200); // there is a relationship between symbol rate here and getting odd readings in the logs.
+  Serial.print("MCU frequency: "); Serial.print(F_CPU); Serial.println(" Hz");
+  Serial.println("Waiting for SQCK..");
+#endif
   // Board detection
   while (!digitalRead(sqck));   // wait for console power on (in case Arduino is powered externally)
   while (!digitalRead(gate_wfck));   // wait for gate / WFCK signal to appear
@@ -149,6 +174,22 @@ void setup()
   else {
     pu22mode = 0;
   }
+ 
+#ifdef ATTINY_X5
+  mySerial.print("m "); mySerial.println(pu22mode);
+  mySerial.flush();
+#else
+  Serial.print("pu22mode: "); Serial.println(pu22mode);
+  Serial.flush();
+  // Power saving
+  // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
+  ADCSRA = ADCSRA & B01111111;
+  // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
+  ACSR = B10000000;
+  // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
+  DIDR0 = DIDR0 | B00111111;
+  digitalWrite(LED_BUILTIN, LOW); // setup complete
+#endif
 }
 
 void loop()
@@ -170,7 +211,7 @@ start:
     do {
       // nothing, reset on timeout
       timeout_clock_counter++;
-      if (timeout_clock_counter > 1000){
+      if (timeout_clock_counter > 1400){
         scpos = 0;  // reset SUBQ packet stream
         timeout_clock_counter = 0;
         bitpos = 0;
@@ -179,15 +220,14 @@ start:
     }
     while (bitRead(SUBQPORT, SQCKBIT) == 1); // wait for clock to go low..
 
-    __asm__("nop\n\t"); __asm__("nop\n\t"); __asm__("nop\n\t");
-    // sample the bit now!
+    // sample the bit 3 no-ops after the clock went low. Tested on ATtiny45 @8Mhz
+    NOP;NOP;NOP;
     sample = bitRead(SUBQPORT, SUBQBIT);
     bitbuf |= sample << bitpos;
-   
     do {
       // nothing
     } while ((bitRead(SUBQPORT, SQCKBIT)) == 0); // and high again..
-   
+
     timeout_clock_counter = 0; // no problem with this bit
   }
  
@@ -203,22 +243,39 @@ start:
   interrupts(); // end critical section
 
   // log SUBQ packets
-//  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){ // a bad sector read is all 0 except for the CRC fields. Don't log it.
-//    for (int i = 0; i<12;i++) {
-//      if (scbuf[i] < 0x10) mySerial.print("0"); // padding
-//        mySerial.print(scbuf[i], HEX);
-//        mySerial.print(" ");
-//      }
-//      mySerial.println("");
-//  }
- 
+#ifdef ATTINY_X5
+  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){ // a bad sector read is all 0 except for the CRC fields. Don't log it.
+    for (int i = 0; i<12;i++) {
+      if (scbuf[i] < 0x10) {mySerial.print("0");} // padding
+      mySerial.print(scbuf[i], HEX);
+      mySerial.print(" ");
+    }
+    mySerial.println("");
+  }
+#else
+  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){
+    for (int i = 0; i<12;i++) {
+      if (scbuf[i] < 0x10) {Serial.print("0");} // padding
+      Serial.print(scbuf[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println("");
+//    Serial.flush();
+//    if (scbuf[0] != 0x41)
+//      digitalWrite(LED_BUILTIN, HIGH);
+//    else
+//      digitalWrite(LED_BUILTIN, LOW);
+  }
+#endif
+
   // check if read head is in wobble area
   // We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
   // We want to see a TOC sector repeatedly before injecting (helps with timing and marginal lasers).
-  static byte hysteresis  = 0;
-
   // All this logic is because we don't know if the HC-05 is actually processing a getSCEX() command.
-  // Hysteresis is used because older drives exhibit more wiggle room. They might see a few TOC sectors when they shouldn't.
+  // Hysteresis is used because older drives exhibit more variation in read head positioning.
+  // While the laser lens moves to correct for the error, they can pick up a few TOC sectors. 
+  static byte hysteresis  = 0;
+ 
   if (
     (scbuf[0] == 0x41 &&  scbuf[1] == 0x00 &&  scbuf[6] == 0x00) &&   // [0] = 41 means psx game disk. the other 2 checks are garbage protection
     (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2 ||      // if [2] = A0, A1, A2 ..
@@ -235,13 +292,17 @@ start:
     hysteresis--; // None of the above. Initial detection was noise. Decrease the counter.
   }
 
-  // Some anti mod routines position the laser very close to the TOC area. Only inject if we're pretty certain it is required.
-  // hysteresis below 10 occasionally triggers injections in Silent Hill (NTSC-J) when using a worn drive
+  // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
+  // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate
   if (hysteresis >= 14){
     hysteresis = 0;
-   
-    //mySerial.println("!");
-   
+
+#ifdef ATTINY_X5
+    mySerial.println("!");
+#else
+    Serial.println("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
+#endif
+
     pinMode(data, OUTPUT);
     digitalWrite(data, 0); // pull data low
     if (!pu22mode){
@@ -249,13 +310,14 @@ start:
       digitalWrite(gate_wfck, 0);
     }
    
-    // HC-05 is waiting for a bit of silence (pin low) before it begins decoding.
+    // HC-05 waits for a bit of silence (pin low) before it begins decoding.
     delay(delay_between_injections);
+    // inject symbols now. 2 x 3 runs seems optimal to cover all boards
     for (byte loop_counter = 0; loop_counter < 2; loop_counter++)
     {
-      inject_SCEX('e', true); // e = SCEE, a = SCEA, i = SCEI
-      inject_SCEX('a', true); // injects all 3 regions by default
-      inject_SCEX('i', true); // makes it easier for people to get working
+      inject_SCEX('e'); // e = SCEE, a = SCEA, i = SCEI
+      inject_SCEX('a'); // injects all 3 regions by default
+      inject_SCEX('i'); // optimize boot time by sending only your console region letter (all 3 times per loop)
     }
 
     if (!pu22mode){
