@@ -20,12 +20,14 @@
 // This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
 // You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
 
-// Choose your hardware!
+//+-------------------------------------------------------------------------------------------+
+//| CHOOSE VOUR HARWARE!                                                                      |
+//+-------------------------------------------------------------------------------------------+
 // 2 main branches available:
 //  - ATmega based > easy to use, fast and nice features for development
 //  - ATtiny based > less features, internal clock has 10% variation
 
-#define ARDUINO_BOARD
+//#define ARDUINO_BOARD
 //#define ATTINY_X5
 
 //#define PSNEEDEBUG
