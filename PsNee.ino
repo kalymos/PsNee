@@ -10,9 +10,9 @@
 //  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
 //  - Use #define ARDUINO_BOARD
 // ATtiny:
-//  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
 //  - ATtiny85: Should work the same as ATtiny45 (supported, untested)
-//  - ATtiny25: Not yet supported. 2kB flash, 128 Bytes RAM. Tricky.
+//  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
+//  - ATtiny25: Should work the same as ATtiny45 but doesn't have enough Flash nor RAM for PSNEEDEBUG (supported, untested)
 //  - Use #define ATTINY_X5
 //
 // Some extra libraries might be required, depending on the board / chip used.
@@ -25,43 +25,65 @@
 //  - ATmega based > easy to use, fast and nice features for development
 //  - ATtiny based > less features, internal clock has 10% variation
 
-//#define ARDUINO_BOARD
-#define ATTINY_X5
+#define ARDUINO_BOARD
+//#define ATTINY_X5
 
-#ifdef ARDUINO_BOARD
-  // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
-  #define sqck 6          // connect to PSX HC-05 SQCK pin
-  #define subq 7          // connect to PSX HC-05 SUBQ pin
-  #define data 8          // connect to point 6 in old modchip diagrams
-  #define gate_wfck 9     // connect to point 5 in old modchip diagrams
-  // MCU I/O definitions
-  #define SUBQPORT PIND       // MCU port for the 2 SUBQ sampling inputs
-  #define SQCKBIT 6           // PD6 "SQCK" < Mechacon pin 26 (PU-7 and early PU-8 Mechacons: pin 41)
-  #define SUBQBIT 7           // PD7 "SUBQ" < Mechacon pin 24 (PU-7 and early PU-8 Mechacons: pin 39)
-  #define GATEWFCKPORT PINB   // MCU port for the gate input (used for WFCK)
-  #define DATAPORT PORTB      // MCU port for the gate input (used for WFCK)
-  #define GATEWFCKBIT 1       // PB1
-  #define DATABIT 0           // PB0
+//#define PSNEEDEBUG
+
+#include <avr/pgmspace.h>
+
+#if defined(ARDUINO_BOARD)
+ // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
+ #define sqck 6          // connect to PSX HC-05 SQCK pin
+ #define subq 7          // connect to PSX HC-05 SUBQ pin
+ #define data 8          // connect to point 6 in old modchip diagrams
+ #define gate_wfck 9     // connect to point 5 in old modchip diagrams
+ // MCU I/O definitions
+ #define SUBQPORT PIND       // MCU port for the 2 SUBQ sampling inputs
+ #define SQCKBIT 6           // PD6 "SQCK" < Mechacon pin 26 (PU-7 and early PU-8 Mechacons: pin 41)
+ #define SUBQBIT 7           // PD7 "SUBQ" < Mechacon pin 24 (PU-7 and early PU-8 Mechacons: pin 39)
+ #define GATEWFCKPORT PINB   // MCU port for the gate input (used for WFCK)
+ #define DATAPORT PORTB      // MCU port for the gate input (used for WFCK)
+ #define GATEWFCKBIT 1       // PB1
+ #define DATABIT 0           // PB0
+#elif defined(ATTINY_X5) // ATtiny 25/45/85
+ // extras
+ #define USINGSOFTWARESERIAL
+ // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
+ #define sqck 0
+ #define subq 1
+ #define data 2
+ #define gate_wfck 4
+ #define debugtx 3
+ // MCU I/O definitions
+ #define SUBQPORT PINB
+ #define SQCKBIT 0
+ #define SUBQBIT 1
+ #define GATEWFCKPORT PINB
+ #define DATAPORT PORTB
+ #define GATEWFCKBIT 4
+ #define DATABIT 2
+#else
+ #error "Select a board!"
 #endif
-#ifdef ATTINY_X5 // ATtiny 25/45/85
-  // extras
-  #include <SoftwareSerial.h>
-  #include <avr/pgmspace.h>
-  SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
-  // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
-  #define sqck 0
-  #define subq 1
-  #define data 2
-  #define gate_wfck 4
-  #define debugtx 3
-  // MCU I/O definitions
-  #define SUBQPORT PINB
-  #define SQCKBIT 0
-  #define SUBQBIT 1
-  #define GATEWFCKPORT PINB
-  #define DATAPORT PORTB
-  #define GATEWFCKBIT 4
-  #define DATABIT 2
+
+#if defined(PSNEEDEBUG) && defined(USINGSOFTWARESERIAL)
+ #include <SoftwareSerial.h>
+ SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
+ #define DEBUG_PRINT(x)     mySerial.print(x)
+ #define DEBUG_PRINTHEX(x)  mySerial.print(x, HEX)
+ #define DEBUG_PRINTLN(x)   mySerial.println(x)
+ #define DEBUG_FLUSH        mySerial.flush()
+#elif defined(PSNEEDEBUG) && !defined(USINGSOFTWARESERIAL)
+ #define DEBUG_PRINT(x)     Serial.print(x)
+ #define DEBUG_PRINTHEX(x)  Serial.print(x, HEX)
+ #define DEBUG_PRINTLN(x)   Serial.println(x)
+ #define DEBUG_FLUSH        Serial.flush()
+#else
+ #define DEBUG_PRINT(x)     
+ #define DEBUG_PRINTHEX(x) 
+ #define DEBUG_PRINTLN(x)
+ #define DEBUG_FLUSH       
 #endif
 
 #define NOP __asm__ __volatile__ ("nop\n\t")
@@ -137,21 +159,27 @@ void setup()
   pinMode(gate_wfck, INPUT);
   pinMode(subq, INPUT); // PSX subchannel bits
   pinMode(sqck, INPUT); // PSX subchannel clock
-#ifdef ATTINY_X5
+ 
+  #if defined(PSNEEDEBUG) && defined(USINGSOFTWARESERIAL)
   pinMode(debugtx, OUTPUT); // software serial tx pin
-  mySerial.begin(57600);
-  mySerial.print("f "); mySerial.println(F_CPU);
-#else
+  mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms)
+  #elif defined(PSNEEDEBUG) && !defined(USINGSOFTWARESERIAL)
+  Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms)
+  DEBUG_PRINT("MCU frequency: "); DEBUG_PRINT(F_CPU); DEBUG_PRINTLN(" Hz");
+  DEBUG_PRINTLN("Waiting for SQCK..");
+  #endif
+
+  #if defined(ARDUINO_BOARD)
   pinMode(LED_BUILTIN, OUTPUT); // Blink on injection / debug.
   digitalWrite(LED_BUILTIN, HIGH); // mark begin of setup
-  Serial.begin(115200); // there is a relationship between symbol rate here and getting odd readings in the logs.
-  Serial.print("MCU frequency: "); Serial.print(F_CPU); Serial.println(" Hz");
-  Serial.println("Waiting for SQCK..");
-#endif
-  // Board detection
-  while (!digitalRead(sqck));   // wait for console power on (in case Arduino is powered externally)
-  while (!digitalRead(gate_wfck));   // wait for gate / WFCK signal to appear
+  #endif
+ 
+  // wait for console power on and stable signals
+  while (!digitalRead(sqck));   
+  while (!digitalRead(gate_wfck));
 
+  // Board detection
+  //
   // GATE: __-----------------------  // this is a PU-7 .. PU-20 board!
   //
   // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
@@ -165,7 +193,6 @@ void setup()
   }
   while ((millis() - now) < 1000); // sample 1s
 
-  //Serial.print("highs: "); Serial.print(highs); Serial.print(" lows: "); Serial.println(lows);
   // typical readouts
   // PU-22: highs: 2449 lows: 2377
   if (lows > 100) {
@@ -175,12 +202,11 @@ void setup()
     pu22mode = 0;
   }
  
-#ifdef ATTINY_X5
-  mySerial.print("m "); mySerial.println(pu22mode);
-  mySerial.flush();
-#else
-  Serial.print("pu22mode: "); Serial.println(pu22mode);
-  Serial.flush();
+  #ifdef ATTINY_X5
+  DEBUG_PRINT("m "); DEBUG_PRINTLN(pu22mode);
+  #else
+  DEBUG_PRINT("highs: "); DEBUG_PRINT(highs); DEBUG_PRINT(" lows: "); DEBUG_PRINTLN(lows);
+  DEBUG_PRINT("pu22mode: "); DEBUG_PRINTLN(pu22mode);
   // Power saving
   // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
   ADCSRA = ADCSRA & B01111111;
@@ -188,8 +214,13 @@ void setup()
   ACSR = B10000000;
   // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
   DIDR0 = DIDR0 | B00111111;
+  #endif
+ 
+  #if defined(ARDUINO_BOARD)
   digitalWrite(LED_BUILTIN, LOW); // setup complete
-#endif
+  #endif
+ 
+  DEBUG_FLUSH; // empty serial transmit buffer
 }
 
 void loop()
@@ -198,39 +229,36 @@ void loop()
   static unsigned int timeout_clock_counter = 0;
   static byte bitbuf = 0;   // SUBQ bit storage
   static bool sample = 0;
- 
+  static byte bitpos = 0;
   byte scpos = 0;           // scbuf position
  
   noInterrupts(); // start critical section
-// yes, a goto jump label. This is to avoid a return out of critical code with interrupts disabled.
-// It prevents bad behaviour, for example running the Arduino Serial Event routine without interrupts.
-// Using a function makes shared variables messier.
-// SUBQ sampling is essential for the rest of the functionality. It is okay for this to take as long as it does.
 start:
-  for (byte bitpos = 0; bitpos<8; bitpos++) { // Capture 8 bits for 12 runs > complete SUBQ transmission
-    do {
-      // nothing, reset on timeout
+  // Capture 8 bits for 12 runs > complete SUBQ transmission
+  bitpos = 0;
+  for (; bitpos<8; bitpos++) {
+    while (bitRead(SUBQPORT, SQCKBIT) == 1){
+      // wait for clock to go low..
+      // a timeout resets the 12 byte stream in case the PSX sends malformatted clock pulses, as happens on bootup
       timeout_clock_counter++;
-      if (timeout_clock_counter > 1400){
+      if (timeout_clock_counter > 1000){
         scpos = 0;  // reset SUBQ packet stream
         timeout_clock_counter = 0;
-        bitpos = 0;
+        bitbuf = 0;
         goto start;
       }
     }
-    while (bitRead(SUBQPORT, SQCKBIT) == 1); // wait for clock to go low..
-
-    // sample the bit 3 no-ops after the clock went low. Tested on ATtiny45 @8Mhz
-    NOP;NOP;NOP;
+   
+    // wait for clock to go high..
+    while ((bitRead(SUBQPORT, SQCKBIT)) == 0);
+   
     sample = bitRead(SUBQPORT, SUBQBIT);
     bitbuf |= sample << bitpos;
-    do {
-      // nothing
-    } while ((bitRead(SUBQPORT, SQCKBIT)) == 0); // and high again..
 
     timeout_clock_counter = 0; // no problem with this bit
   }
- 
+
+  // one byte done
   scbuf[scpos] = bitbuf;
   scpos++;
   bitbuf = 0;
@@ -239,34 +267,27 @@ start:
   if (scpos < 12){
     goto start;
   }
-
   interrupts(); // end critical section
 
-  // log SUBQ packets
-#ifdef ATTINY_X5
+  // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
+  #ifdef ATTINY_X5
   if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){ // a bad sector read is all 0 except for the CRC fields. Don't log it.
     for (int i = 0; i<12;i++) {
-      if (scbuf[i] < 0x10) {mySerial.print("0");} // padding
-      mySerial.print(scbuf[i], HEX);
-      mySerial.print(" ");
+      if (scbuf[i] < 0x10) {DEBUG_PRINT("0");} // padding
+      DEBUG_PRINTHEX(scbuf[i]);
     }
-    mySerial.println("");
+    DEBUG_PRINTLN("");
   }
-#else
+  #else
   if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){
     for (int i = 0; i<12;i++) {
-      if (scbuf[i] < 0x10) {Serial.print("0");} // padding
-      Serial.print(scbuf[i], HEX);
-      Serial.print(" ");
+      if (scbuf[i] < 0x10) {DEBUG_PRINT("0");} // padding
+      DEBUG_PRINTHEX(scbuf[i]);
+      DEBUG_PRINT(" ");
     }
-    Serial.println("");
-//    Serial.flush();
-//    if (scbuf[0] != 0x41)
-//      digitalWrite(LED_BUILTIN, HIGH);
-//    else
-//      digitalWrite(LED_BUILTIN, LOW);
+    DEBUG_PRINTLN("");
   }
-#endif
+  #endif
 
   // check if read head is in wobble area
   // We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
@@ -295,14 +316,19 @@ start:
   // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
   // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate
   if (hysteresis >= 14){
-    hysteresis = 0;
+    // If the read head is still here after injection, resending should be quick.
+    // Hysteresis naturally goes to 0 otherwise (the read head moved).
+    hysteresis = 11;
 
-#ifdef ATTINY_X5
-    mySerial.println("!");
-#else
-    Serial.println("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
-#endif
-
+    #ifdef ATTINY_X5
+    DEBUG_PRINTLN("!");
+    #else
+    DEBUG_PRINTLN("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
+    #endif
+    #if defined(ARDUINO_BOARD)
+    digitalWrite(LED_BUILTIN, HIGH);
+    #endif
+   
     pinMode(data, OUTPUT);
     digitalWrite(data, 0); // pull data low
     if (!pu22mode){
@@ -324,6 +350,9 @@ start:
       pinMode(gate_wfck, INPUT); // high-z the line, we're done
     }
     pinMode(data, INPUT); // high-z the line, we're done
+    #if defined(ARDUINO_BOARD)
+    digitalWrite(LED_BUILTIN, LOW);
+    #endif
   }
 // keep catching SUBQ packets forever
 }
