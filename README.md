@@ -41,8 +41,11 @@ Is developed by the psxdev team
  PAL PM-41 support isn't implemented yet. (ToDo)
  This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
  You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
-
- Choose your hardware!
+ 
+-------------------------------------------------------------------
+    Choose your hardware!
+    You must uncomment the line that corresponds to your cips.
+    
  2 main branches available:
   - ATmega based > easy to use, fast and nice features for development
   - ATtiny based > less features, internal clock has 10% variation
