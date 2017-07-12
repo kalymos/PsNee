@@ -28,10 +28,24 @@ Is developed by the psxdev team
 -------------------------------------------------
 
  This PsNee version is meant for Arduino boards.
- 16Mhz and 8Mhz variants are supported. "Pro Micro" etc supported and recommended
- "Arduino Pro Micro" has a different pin assignment and needs porting. (ToDo)
-
+ 
+  - Arduino Pro Mini @8Mhz and @16Mhz (supported, tested)
+  - Arduino Uno @8Mhz and @16Mhz (supported, tested)
+  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
+  
+  - ATtiny85: Should work the same as ATtiny45 (supported, untested)
+  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
+  - ATtiny25: Should work the same as ATtiny45 but doesn't have enough Flash nor RAM for PSNEEDEBUG (supported, untested)
+  
+ Some extra libraries might be required, depending on the board / chip used.
  PAL PM-41 support isn't implemented yet. (ToDo)
+ This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+ You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
+
+ Choose your hardware!
+ 2 main branches available:
+  - ATmega based > easy to use, fast and nice features for development
+  - ATtiny based > less features, internal clock has 10% variation
 
  This code is multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
 
@@ -76,16 +90,6 @@ The security thus functions not only as copy protection, but also as region prot
 The text string from the disc is compared with the text string that is embedded in the Playstation
 hardware. When these text strings are the same, the disc is interpreted to be authentic and from
 the correct region. Bingo!
+
+
  
-HOW THE MODCHIP TRICKS THE PLAYSTATION:
-The modchip isn't all that of a complicated device: clever reverse engineers found the point on the
-Playstation motherboard that carried the text string from the disc and found a way to temporarily block
-this signal (by grounding an input of an op-amp buffer) to be able to inject the signal from the modchip
-The modchip injects after about 1500ms the text strings SCEE SCEA SCEI on the motherboard point and stops
-with this after about 25 seconds. Because all the possible valid region options are outputted on the
-motherboard the Playstation gets a bit confused and simply accepts the inserted disc as authentic; after all,
-one of the codes was the same as that of the Playstation hardware...
-Early modchips applied the text strings as long as power was applied to them, whereby later Playstation
-software could detect whether a modchip was installed. This is circumvented in this application by idling the
-modchip after about 25 seconds. The text strings are only tranmitted again when the CD lid is opened and closed
-again, to enable playing multi-disc games. This is also called a stealth modchip in marketing-speak.
