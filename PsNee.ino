@@ -21,7 +21,7 @@
 // You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
 
 //+-------------------------------------------------------------------------------------------+
-//| CHOOSE VOUR HARWARE!                                                                      |
+//|                                  Choose your hardware!                                    |
 //+-------------------------------------------------------------------------------------------+
 // 2 main branches available:
 //  - ATmega based > easy to use, fast and nice features for development
@@ -29,6 +29,8 @@
 
 //#define ARDUINO_BOARD
 //#define ATTINY_X5
+
+//---------------------------------------------------------------------------------------------
 
 //#define PSNEEDEBUG
 
