@@ -41,8 +41,16 @@ Is developed by the psxdev team
  PAL PM-41 support isn't implemented yet. (ToDo)
  This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
  You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
+----------------------------------------------------------------------
+
+BIOS patch for PM-41
+
+For now it only supports Arduino boards (ATmega chips).
+Also, the Arduino must either be powered on first or have no bootloader present (flashed using SPI) since I expect a signal ~1 second after power on.
+8Mhz boards are also supported.
  
 -------------------------------------------------------------------
+
     Choose your hardware!
     You must uncomment the line that corresponds to your cips.
     
@@ -65,6 +73,8 @@ Is developed by the psxdev team
     pin-6  =   data output     Arduino pin-8   = data 8       IC732.Pin-42 = CEO
                                Arduino pin-7   = subq 7       IC304.Pin-24 = SUBQ
                                Arduino pin-6   = sqck 6       IC304.Pin-26 = SQCK
+                               Arduino pin-5   = D2           IC102.Pin-15 = D2
+                               Arduino pin-4   = A18          IC102.Pin-31 = A18
     pin-8  =   gnd             Arduino Pin-Gnd = gnd          GND          = gnd
 ------------------------------------------------
                  General info!
