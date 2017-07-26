@@ -114,6 +114,7 @@ After power on, it will start sending injections for some time, then turns off.
 It also doesn't know when it's required to turn on again (except for after a reset), so it gets detected by anti-mod games.
 
 That mechanism to know when to inject and when to turn it off. This is the 2 wires for SUBQ / SQCK. The PSX transmits the current subchannel Q data on this bus. It tells the console where on the disk the read head is. We know that the protection symbols only exist on the earliest sectors, and that anti-mod games exploit this by looking for the symbols elsewhere on the disk. (If they get those symbols, a modchip must be generating them.) So with that information, my code knows when the PSX wants to see the unlock symbols, and when it's "fake" / anti-mod. The chip is continously looking at that subcode bus, don't need the reset wire or any other timing hints that other modchips use. That makes it compatible and fully functional with all revisions of the PSX, not just the later ones. Also with this method, the chip knows more about the current CD. This allows it to not send unlock symbols for a music CD > The BIOS starts right into the CD player, instead of after a long delay with other modchips.
+
 This has some drawbacks though.
 It's more logic / code. More things to go wrong. The testing done so far suggests it's working fine though.
 It's not a good example anymore to demonstrate PSX security and how modchips work.
