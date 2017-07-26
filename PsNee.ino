@@ -1,328 +1,413 @@
-//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-//                    PPPPPPPPPPPPPPPP                  P            P      
-//                   P              P                  PP           P        
-//                  P              P                  P P          P        
-//                 P              P                  P  P         P          
-//                P              P                  P   P        P          
-//               P              P                  P    P       P            
-//              P              P                  P     P      P            
-//             PPPPPPPPPPPPPPPP  PPPPPPPPPPP     P      P     P  PPPPPPPPPPP  PPPPPPPPPPP
-//            P                 P               P       P    P  P            P
-//           P                 P               P        P   P  P            P  
-//          P                 P               P         P  P  P            P  
-//         P                 P               P          P P  P            P    
-//        P                 PPPPPPPPPPPPPP  P           PP  PPPPPPP      PPPPPPP    
-//       P                              P  P            P  P            P      
-//      P                              P  P            P  P            P      
-//     P                              P  P            P  P            P        
-//    P                              P  P            P  P            P        
-//   P                              P  P            P  P            P      
-//  P                              P  P            P  P            P        
-//                     PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP   VERSION 6!
- 
-//UPDATED AT MAY 14 2016, CODED BY THE FRIENDLY FRIETMAN :-)
- 
-//PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
-//all platforms supported by Arduino, preferably ATTiny. Finally something modern!
- 
- 
-//--------------------------------------------------
-//                    TL;DR
-//--------------------------------------------------
-//Look for the "Arduino selection!" section and verify the target platform. Hook up your target device and hit Upload!
-//BEWARE: when using ATTiny45, make sure the proper device is selected (Extra=>Board=>ATTiny45 (internal 8MHz clock))
-//and the proper fuses are burnt (use Extra=>Burn bootloader for this), otherwise PsNee will malfunction. A tutorial on
-//uploading Arduino code via an Arduino Uno to an ATTiny device: http://highlowtech.org/?p=1695
-//Look at the pinout for your device and hook PsNee up to the points on your Playstation.
- 
- 
-//--------------------------------------------------
-//                 General info!
-//--------------------------------------------------
-//PLAYSTATION 1 SECURITY - HOW IT DOES IT'S THING:
-//Sony didn't really go through great lenghts to protect it's precious Playstation
-//from running unauthorised software; the main security is based on a simple ASCII
-//string of text that is read from a part of an original Playstation disc that cannot
-//be reproduced by an ordinary PC CD burner.
-//As most of you will know, a CD is basically a very long rolled up (carrier) string in which very
-//little pits and ehm... little not-pits are embedded that represent the data stored on the disc.
-//The nifty Sony engineers did not use the pits and stuff to store the security checks for
-//Playstation discs but went crazy with the rolled up carrier string. In an ordinary CD, the
-//string is rolled up so that the spacing between the tracks is as equal as possible. If that
-//is not the case, the laser itself needs to move a bit to keep track of the track and
-//reliably read the data off the disc.
-//If you wonder how the laser knows when it follows the track optimally: four photodiodes, light
-//intensity measurement, difference measurements, servo. There.
-//To the point: the Sony engineers decidedly "fumbled up" the track of sector 4 on a Playstation
-//disc (the track was modulated in nerd-speak) so that the error correction circuit outputs a
-//recognisable signal, as the laser needs to be corrected to follow the track optimally.
-//This output signal actually is a 250bps serial bitstream (with 1 start bit and 2 stop bits) which
-//in plain ASCII says SCEA (Sony Computer Entertainment of America), SCEE (Sony Computer Entertainment
-//of Europe) or SCEI (Sony Computer Entertainment of Japan), depending on the region of the disc inserted.
-//The security thus functions not only as copy protection, but also as region protection.
-//The text string from the disc is compared with the text string that is embedded in the Playstation
-//hardware. When these text strings are the same, the disc is interpreted to be authentic and from
-//the correct region. Bingo!
- 
-//HOW THE MODCHIP TRICKS THE PLAYSTATION:
-//The modchip isn't all that of a complicated device: clever reverse engineers found the point on the
-//Playstation motherboard that carried the text string from the disc and found a way to temporarily block
-//this signal (by grounding an input of an op-amp buffer) to be able to inject the signal from the modchip
-//The modchip injects after about 1500ms the text strings SCEE SCEA SCEI on the motherboard point and stops
-//with this after about 25 seconds. Because all the possible valid region options are outputted on the
-//motherboard the Playstation gets a bit confused and simply accepts the inserted disc as authentic; after all,
-//one of the codes was the same as that of the Playstation hardware...
-//Early modchips applied the text strings as long as power was applied to them, whereby later Playstation
-//software could detect whether a modchip was installed. This is circumvented in this application by idling the
-//modchip after about 25 seconds. The text strings are only tranmitted again when the CD lid is opened and closed
-//again, to enable playing multi-disc games. This is also called a stealth modchip in marketing-speak.
- 
- 
-//--------------------------------------------------
-//               New in this version!
-//--------------------------------------------------
-//A lot!
-// - The PAL SCPH-102 NTSC BIOS-patch works flawlessly! For speed reasons this is implemented in bare
-//   AVR C. It is functionally identical to the OneChip modchip, this modchip firmware was disassembled,
-//   documented (available on request, but written in Dutch...) and analyzed with a logic analyzer to
-//   make sure PsNee works just as well.
-// - The code now is segmented in functions which make the program a lot more maintable and readable
-// - Timing is perfected, all discs (both backups and originals of PAL and NTSC games) now work in the
-//   PAL SCPH-102 test machine
-// - It was found out that the gate signal doesn't havbe to be hooked up to a PAL SCPH-102 Playstation
-//   to circumvent the copy protection. This is not tested on other Playstation models so the signal still
-//   is available
-// - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
-// - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
- 
- 
-//--------------------------------------------------
-//                  Pinouts!
-//--------------------------------------------------
-//FOR ARDUINO UNO (WITH ATMEGA328):
-// - Arduino pin 8  = data    = ATMega pin 14
-// - Arduino pin 9  = gate    = ATMega pin 15
-// - Arduino pin 10 = lid     = ATMega pin 16
-// - Arduino pin 11 = biosA18 = ATMega pin 17
-// - Arduino pin 12 = biosD2  = ATMega pin 18
- 
-//FOR ATTINY25/45/85:
-// - Arduino pin 0 = data    = ATTiny pin 5
-// - Arduino pin 1 = gate    = ATTiny pin 6
-// - Arduino pin 2 = lid     = ATTiny pin 7
-// - Arduino pin 3 = biosA18 = ATTiny pin 2
-// - Arduino pin 4 = biosD2  = ATTiny pin 3
- 
-//--------------------------------------------------
-//                    Includes!
-//--------------------------------------------------
-#include <Flash.h>
- 
-//--------------------------------------------------
-//               Arduino selection!
-//--------------------------------------------------
-#define ARDUINO_UNO        //Make that "#define ARDUINO_UNO" if you want to compile for Arduino Uno instead of ATTiny25/45/85
- 
-#ifdef ARDUINO_UNO
-//Pins
-int data = 8;         //The pin that outputs the SCEE SCEA SCEI string
-int gate = 9;         //The pin that outputs the SCEE SCEA SCEI string
-int lid = 10;         //The pin that gets connected to the internal CD lid signal; active high
-int biosA18 = 11;     //Only used in SCPH-102 PAL mode
-int biosD2 = 12;      //Only used in SCPH-102 PAL mode
-int delay_ntsc = 2350;
-int delay_between_bits = 4;
-int delay_between_injections = 74;
-#endif
- 
-#ifdef ATTINY
-//Pins
-int data = 0;        //The pin that outputs the SCEE SCEA SCEI string
-int gate = 1;
-int lid = 2;         //The pin that gets connected to the internal CD lid signal; active high
-int biosA18 = 3;     //Only used in SCPH-102 PAL mode
-int biosD2 = 4;      //Only used in SCPH-102 PAL mode
-int delay_ntsc = 2400;
-int delay_between_bits = 4;
-int delay_between_injections = 68;
-#endif
- 
-//--------------------------------------------------
-//              Global variables!
-//--------------------------------------------------
-//None, just like it should be!
- 
-//--------------------------------------------------
-//              Seperate functions!
-//--------------------------------------------------
-void NTSC_fix()
-{
-  //Make sure all pins are inputs
-  DDRB = 0x00;
- 
-  //Wait until just before the pulse on BIOS A18 arrives
-  delay(delay_ntsc);
- 
-  //...And wait here until it actually happened
-  while(!(PINB & B00001000))
-  {
-    ;  //Wait
-  }
-  delayMicroseconds(12);
-  PORTB = B00000000;
-  DDRB = B00010000;
-  delayMicroseconds(5);
-  DDRB = 0x00;
-}
- 
-void inject_SCEE()
-{
-  //SCEE-array                                                                                                                   //      Start            Data     Stop
-  FLASH_ARRAY (boolean, SCEEData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0);      //SCEE: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01011101 00   44 bits total
- 
-  int bit_counter;
- 
-  for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
-  {
-    if (SCEEData[bit_counter] == 0)
-    {        
-      pinMode(data, OUTPUT);
-      digitalWrite(data, 0);
-      delay(delay_between_bits);
-    }
-    else
+    // PsNee / psxdev.net version
+    // For Arduino and ATtiny
+    //
+    // Quick start: Select your hardware via the #defines, compile + upload the code, install in PSX.
+    // There are some pictures in the development thread ( http://www.psxdev.net/forum/viewtopic.php?f=47&t=1262&start=120 )
+    //
+    // Arduinos:
+    //  - Arduino Pro Mini @8Mhz and @16Mhz (supported, tested)
+    //  - Arduino Uno @8Mhz and @16Mhz (supported, tested)
+    //  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
+    //  - Use #define ARDUINO_BOARD
+    // ATtiny:
+    //  - ATtiny85: Should work the same as ATtiny45 (supported, untested)
+    //  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
+    //  - ATtiny25: Should work the same as ATtiny45 but doesn't have enough Flash nor RAM for PSNEEDEBUG (supported, untested)
+    //  - Use #define ATTINY_X5
+    //
+    // Some extra libraries might be required, depending on the board / chip used.
+    // PAL PM-41 is supported with #define APPLY_PSONE_PAL_BIOS_PATCH
+    //For now the BIOS_PATCH  it only supports Arduino boards (ATmega chips).
+    //Also, the Arduino must either be powered on first or have no bootloader present (flashed using SPI) since I expect a signal ~1 second after power on.
+    // This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+    // You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
+
+    //+-------------------------------------------------------------------------------------------+
+    //|                                  Choose your hardware!                                    |
+    //+-------------------------------------------------------------------------------------------+
+    // 2 main branches available:
+    //  - ATmega based > easy to use, fast and nice features for development
+    //  - ATtiny based > less features, internal clock has 10% variation
+
+    //#define ARDUINO_BOARD
+    //#define ATTINY_X5
+
+    //#define APPLY_PSONE_PAL_BIOS_PATCH
+
+    //#define PSNEEDEBUG
+
+    #include <avr/pgmspace.h>
+
+    #if defined(ARDUINO_BOARD)
+     // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
+     #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
+      #define BIOS_A18 4          // connect to PSOne BIOS A18 (pin 31 on that chip)
+      #define BIOS_D2  5          // connect to PSOne BIOS D2 (pin 15 on that chip)
+     #endif
+     #define sqck 6          // connect to PSX HC-05 SQCK pin
+     #define subq 7          // connect to PSX HC-05 SUBQ pin
+     #define data 8          // connect to point 6 in old modchip diagrams
+     #define gate_wfck 9     // connect to point 5 in old modchip diagrams
+     // MCU I/O definitions
+     #define SUBQPORT PIND       // MCU port for the 2 SUBQ sampling inputs
+     #define SQCKBIT 6           // PD6 "SQCK" < Mechacon pin 26 (PU-7 and early PU-8 Mechacons: pin 41)
+     #define SUBQBIT 7           // PD7 "SUBQ" < Mechacon pin 24 (PU-7 and early PU-8 Mechacons: pin 39)
+     #define GATEWFCKPORT PINB   // MCU port for the gate input (used for WFCK)
+     #define DATAPORT PORTB      // MCU port for the gate input (used for WFCK)
+     #define GATEWFCKBIT 1       // PB1
+     #define DATABIT 0           // PB0
+     #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
+      #define BIOSPATCHPORTIN  PIND
+      #define BIOSPATCHPORTOUT PORTD
+      #define BIOSPATCHDDR     DDRD
+      #define BIOS_A18_BIT 4
+      #define BIOS_D2_BIT  5
+     #endif
+    #elif defined(ATTINY_X5) // ATtiny 25/45/85
+     // extras
+     #define USINGSOFTWARESERIAL
+     // board pins (Do not change. Changing pins requires adjustments to MCU I/O definitions)
+     #define sqck 0
+     #define subq 1
+     #define data 2
+     #define gate_wfck 4
+     #define debugtx 3
+     // MCU I/O definitions
+     #define SUBQPORT PINB
+     #define SQCKBIT 0
+     #define SUBQBIT 1
+     #define GATEWFCKPORT PINB
+     #define DATAPORT PORTB
+     #define GATEWFCKBIT 4
+     #define DATABIT 2
+     #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
+      #error "ATtiny does not support PAL PSOne patch yet!"
+     #endif
+    #else
+     #error "Select a board!"
+    #endif
+
+    #if defined(PSNEEDEBUG) && defined(USINGSOFTWARESERIAL)
+     #include <SoftwareSerial.h>
+     SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
+     #define DEBUG_PRINT(x)     mySerial.print(x)
+     #define DEBUG_PRINTHEX(x)  mySerial.print(x, HEX)
+     #define DEBUG_PRINTLN(x)   mySerial.println(x)
+     #define DEBUG_FLUSH        mySerial.flush()
+    #elif defined(PSNEEDEBUG) && !defined(USINGSOFTWARESERIAL)
+     #define DEBUG_PRINT(x)     Serial.print(x)
+     #define DEBUG_PRINTHEX(x)  Serial.print(x, HEX)
+     #define DEBUG_PRINTLN(x)   Serial.println(x)
+     #define DEBUG_FLUSH        Serial.flush()
+    #else
+     #define DEBUG_PRINT(x)     
+     #define DEBUG_PRINTHEX(x) 
+     #define DEBUG_PRINTLN(x)
+     #define DEBUG_FLUSH       
+    #endif
+
+    #define NOP __asm__ __volatile__ ("nop\n\t")
+
+    // Setup() detects which (of 2) injection methods this PSX board requires, then stores it in pu22mode.
+    boolean pu22mode;
+
+    //Timing
+    const int delay_between_bits = 4000;      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100)
+    const int delay_between_injections = 90;  // 72 in oldcrow. PU-22+ work best with 80 to 100 (milliseconds)
+
+    // borrowed from AttyNee. Bitmagic to get to the SCEX strings stored in flash (because Harvard architecture)
+    bool readBit(int index, const unsigned char *ByteSet)
     {
-      pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
-      delay(delay_between_bits);
+      int byte_index = index >> 3;
+      byte bits = pgm_read_byte(&(ByteSet[byte_index]));
+      int bit_index = index & 0x7; // same as (index - byte_index<<3) or (index%8)
+      byte mask = 1 << bit_index;
+      return (0 != (bits & mask));
     }
-  }
- 
-  pinMode(data, OUTPUT);
-  digitalWrite(data, 0);
-  delay(delay_between_injections);
-}
- 
-void inject_SCEA()
-{
-  //SCEE-array                                                                                                                   //      Start            Data     Stop
-  FLASH_ARRAY (boolean, SCEAData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,1,1,0,1,0,0);      //SCEA: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01111101 00
- 
-  int bit_counter;
- 
-  for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
-  {
-    if (SCEAData[bit_counter] == 0)
-    {        
-      pinMode(data, OUTPUT);
-      digitalWrite(data, 0);
-      delay(delay_between_bits);
-    }
-    else
+
+    void inject_SCEX(char region)
     {
-      pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
-      delay(delay_between_bits);
-    }
-  }
- 
-  pinMode(data, OUTPUT);
-  digitalWrite(data, 0);
-  delay(delay_between_injections);
-}
- 
-void inject_SCEI()
-{
-  //SCEE-array                                                                                                                   //      Start            Data     Stop
-  FLASH_ARRAY (boolean, SCEIData, 1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,0,1,1,0,1,0,0);      //SCEI: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01101101 00
- 
-  int bit_counter;
- 
-  for (bit_counter = 0; bit_counter < 44; bit_counter = bit_counter + 1)
-  {
-    if (SCEIData[bit_counter] == 0)
-    {        
+      //SCEE: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01011101 00
+      //SCEA: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01111101 00
+      //SCEI: 1 00110101 00, 1 00111101 00, 1 01011101 00, 1 01101101 00
+      //const boolean SCEEData[44] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0};
+      //const boolean SCEAData[44] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0};
+      //const boolean SCEIData[44] = {1,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0};
+      static const PROGMEM unsigned char SCEEData[] = {0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11101010, 0b00000010};
+      static const PROGMEM unsigned char SCEAData[] = {0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11111010, 0b00000010};
+      static const PROGMEM unsigned char SCEIData[] = {0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11011010, 0b00000010};
+     
+      // pinMode(data, OUTPUT) is used more than it has to be but that's fine.
+      for (byte bit_counter = 0; bit_counter < 44; bit_counter++)
+      {
+        if (readBit(bit_counter, region == 'e' ? SCEEData : region == 'a' ? SCEAData : SCEIData) == 0)
+        {
+          pinMode(data, OUTPUT);
+          bitClear(GATEWFCKPORT,DATABIT); // data low
+          delayMicroseconds(delay_between_bits);
+        }
+        else
+        {
+          if (pu22mode) {
+            pinMode(data, OUTPUT);
+            unsigned long now = micros();
+            do {
+              bool wfck_sample = bitRead(GATEWFCKPORT, GATEWFCKBIT);
+              bitWrite(DATAPORT,DATABIT,wfck_sample); // output wfck signal on data pin
+            }
+            while ((micros() - now) < delay_between_bits);
+          }
+          else { // PU-18 or lower mode
+            pinMode(data, INPUT);
+            delayMicroseconds(delay_between_bits);
+          }
+        }
+      }
+
       pinMode(data, OUTPUT);
-      digitalWrite(data, 0);
-      delay(delay_between_bits);
+      bitClear(GATEWFCKPORT,DATABIT); // pull data low
+      delay(delay_between_injections);
     }
-    else
+
+    void NTSC_fix(){
+      #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
+      pinMode(BIOS_A18, INPUT);
+      pinMode(BIOS_D2, INPUT);
+     
+      delay(100); // this is right after SQCK appeared. wait a little to avoid noise
+      while (!bitRead(BIOSPATCHPORTIN, BIOS_A18_BIT))
+      {
+        ;  //wait for stage 1 A18 pulse
+      }
+      delay(1350); //wait through stage 1 of A18 activity
+     
+      noInterrupts(); // start critical section
+      while (!bitRead(BIOSPATCHPORTIN, BIOS_A18_BIT))
+      {
+        ;  //wait for priming A18 pulse
+      }
+      delayMicroseconds(17); // max 17us for 16Mhz ATmega (maximize this when tuning!)
+      bitClear(BIOSPATCHPORTOUT, BIOS_D2_BIT); // store a low
+      bitSet(BIOSPATCHDDR, BIOS_D2_BIT); // D2 = output. drags line low now
+      delayMicroseconds(3); // min 2us for 16Mhz ATmega, 8Mhz requires 3us (minimize this when tuning, after maximizing first us delay!)
+      bitClear(DDRD, BIOS_D2_BIT); // D2 = input / high-z
+      interrupts(); // end critical section
+
+      // not necessary but I want to make sure these pins are now high-z again
+      pinMode(BIOS_A18, INPUT);
+      pinMode(BIOS_D2, INPUT);
+      #endif
+    }
+
+    //--------------------------------------------------
+    //     Setup
+    //--------------------------------------------------
+
+    void setup()
     {
-      pinMode(data, INPUT);                //We make the data pin high-impedance to let the pull-up of the Playstation motherboard make a 1
-      delay(delay_between_bits);
+      pinMode(data, INPUT);
+      pinMode(gate_wfck, INPUT);
+      pinMode(subq, INPUT); // PSX subchannel bits
+      pinMode(sqck, INPUT); // PSX subchannel clock
+     
+      #if defined(PSNEEDEBUG) && defined(USINGSOFTWARESERIAL)
+      pinMode(debugtx, OUTPUT); // software serial tx pin
+      mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms)
+      #elif defined(PSNEEDEBUG) && !defined(USINGSOFTWARESERIAL)
+      Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms)
+      DEBUG_PRINT("MCU frequency: "); DEBUG_PRINT(F_CPU); DEBUG_PRINTLN(" Hz");
+      DEBUG_PRINTLN("Waiting for SQCK..");
+      #endif
+
+      #if defined(ARDUINO_BOARD)
+      pinMode(LED_BUILTIN, OUTPUT); // Blink on injection / debug.
+      digitalWrite(LED_BUILTIN, HIGH); // mark begin of setup
+      #endif
+     
+      // wait for console power on and stable signals
+      while (!digitalRead(sqck));   
+      while (!digitalRead(gate_wfck));
+
+      // if enabled: patches PAL PSOne consoles so they start all region games
+      NTSC_fix();
+     
+      // Board detection
+      //
+      // GATE: __-----------------------  // this is a PU-7 .. PU-20 board!
+      //
+      // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
+
+      unsigned int highs, lows = 0;
+      unsigned long now = millis();
+      do {
+        if (digitalRead(gate_wfck) == 1) highs++;
+        if (digitalRead(gate_wfck) == 0) lows++;
+        delayMicroseconds(200);   // good for ~5000 reads in 1s
+      }
+      while ((millis() - now) < 1000); // sample 1s
+
+      // typical readouts
+      // PU-22: highs: 2449 lows: 2377
+      if (lows > 100) {
+        pu22mode = 1;
+      }
+      else {
+        pu22mode = 0;
+      }
+     
+      #ifdef ATTINY_X5
+      DEBUG_PRINT("m "); DEBUG_PRINTLN(pu22mode);
+      #else
+      DEBUG_PRINT("highs: "); DEBUG_PRINT(highs); DEBUG_PRINT(" lows: "); DEBUG_PRINTLN(lows);
+      DEBUG_PRINT("pu22mode: "); DEBUG_PRINTLN(pu22mode);
+      // Power saving
+      // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
+      ADCSRA = ADCSRA & B01111111;
+      // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
+      ACSR = B10000000;
+      // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
+      DIDR0 = DIDR0 | B00111111;
+      #endif
+     
+      #if defined(ARDUINO_BOARD)
+      digitalWrite(LED_BUILTIN, LOW); // setup complete
+      #endif
+     
+      DEBUG_FLUSH; // empty serial transmit buffer
     }
-  }
- 
-  pinMode(data, OUTPUT);
-  digitalWrite(data, 0);
-  delay(delay_between_injections);
-}
- 
-void inject_multiple_times(int number_of_injection_cycles)
-{
-  int cycle_counter;
- 
-  for(cycle_counter = 0; cycle_counter < number_of_injection_cycles; cycle_counter = cycle_counter + 1)
-  {
-    inject_SCEE();
-    inject_SCEA();
-    inject_SCEI();
-  }
-}
- 
-void inject_playstation()
-{
-  //Variables
-  int loop_counter;
- 
-  //Code
-  NTSC_fix();
- 
-  delay(6900);
-  digitalWrite(data, 0);
-  pinMode(data, OUTPUT);
-  delay(100);
- 
-  pinMode(gate, OUTPUT);
-  digitalWrite(gate, 0);
- 
-  for (loop_counter = 0; loop_counter < 25; loop_counter = loop_counter + 1)
-  {
-    inject_SCEE();
-  }
- 
-  pinMode(gate, INPUT);
-  pinMode(data, INPUT);
-  delay(11000);
- 
-  pinMode(gate, OUTPUT);
-  digitalWrite(gate, 0);
- 
-  for (loop_counter = 0; loop_counter < 60; loop_counter = loop_counter + 1)
-  {
-    inject_SCEE();
-  }
- 
-  pinMode(gate, INPUT);
-  pinMode(data, INPUT);
-}
- 
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//--------------------------------------------------
-//     Setup function - execution starts here!
-//--------------------------------------------------
-void setup()
-{
-  inject_playstation();
-}
- 
-//----------------------------------------------------------------
-//   Loop function - executes after the initial injection cycle
-//----------------------------------------------------------------
-void loop()
-{
-  if(lid == 0)
-  {
-    while(lid != 1);      //Wait until the lid is closed again (after being opened) to initiate a new injection cycle
-    inject_playstation();
-  }
-}
+
+    void loop()
+    {
+      static byte scbuf [12] = { 0 }; // We will be capturing PSX "SUBQ" packets, there are 12 bytes per valid read.
+      static unsigned int timeout_clock_counter = 0;
+      static byte bitbuf = 0;   // SUBQ bit storage
+      static bool sample = 0;
+      static byte bitpos = 0;
+      byte scpos = 0;           // scbuf position
+     
+      noInterrupts(); // start critical section
+    start:
+      // Capture 8 bits for 12 runs > complete SUBQ transmission
+      bitpos = 0;
+      for (; bitpos<8; bitpos++) {
+        while (bitRead(SUBQPORT, SQCKBIT) == 1){
+          // wait for clock to go low..
+          // a timeout resets the 12 byte stream in case the PSX sends malformatted clock pulses, as happens on bootup
+          timeout_clock_counter++;
+          if (timeout_clock_counter > 1000){
+            scpos = 0;  // reset SUBQ packet stream
+            timeout_clock_counter = 0;
+            bitbuf = 0;
+            goto start;
+          }
+        }
+       
+        // wait for clock to go high..
+        while ((bitRead(SUBQPORT, SQCKBIT)) == 0);
+       
+        sample = bitRead(SUBQPORT, SUBQBIT);
+        bitbuf |= sample << bitpos;
+
+        timeout_clock_counter = 0; // no problem with this bit
+      }
+
+      // one byte done
+      scbuf[scpos] = bitbuf;
+      scpos++;
+      bitbuf = 0;
+
+      // repeat for all 12 bytes
+      if (scpos < 12){
+        goto start;
+      }
+      interrupts(); // end critical section
+
+      // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
+      #ifdef ATTINY_X5
+      if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){ // a bad sector read is all 0 except for the CRC fields. Don't log it.
+        for (int i = 0; i<12;i++) {
+          if (scbuf[i] < 0x10) {DEBUG_PRINT("0");} // padding
+          DEBUG_PRINTHEX(scbuf[i]);
+        }
+        DEBUG_PRINTLN("");
+      }
+      #else
+      if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)){
+        for (int i = 0; i<12;i++) {
+          if (scbuf[i] < 0x10) {DEBUG_PRINT("0");} // padding
+          DEBUG_PRINTHEX(scbuf[i]);
+          DEBUG_PRINT(" ");
+        }
+        DEBUG_PRINTLN("");
+      }
+      #endif
+
+      // check if read head is in wobble area
+      // We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
+      // We want to see a TOC sector repeatedly before injecting (helps with timing and marginal lasers).
+      // All this logic is because we don't know if the HC-05 is actually processing a getSCEX() command.
+      // Hysteresis is used because older drives exhibit more variation in read head positioning.
+      // While the laser lens moves to correct for the error, they can pick up a few TOC sectors. 
+      static byte hysteresis  = 0;
+     
+      if (
+        (scbuf[0] == 0x41 &&  scbuf[1] == 0x00 &&  scbuf[6] == 0x00) &&   // [0] = 41 means psx game disk. the other 2 checks are garbage protection
+        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2 ||      // if [2] = A0, A1, A2 ..
+        (scbuf[2] == 0x01 && (scbuf[3] >= 0x98 || scbuf[3] <= 0x02) ) )   // .. or = 01 but then [3] is either > 98 or < 02
+      ) {
+        hysteresis++;
+      }
+      else if ( hysteresis > 0 &&
+              ((scbuf[0] == 0x01 || scbuf[0] == 0x41) && (scbuf[1] == 0x00 /*|| scbuf[1] == 0x01*/) &&  scbuf[6] == 0x00)
+      ) {  // This CD has the wobble into CD-DA space. (started at 0x41, then went into 0x01)
+        hysteresis++;
+      }
+      else if (hysteresis > 0) {
+        hysteresis--; // None of the above. Initial detection was noise. Decrease the counter.
+      }
+
+      // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
+      // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate
+      if (hysteresis >= 14){
+        // If the read head is still here after injection, resending should be quick.
+        // Hysteresis naturally goes to 0 otherwise (the read head moved).
+        hysteresis = 11;
+
+        #ifdef ATTINY_X5
+        DEBUG_PRINTLN("!");
+        #else
+        DEBUG_PRINTLN("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
+        #endif
+        #if defined(ARDUINO_BOARD)
+        digitalWrite(LED_BUILTIN, HIGH);
+        #endif
+       
+        pinMode(data, OUTPUT);
+        digitalWrite(data, 0); // pull data low
+        if (!pu22mode){
+          pinMode(gate_wfck, OUTPUT);
+          digitalWrite(gate_wfck, 0);
+        }
+       
+        // HC-05 waits for a bit of silence (pin low) before it begins decoding.
+        delay(delay_between_injections);
+        // inject symbols now. 2 x 3 runs seems optimal to cover all boards
+        for (byte loop_counter = 0; loop_counter < 2; loop_counter++)
+        {
+          inject_SCEX('e'); // e = SCEE, a = SCEA, i = SCEI
+          inject_SCEX('a'); // injects all 3 regions by default
+          inject_SCEX('i'); // optimize boot time by sending only your console region letter (all 3 times per loop)
+        }
+
+        if (!pu22mode){
+          pinMode(gate_wfck, INPUT); // high-z the line, we're done
+        }
+        pinMode(data, INPUT); // high-z the line, we're done
+        #if defined(ARDUINO_BOARD)
+        digitalWrite(LED_BUILTIN, LOW);
+        #endif
+      }
+    // keep catching SUBQ packets forever
+    }
+
+

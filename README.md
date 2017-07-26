@@ -19,29 +19,66 @@
        P                              P  P            P  P            P      
       P                              P  P            P  P            P        
      P                   PPPPPPPPPPPP  P            P  PPPPPPPPPPP  PPPPPPPPPPP
- 
---------------------------------------------------
-This version is from the forum  
-https://assemblergames.com/threads/psnee-a-stealth-modchip-for-all-ps1-models.57907/
-And is developed by TheFrietMan
 
+---------------------------------------
+This version is from
+http://www.psxdev.net/forum/viewtopic.php?f=47&t=1262&start=40
+Is developed by the psxdev team
+ 
+ 
+-------------------------------------------------
 
---------------------------------------------------
-PsNee, an open source stealth modchip for the Sony Playstation 1, usable on
-all platforms supported by Arduino, preferably ATTiny. Finally something modern!
+ This PsNee version is meant for Arduino boards.
+
  
+  - Arduino Pro Mini @8Mhz and @16Mhz (supported, tested)
+  - Arduino Uno @8Mhz and @16Mhz (supported, tested)
+  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
+  
+  - ATtiny85: Should work the same as ATtiny45 (supported, untested)
+  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
+  - ATtiny25: Should work the same as ATtiny45 but doesn't have enough Flash nor RAM for PSNEEDEBUG (supported, untested)
+  
+ Some extra libraries might be required, depending on the board / chip used.
+ PAL PM-41 support isn't implemented yet. (ToDo)
+ This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+ You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
+----------------------------------------------------------------------
+
+BIOS patch for PM-41
+
+For now it only supports Arduino boards (ATmega chips).
+Also, the Arduino must either be powered on first or have no bootloader present (flashed using SPI) since I expect a signal ~1 second after power on.
+8Mhz boards are also supported.
  
---------------------------------------------------
-                    TL;DR
---------------------------------------------------
-Look for the "Arduino selection!" section and verify the target platform. Hook up your target device and hit Upload!
-BEWARE: when using ATTiny45, make sure the proper device is selected (Extra=>Board=>ATTiny45 (internal 8MHz clock))
-and the proper fuses are burnt (use Extra=>Burn bootloader for this), otherwise PsNee will malfunction. A tutorial on
-uploading Arduino code via an Arduino Uno to an ATTiny device: http://highlowtech.org/?p=1695
-Look at the pinout for your device and hook PsNee up to the points on your Playstation.
+-------------------------------------------------------------------
+
+    Choose your hardware!
+    You must uncomment the line that corresponds to your cips.
+    
+ 2 main branches available:
+  - ATmega based > easy to use, fast and nice features for development
+  - ATtiny based > less features, internal clock has 10% variation
+
+ This code is multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+
+-----------------------------------------------------
+
+                      Pin assignments
+                        
+           PSNee psxdev                   PlayStation
+      Arduino   Atinny  name           ps pin         Name
  
- 
---------------------------------------------------
+      pin-vin  = VCC    = 3.5v         3.5v           = supply
+                 3      = debugtx
+      pin-9    = 4      = gate_wfck    IC732.Pin-5    = WFCK           
+      pin-8    = 2      = data         IC732.Pin-42   = CEO
+      pin-7    = 1      = subq         IC304.Pin-24   = SUBQ
+      pin-6    = 0      = sqck         IC304.Pin-26   = SQCK
+      pin 5             = BIOS D2      IC102.Pin-15   = D2
+      pin 4             = BIOS A18     Ic102.Pin-31   = A18
+      Pin-Gnd  = GND    = gnd          GND            = gnd
+------------------------------------------------
                  General info!
 --------------------------------------------------
 PLAYSTATION 1 SECURITY - HOW IT DOES IT'S THING:
@@ -68,16 +105,6 @@ The security thus functions not only as copy protection, but also as region prot
 The text string from the disc is compared with the text string that is embedded in the Playstation
 hardware. When these text strings are the same, the disc is interpreted to be authentic and from
 the correct region. Bingo!
+
+
  
-HOW THE MODCHIP TRICKS THE PLAYSTATION:
-The modchip isn't all that of a complicated device: clever reverse engineers found the point on the
-Playstation motherboard that carried the text string from the disc and found a way to temporarily block
-this signal (by grounding an input of an op-amp buffer) to be able to inject the signal from the modchip
-The modchip injects after about 1500ms the text strings SCEE SCEA SCEI on the motherboard point and stops
-with this after about 25 seconds. Because all the possible valid region options are outputted on the
-motherboard the Playstation gets a bit confused and simply accepts the inserted disc as authentic; after all,
-one of the codes was the same as that of the Playstation hardware...
-Early modchips applied the text strings as long as power was applied to them, whereby later Playstation
-software could detect whether a modchip was installed. This is circumvented in this application by idling the
-modchip after about 25 seconds. The text strings are only tranmitted again when the CD lid is opened and closed
-again, to enable playing multi-disc games. This is also called a stealth modchip in marketing-speak.
