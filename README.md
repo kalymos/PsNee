@@ -39,10 +39,9 @@ Is developed by the psxdev team
   - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
   - ATtiny25: Should work the same as ATtiny45 but doesn't have enough Flash nor RAM for PSNEEDEBUG (supported, untested)
   
- Some extra libraries might be required, depending on the board / chip used.
- PAL PM-41 support isn't implemented yet. (ToDo)
- This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
- You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
+Some extra libraries might be required, depending on the board / chip used.
+This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
+You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
 ----------------------------------------------------------------------
 
 BIOS patch for PM-41
