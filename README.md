@@ -41,6 +41,10 @@ Is developed by the psxdev team
   
 ---------------------------------------------------------------------------
 
+Beware to use the PSX 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
+
+-----------------------------------------------------------------------------
+
 Some extra libraries might be required, depending on the board / chip used.
 This code defaults to multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
 You can optimize boot times for your console further. See "// inject symbols now" in the main loop.
