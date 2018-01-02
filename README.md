@@ -1,4 +1,7 @@
 # PsNee
+
+PsNee, an open source stealth modchip for the Sony Playstation 1 
+
                         PPPPPPPPPPPPPPPP                  P            P      
                        P              P                  PP           P        
                       P              P                  P P          P        
