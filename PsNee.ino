@@ -215,9 +215,9 @@ void setup()
 
 #if defined(PSNEEDEBUG) && defined(USINGSOFTWARESERIAL)
   pinMode(debugtx, OUTPUT); // software serial tx pin
-  mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms)
+  mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
 #elif defined(PSNEEDEBUG) && !defined(USINGSOFTWARESERIAL)
-  Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms)
+  Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
   DEBUG_PRINT("MCU frequency: "); DEBUG_PRINT(F_CPU); DEBUG_PRINTLN(" Hz");
   DEBUG_PRINTLN("Waiting for SQCK..");
 #endif
@@ -240,7 +240,7 @@ void setup()
   //
   // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
 
-  unsigned int highs, lows = 0;
+  unsigned int highs = 0, lows = 0;
   unsigned long now = millis();
   do {
     if (digitalRead(gate_wfck) == 1) highs++;
@@ -288,6 +288,10 @@ void loop()
   static byte bitpos = 0;
   byte scpos = 0;           // scbuf position
 
+  // start with a small delay, which can be necessary in cases where the MCU loops too quickly
+  // and picks up the laster SUBQ trailing end
+  delay(1); 
+  
   noInterrupts(); // start critical section
 start:
   // Capture 8 bits for 12 runs > complete SUBQ transmission
@@ -356,16 +360,17 @@ start:
   // Hysteresis is used because older drives exhibit more variation in read head positioning.
   // While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
   static byte hysteresis  = 0;
-
+  boolean isDataSector = (((scbuf[0] & 0x40) == 0x40) && (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
+  
   if (
-    (scbuf[0] == 0x41 &&  scbuf[1] == 0x00 &&  scbuf[6] == 0x00) &&   // [0] = 41 means psx game disk. the other 2 checks are garbage protection
+    (isDataSector &&  scbuf[1] == 0x00 &&  scbuf[6] == 0x00) &&   // [0] = 41 means psx game disk. the other 2 checks are garbage protection
     (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2 ||      // if [2] = A0, A1, A2 ..
      (scbuf[2] == 0x01 && (scbuf[3] >= 0x98 || scbuf[3] <= 0x02) ) )   // .. or = 01 but then [3] is either > 98 or < 02
   ) {
     hysteresis++;
   }
   else if ( hysteresis > 0 &&
-            ((scbuf[0] == 0x01 || scbuf[0] == 0x41) && (scbuf[1] == 0x00 /*|| scbuf[1] == 0x01*/) &&  scbuf[6] == 0x00)
+            ((scbuf[0] == 0x01 || isDataSector) && (scbuf[1] == 0x00 /*|| scbuf[1] == 0x01*/) &&  scbuf[6] == 0x00)
           ) {  // This CD has the wobble into CD-DA space. (started at 0x41, then went into 0x01)
     hysteresis++;
   }
