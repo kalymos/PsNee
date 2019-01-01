@@ -6,15 +6,15 @@
 // - Arduino pin 8  = data    = ATMega pin 14
 // - Arduino pin 9  = gate    = ATMega pin 15
 // - Arduino pin 10 = lid     = ATMega pin 16
-// - Arduino pin 11 = biosA18  = ATMega pin 2
-// - Arduino pin 12 = biosD2  = ATMega pin 18
+// - Arduino pin 11 = biosA18  = ATMega pin 2   Only used in SCPH-102 PAL mode
+// - Arduino pin 12 = biosD2  = ATMega pin 18   Only used in SCPH-102 PAL mode
 
 //FOR ATTINY13/25/45/85:
 // - PB0 = data     = ATTiny pin 5
 // - PB1 = gate     = ATTiny pin 6
 // - PB2 = lid      = ATTiny pin 7
-// - PB3 = biosA18  = ATTiny pin 2
-// - PB4 = biosD2   = ATTiny pin 3
+// - PB3 = biosA18  = ATTiny pin 2   Only used in SCPH-102 PAL mode
+// - PB4 = biosD2   = ATTiny pin 3   Only used in SCPH-102 PAL mode
 
 
 //--------------------------------------------------
