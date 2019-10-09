@@ -44,7 +44,7 @@ Is developed by the psxdev team
   
 ---------------------------------------------------------------------------
 
-Beware to use the PSX 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
+Be aware the PSX provides 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
 
 -----------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ Also, the Arduino must either be powered on first or have no bootloader present 
 -------------------------------------------------------------------
 
     Choose your hardware!
-    You must uncomment the line that corresponds to your cips.
+    You must uncomment the line that corresponds to your chips.
     
  2 main branches are available:
   - ATmega based: easy to use, fast and nice features for development
@@ -123,7 +123,7 @@ It also doesn't know when it's required to turn on again (except for after a res
 
 ### The mechanism to know when to inject and when to turn it off.
 
-This is the 2 wires for SUBQ / SQCK. The PSX transmits the current subchannel Q data on this bus. It tells the console where on the disk the read head is. We know that the protection symbols only exist on the earliest sectors, and that anti-mod games exploit this by looking for the symbols elsewhere on the disk. If they get those symbols, a modchip must be generating them!
+This is the 2 wires for SUBQ / SQCK. The PSX transmits the current subchannel Q data on this bus. It tells the console where on the disc the read head is. We know that the protection symbols only exist on the earliest sectors, and that anti-mod games exploit this by looking for the symbols elsewhere on the disk. If they get those symbols, a modchip must be generating them!
 
 So with that information, my code knows when the PSX wants to see the unlock symbols, and when it's "fake" / anti-mod. The chip is continously looking at that subcode bus, so you don't need the reset wire or any other timing hints that other modchips use. That makes it compatible and fully functional with all revisions of the PSX, not just the later ones. Also with this method, the chip knows more about the current CD. This allows it to not send unlock symbols for a music CD, which means the BIOS starts right into the CD player, instead of after a long delay with other modchips.
 
