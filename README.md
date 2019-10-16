@@ -44,7 +44,7 @@ Is developed by the psxdev team
   
 ---------------------------------------------------------------------------
 
-Be aware the PSX provides 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
+Be aware to provide 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
 
 -----------------------------------------------------------------------------
 
