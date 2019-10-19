@@ -44,7 +44,7 @@ Is developed by the psxdev team
   
 ---------------------------------------------------------------------------
 
-Be aware the PSX provides 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
+Be sure to use the 3.5V / 3.3V PSX power supply, * AND NOT THE 5V! * for your PsNee. (The ps chipset works in 3.3v, and their injected 5v is not good.) The installation pictures include an example.
 
 -----------------------------------------------------------------------------
 
