@@ -6,10 +6,13 @@
 // Beware to use the PSX 3.5V / 3.3V power, *NOT* 5V! The installation pictures include an example.
 //
 // Arduinos:
+//  Use #define ARDUINO_328_BOARD for the following:
 //  - Arduino Pro Mini @8Mhz and @16Mhz (supported, tested)
 //  - Arduino Uno @8Mhz and @16Mhz (supported, tested)
-//  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
-//  - Use #define ARDUINO_BOARD
+//  Use #define ARDUINO_32UX_BOARD for the following:
+//  - Pro Micro (supported, tested)
+//  - Arduino Leonardo (supported, untested)
+
 // ATtiny:
 //  - ATtiny85: Should work the same as ATtiny45 (supported, untested)
 //  - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
@@ -32,7 +35,11 @@
 //  - ATmega based > easy to use, fast and nice features for development, recommended
 //  - ATtiny based > for minimal installs
 
-//#define ARDUINO_BOARD
+// ATmega32U4/32U2 boards (as in the Pro Micro) have to use different pinouts than the 'regular'
+// Arduino ATMega328's. For these, a different define must be used.
+
+//#define ARDUINO_328_BOARD
+//#define ARDUINO_32UX_BOARD
 //#define ATTINY_X5
 
 //#define APPLY_PSONE_PAL_BIOS_PATCH
@@ -41,7 +48,7 @@
 
 #include <avr/pgmspace.h>
 
-#if defined(ARDUINO_BOARD)
+#if defined(ARDUINO_328_BOARD)
 // board pins (code requires porting to reflect any changes)
 #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
 #define BIOS_A18 4          // connect to PSOne BIOS A18 (pin 31 on that chip)
@@ -65,6 +72,30 @@
 #define BIOSPATCHDDR     DDRD
 #define BIOS_A18_BIT 4
 #define BIOS_D2_BIT  5
+#endif
+#elif defined(ARDUINO_32UX_BOARD) // ATMega32U2/ATMega32U4
+#if defined(APPLY_PSONE_PAL_BIOS_PATCH)
+#define BIOS_A18 8
+#define BIOS_D2  9
+#endif
+#define sqck 2
+#define subq 3
+#define data 14
+#define gate_wfck 15
+// MCU I/O definitions
+#define SUBQPORT PIND
+#define SQCKBIT 1           // PD1
+#define SUBQBIT 0           // PD0
+#define GATEWFCKPORT PINB
+#define DATAPORT PORTB
+#define GATEWFCKBIT 1       // PB1
+#define DATABIT 3           // PB3
+#if defined(APPLY_PSONE_PAL_BIOS_PATCH)
+#define BIOSPATCHPORTIN  PINB
+#define BIOSPATCHPORTOUT PORTB
+#define BIOSPATCHDDR     DDRB
+#define BIOS_A18_BIT 4      //PB4
+#define BIOS_D2_BIT  5      //PB5
 #endif
 #elif defined(ATTINY_X5) // ATtiny 25/45/85
 // extras
@@ -222,7 +253,7 @@ void setup()
   DEBUG_PRINTLN("Waiting for SQCK..");
 #endif
 
-#if defined(ARDUINO_BOARD)
+#if defined(ARDUINO_328_BOARD) || defined(ARDUINO_32UX_BOARD)
   pinMode(LED_BUILTIN, OUTPUT); // Blink on injection / debug.
   digitalWrite(LED_BUILTIN, HIGH); // mark begin of setup
 #endif
@@ -272,7 +303,7 @@ void setup()
   DIDR0 = DIDR0 | B00111111;
 #endif
 
-#if defined(ARDUINO_BOARD)
+#if defined(ARDUINO_328_BOARD) || defined(ARDUINO_32UX_BOARD)
   digitalWrite(LED_BUILTIN, LOW); // setup complete
 #endif
 
@@ -390,7 +421,7 @@ start:
 #else
     DEBUG_PRINTLN("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
 #endif
-#if defined(ARDUINO_BOARD)
+#if defined(ARDUINO_328_BOARD) || defined(ARDUINO_32UX_BOARD)
     digitalWrite(LED_BUILTIN, HIGH);
 #endif
 
@@ -415,7 +446,7 @@ start:
       pinMode(gate_wfck, INPUT); // high-z the line, we're done
     }
     pinMode(data, INPUT); // high-z the line, we're done
-#if defined(ARDUINO_BOARD)
+#if defined(ARDUINO_328_BOARD) || defined(ARDUINO_32UX_BOARD)
     digitalWrite(LED_BUILTIN, LOW);
 #endif
   }
