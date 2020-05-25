@@ -36,7 +36,9 @@ Is developed by the psxdev team
  
   - Arduino Pro Mini @8Mhz and @16Mhz (supported, tested)
   - Arduino Uno @8Mhz and @16Mhz (supported, tested)
-  - Arduino Pro Micro has a different pin assignment and needs some easy porting. (ToDo)
+
+  - Pro Micro @8Mhz and @16Mhz (supported, tested)
+  - Arduino Leonardo @8Mhz and @16Mhz: Should work the same as Pro Micro, but two pins are on the ICSP header (supported, untested)
   
   - ATtiny85: Should work the same as ATtiny45 (supported, untested)
   - ATtiny45: LFUSE 0xE2  HFUSE 0xDF > internal oscillator, full 8Mhz speed (supported, tested)
@@ -71,22 +73,22 @@ Also, the Arduino must either be powered on first or have no bootloader present 
 
  This code is multi-region, meaning it will unlock PAL, NTSC-U and NTSC-J machines.
 
------------------------------------------------------
+-------------------------------------------------------------------------------------
 
                       Pin assignments
                         
-           PSNee psxdev                   PlayStation
-      Arduino   Atinny  name           ps pin         Name
- 
-      pin-vin  = VCC    = 3.5v         3.5v           = supply
-                 3      = debugtx
-      pin-9    = 4      = gate_wfck    IC732.Pin-5    = WFCK           
-      pin-8    = 2      = data         IC732.Pin-42   = CEO
-      pin-7    = 1      = subq         IC304.Pin-24   = SUBQ
-      pin-6    = 0      = sqck         IC304.Pin-26   = SQCK
-      pin 5             = BIOS D2      IC102.Pin-15   = D2
-      pin 4             = BIOS A18     Ic102.Pin-31   = A18
-      Pin-Gnd  = GND    = gnd          GND            = gnd
+                      PSNee psxdev                                PlayStation
+      Arduino   Atinny   ProMicro   Leonardo    name           ps pin         Name
+
+      pin-5v   = VCC    = VCC      = pin-5v    = 3.5v         3.5v           = supply
+                 3      =          =           = debugtx
+      pin-9    = 4      = pin-15   = icsp-sck  = gate_wfck    IC732.Pin-5    = WFCK           
+      pin-8    = 2      = pin-14   = icsp-miso = data         IC732.Pin-42   = CEO
+      pin-7    = 1      = pin-3    = pin-3     = subq         IC304.Pin-24   = SUBQ
+      pin-6    = 0      = pin-2    = pin-2     = sqck         IC304.Pin-26   = SQCK
+      pin 5             = pin-9    = pin-9     = BIOS D2      IC102.Pin-15   = D2
+      pin 4             = pin-8    = pin-8     = BIOS A18     Ic102.Pin-31   = A18
+      pin-gnd  = GND    = GND      = pin-gnd   = gnd          GND            = gnd
 
 ## General Info
 
