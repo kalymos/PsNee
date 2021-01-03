@@ -77,8 +77,8 @@ Also, the Arduino must either be powered on first or have no bootloader present 
 
                                          pin equivalent tableau
                         
-                      PSNee	       name in Arduino board or Attiny		  	PlayStation
-    support name      name in code     Attiny45    Arduino   ProMicro	Leonardo	ic pin name 	track name in schematic
+                      PSNee            name in Arduino board or Attiny                  PlayStation
+    support name      name in code     Attiny45    Arduino   ProMicro   Leonardo        ic pin name     track name in schematic
                                        VCC	   5V	     VCC	5V	        3.5V	        supply
                       debugtx	       3
                       gate_wfck        4           9	     15	        Icsp-sck	IC732.Pin-5	WFCK
