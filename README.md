@@ -75,19 +75,19 @@ Also, the Arduino must either be powered on first or have no bootloader present 
 
 -------------------------------------------------------------------------------------
 
-                      pin equivalent tableau
+                                         pin equivalent tableau
                         
-                         PSNee	         name in Arduino board or Attiny			         	PlayStation
-    support name	    name in code	 Attiny45 	Arduino 	ProMicro	Leonardo	  ic pin name 	track name in schematic
-                                       VCC	      5V	     VCC	       5V	          3.5V	            supply
-                        debugtx	        3
-                       gate_wfck	      4	         9	      15	    Icsp-sck	   IC732.Pin-5	          WFCK
-                          data	        2          8      	14	    icsp-miso	   IC732.Pin-42	          CEO
-     pin name             subq	        1	         7	       3	        3        IC304.Pin-24	          SUBQ
-                          sqck	        0	         6	       2	        2	       IC304.Pin-26	          SQCK
-                        BIOS D2		                 5	       9	        9	       IC102.Pin-15	          D2 
-                        BIOS A18		               4	       8	        8	       Ic102.Pin-31	          A18
-	                                     GND	      GND	      GND	       GND	         GND	              GND
+                      PSNee	       name in Arduino board or Attiny		  	PlayStation
+    support name      name in code     Attiny45    Arduino   ProMicro	Leonardo	ic pin name 	track name in schematic
+                                       VCC	   5V	     VCC	5V	        3.5V	        supply
+                      debugtx	       3
+                      gate_wfck        4           9	     15	        Icsp-sck	IC732.Pin-5	WFCK
+                      data	       2           8         14	        icsp-miso	IC732.Pin-42	CEO
+     pin name         subq	       1           7	     3	        3               IC304.Pin-24	SUBQ
+                      sqck	       0           6	     2	        2	        IC304.Pin-26	SQCK
+                      BIOS D2		           5	     9	        9	        IC102.Pin-15	D2 
+                      BIOS A18	                   4	     8	        8	        Ic102.Pin-31	A18
+	                               GND	   GND	     GND	GND	        GND	        GND
 
 
 
