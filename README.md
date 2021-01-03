@@ -87,7 +87,7 @@ Also, the Arduino must either be powered on first or have no bootloader present 
                       sqck             0           6         2          2               IC304.Pin-26    SQCK
                       BIOS D2                      5         9          9               IC102.Pin-15    D2 
                       BIOS A18                     4         8          8               Ic102.Pin-31    A18
-	                               GND         GND       GND        GND             GND             GND
+	                                   GND         GND       GND        GND             GND             GND
 
 
 
