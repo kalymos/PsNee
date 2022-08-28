@@ -31,6 +31,9 @@
 //+-------------------------------------------------------------------------------------------+
 //|                                  Choose your hardware!                                    |
 //+-------------------------------------------------------------------------------------------+
+//
+// To fix the timer problem with APPLY_PSONE_PAL_BIOS_PATCH look at line 223
+//
 // 2 main branches available:
 //  - ATmega based > easy to use, fast and nice features for development, recommended
 //  - ATtiny based > for minimal installs
@@ -220,7 +223,7 @@ void NTSC_fix() {
   {
     ;  //wait for priming A18 pulse
   }
-  delayMicroseconds(17); // max 17us for 16Mhz ATmega (maximize this when tuning!)
+  delayMicroseconds(17); // min 13us max 17us for 16Mhz ATmega (maximize this when tuning!)
   bitClear(BIOSPATCHPORTOUT, BIOS_D2_BIT); // store a low
   bitSet(BIOSPATCHDDR, BIOS_D2_BIT); // D2 = output. drags line low now
   delayMicroseconds(4); // min 2us for 16Mhz ATmega, 8Mhz requires 3us (minimize this when tuning, after maximizing first us delay!)
