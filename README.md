@@ -84,10 +84,10 @@ Also, the Arduino must either be powered on first or have no bootloader present 
     						Mini		     Pro Micro
 						        Pro Mini
     
-    name in code                       ATTINY_X5    ARDUINO_328_BOARD    ARDUINO_32UX_BOARD        ic pin name     track name in schematic
+    name in code                       ATTINY_X5    ARDUINO_328_BOARD    ARDUINO_32UX_BOARD        
     
     microcontroller		  	   ATtiny*5	ATmega328**          ATmega32U*
-						   					   
+						   					       ic pin name     track name in schematic
                                        VCC          5V                   5v                        3.5V            supply
                       debugtx          3
                       gate_wfck        4            9                    ICSP-SCLK(15)             IC732.Pin-5     WFCK
