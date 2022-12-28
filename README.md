@@ -81,8 +81,8 @@ Also, the Arduino must either be powered on first or have no bootloader present 
     support name      name in code     Attiny45    Arduino    Leonardo        ic pin name     track name in schematic
                                        VCC         5V         5v              3.5V            supply
                       debugtx          3
-                      gate_wfck        4           9          Icsp-sck        IC732.Pin-5     WFCK
-                      data             2           8          icsp-miso       IC732.Pin-42    CEO
+                      gate_wfck        4           9          ICSP-SCLK(15)   IC732.Pin-5     WFCK
+                      data             2           8          ICSP-MISO(14)   IC732.Pin-42    CEO
      pin name         subq             1           7          3               IC304.Pin-24    SUBQ
                       sqck             0           6          2               IC304.Pin-26    SQCK
                       BIOS D2                      5          9               IC102.Pin-15    D2 
