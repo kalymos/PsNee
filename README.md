@@ -79,10 +79,10 @@ Also, the Arduino must either be powered on first or have no bootloader present 
                         
                       PSNee            name in Arduino board or Attiny                             PlayStation
 		      
-    board name					   Uno		         Leonardo
-    						   Nano                 Micro 
-    						   Mini		 Pro Micro
-							    Pro Mini
+    board name					    Uno		         Leonardo
+    						    Nano                 Micro 
+    						    Mini		 Pro Micro
+							   Pro Mini
     
     name in code                       ATTINY_X5    ARDUINO_328_BOARD    ARDUINO_32UX_BOARD        ic pin name     track name in schematic
     
