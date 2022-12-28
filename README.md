@@ -87,7 +87,7 @@ Also, the Arduino must either be powered on first or have no bootloader present 
     name in code                       ATTINY_X5    ARDUINO_328_BOARD    ARDUINO_32UX_BOARD        
     
     microcontroller		  	   ATtiny*5	ATmega328**          ATmega32U*
-						   					       ic pin name     track name in schematic
+						   					               ic pin name     track name in schematic
                                        VCC          5V                   5v                        3.5V            supply
                       debugtx          3
                       gate_wfck        4            9                    ICSP-SCLK(15)             IC732.Pin-5     WFCK
