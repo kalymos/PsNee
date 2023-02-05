@@ -112,30 +112,29 @@ Also, the Arduino must either be powered on first or have no bootloader present 
 
 ## General Info
 
-### PLAYSTATION 1 SECURITY - HOW IT DOES ITS THING:
-Sony didn't really go through great lenghts to protect its precious Playstation
-from running unauthorised software: the main security is based on a simple ASCII
-string of text that is read from a part of an original Playstation disc that cannot
-be reproduced by an ordinary PC CD burner.
-As most of you will know, a CD is basically a very long rolled up (carrier) string in which very
-little pits and ehm... little not-pits are embedded that represent the data stored on the disc.
-The nifty Sony engineers did not use the pits and stuff to store the security checks for
-Playstation discs, but went crazy with the rolled up carrier string. In an ordinary CD, the
-string is rolled up so that the spacing between the tracks is as equal as possible. If that
-is not the case, the laser itself needs to move a bit to keep track of the track and
-reliably read the data off the disc.
-If you wonder how the laser knows when it follows the track optimally: four photodiodes, light
-intensity measurement, difference measurements, servo. There.
-To the point: the Sony engineers decidedly "fumbled up" the track of sector 4 on a Playstation
-disc (the track was modulated, in nerd-speak) so that the error correction circuit outputs a
-recognisable signal, as the laser needs to be corrected to follow the track optimally.
-This output signal actually is a 250bps serial bitstream (with 1 start bit and 2 stop bits) which
-in plain ASCII says *SCEA* (Sony Computer Entertainment of America), *SCEE* (Sony Computer Entertainment
-of Europe) or *SCEI* (Sony Computer Entertainment of Japan), depending on the region of the disc inserted.
+### The PlayStation 1 security, how does it work?
+
+To protect its precious PlayStation from running unauthorized software, Sony implemented a copy protection mechanism based on a simple ASCII string of text that is read from a part of an original PlayStation disc that cannot be reproduced by an ordinary PC CD burner (in theory).
+
+Basically, a CD is made from a really long spiral of pits and lands that represent the data stored on the disc. Inside the Optical Pickup Unit (OPU), a laser diode emits infrared light that goes through lenses and mirrors, hits the disc, bounces back and shines on a sensor made from at least 4 photodiodes. These photodiodes receive different amounts of light depending on pits and lands' reflectivity allowing to recover the data but they are also used to perform self-adjustment to keep the track aligned and in focus.
+This is done by comparing photodiodes outputs in a way to create the Tracking Error (TE) and Focus Error (FE) signals and then send them to the CD controller to move the lens head horizontally for the tracking and vertically for the focus.
+
+On a CD-ROM (read-only disc pressed inside a CD factory), the spiral is a simple rolled up line. However, on a blank CD-R, the spiral i.e. the pregroove is wobbling on all over the disc and the CD controller follows it. This wobble picked up by the TE signal actually carries data known as the Absolute Time In Pregroove (ATIP) and is frequency-modulated at 22kHz (1x read speed). The ATIP contains information about the disc characteristics and time codes but is useful only for burning.
+
+Now, what is the relation between these explanations and the PlayStation security?
+
+As CD-ROMs do not have the wobble nor the ATIP, Sony engineers surely thought:
+
+    Why not reuse the wobble that burners can't reproduce to encode some sort of information that will provide copy protection?
+
+And that's what they did! In the lead-in area of a PlayStation disc (negative sectors), the spiral is wobbling at the same 22kHz carrier frequency like a CD-R but instead of storing the ATIP, they stored a 250bps amplitude-modulated serial bitstream also known as SCEx signal (with 1 start bit and 2 stop bits) that repeats until sector 0 (end of lead-in).
+
+The important thing to understand is the bitstream is not part of the game data which is encoded using pits and lands' length. Instead, it is made by slightly shifting the track i.e. pits and lands' position in a sinusoidal way. The self-adjusting system simply follows this wobbling track creating a modulated TE signal that needs to be demodulated using a 22kHz filter. Then, it goes to the PlayStation sub-CPU for decoding.
+
+The bitstream in plain ASCII says "SCEA" (Sony Computer Entertainment of America), "SCEE" (Sony Computer Entertainment of Europe) or "SCEI" (Sony Computer Entertainment Inc. (i.e. Japan)), depending on the region of the disc.
 The security thus functions not only as copy protection, but also as region protection.
-The text string from the disc is compared with the text string that is embedded in the Playstation
-hardware. When these text strings are the same, the disc is interpreted to be authentic and from
-the correct region. Bingo!
+
+The text string from the disc is compared with the one that is embedded in the PlayStation sub-CPU. If these text strings are the same, the disc is interpreted to be authentic and from the correct region. Bingo!
 
 ### The master branch is completely redesigned!
 
