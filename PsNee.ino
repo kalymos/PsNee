@@ -54,8 +54,8 @@
 #if defined(ARDUINO_328_BOARD)
 // board pins (code requires porting to reflect any changes)
 #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
-#define BIOS_A18 4          // connect to PSOne BIOS A18 (pin 31 on that chip)
-#define BIOS_D2  5          // connect to PSOne BIOS D2 (pin 15 on that chip)
+#define BIOS_A18 3          // connect to PSOne BIOS A18 (pin 31 on that chip)
+#define BIOS_D2  4          // connect to PSOne BIOS D2 (pin 15 on that chip)
 #endif
 #define sqck 6          // connect to PSX HC-05 SQCK pin
 #define subq 7          // connect to PSX HC-05 SUBQ pin
@@ -78,27 +78,27 @@
 #endif
 #elif defined(ARDUINO_32UX_BOARD) // ATMega32U2/ATMega32U4
 #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
-#define BIOS_A18 8
-#define BIOS_D2  9
+#define BIOS_A18 2
+#define BIOS_D2 3
 #endif
-#define sqck 2
-#define subq 3
-#define data 14
-#define gate_wfck 15
+#define sqck 4
+#define subq 6
+#define data 8
+#define gate_wfck 9
 // MCU I/O definitions
 #define SUBQPORT PIND
-#define SQCKBIT 1           // PD1
-#define SUBQBIT 0           // PD0
+#define SQCKBIT 1           // 
+#define SUBQBIT 0           // 
 #define GATEWFCKPORT PINB
 #define DATAPORT PORTB
-#define GATEWFCKBIT 1       // PB1
-#define DATABIT 3           // PB3
+#define GATEWFCKBIT 1       // 
+#define DATABIT 3           // 
 #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
-#define BIOSPATCHPORTIN  PINB
-#define BIOSPATCHPORTOUT PORTB
-#define BIOSPATCHDDR     DDRB
-#define BIOS_A18_BIT 4      //PB4
-#define BIOS_D2_BIT  5      //PB5
+#define BIOSPATCHPORTIN  PIND
+#define BIOSPATCHPORTOUT PORTD
+#define BIOSPATCHDDR     DDRD
+#define BIOS_A18_BIT 2      //PB4
+#define BIOS_D2_BIT  3      //PB5
 #endif
 #elif defined(ATTINY_X5) // ATtiny 25/45/85
 // extras
