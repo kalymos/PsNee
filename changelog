@@ -1,3 +1,139 @@
+Update:july 2024
+
+-Reimplementation of support for MUCs ATtiny25/45/85, Atmega32u4
+-added support for MUC LGF8F328
+
+-------------------------------------------------------------
+
+Update: 9 oct 2023
+
+-Added support by brill & postal2201 of the bios patch for japanese consoles https://github.com/postal2201/PSNee_V8
+
+--------------------------------------------------------------
+
+Update: 16 August 2017
+ 
+-changed the timing for the PAL PM-41 patch to make it more reliable (I had it failing occasionally).
+Also I added a warning for people not to use 5V.
+ 
+--------------------------------------------------------------
+
+Update: 16 July 2017
+
+-The BIOS patch works!
+For now it only supports Arduino boards (ATmega chips).
+Also, the Arduino must either be powered on first or have no bootloader present (flashed using SPI) since I expect a signal ~1 second after power on.
+8Mhz boards are also supported.
+
+--------------------------------------------------------------
+
+Update: 10 July 2017
+
+- finished porting to ATtinyX5 (25,45,85 although the 25 has too little resources. for now.)
+- store the licensing symbols in flash again, frees a lot of RAM
+- bit retrieval code lifted from AttyNee (Nice work guys!)
+- extra RAM allows SoftwareSerial debugging prints on an ATtiny45!
+- nicer intro readme ;p
+
+---------------------------------------------------------------
+
+Update 9 July 2017
+
+Sure. Consider it work in progress quality ;)
+Main changes:
+- figured out ATtiny pin assignments :p
+- RAM use reduced by only storing the "SCE" part of the license string once. Using a somewhat farfetched method. Maybe someone can make it nicer, without the recursion and over engineering? :p
+- tried getting debug prints but it doesn't look like it'll happen (on ATtiny45), too little RAM > the chip crashes
+- SUBQ sampling timing reverted to sample while clock is low, instead of right after it goes high
+
+-------------------------------------------------------------
+
+Updat 29 June 2017
+- final modchip function I / Os: SQCK, SCLK, data, gate_wfck
+- hysteresis for injections, fixes anti-mod occasionally triggering when using worn drives
+- optimized injection timing for multi-region, multi BIOS versions (Sony added more protection checks over time)
+- first attempt to make it more portable to other Arduino variants
+- auto console detection works reliably, with and without Arduino bootloader present
+- pin assignments changed for practical / installation reasons (ICSP capability, wire routing)
+- so many changes, it surely contains all new bugs ;)
+
+Pin assignments are finalized. We can start producing final installation images / help!
+As always, I appreciate code reviews and bug fixes. I'm sorry some of it got so messy ;p
+psxdev
+
+------------------------------------------------------------
+
+Update 4 June 2017
+- unified SCEX injection function / easier to read code
+- PU-22+ now work without the WFCK wire (but depends on tight timings, tested on 8 and 16Mhz mcu)
+- interrupts disabled while sampling SUBQ > much better performance capturing all events correctly
+- now blinks the built-in LED on injections for debugging
+psxdev
+
+------------------------------------------------------------
+
+Update 31st May 2017
+
+- supports all motherboard versions except PU-41 (PAL) (will get to it!)
+- WFCK modulated injection method for PU-22 and up, just like the last multimode 3 chips
+- minimized CD controller interference: PsNee only ever speaks when it has to (also: full stealth)
+- not relying on BIOS delays: perfect boot disregarding extension cards etc
+- might not be bug free! I'm just one guy and testing on a dozen consoles takes time ;)
+psxdev
+
+-------------------------------------------------------------
+
+Update 27th of May 2017
+This version is compatible with 8Mhz and 16Mhz ATmega328 / Arduino boards.
+It uses polling to grab the SUBQ packets. This works better than relying on interrupts.
+I even have a few cycles to spare on a 8Mhz chip! 
+psxdev
+
+--------------------------------------------------------------
+
+Update 15th of May 2017
+PSNee now watches the subchannel data and looks at the position information contained within.
+This allows deterministic SCEX injections. It knows (almost) exactly when to inject the SCEX string.
+Therefore it is now a stealth modchip :)
+Required connections: GND, VCC, data, gate, SQCL, SUBQ
+No more need to watch the PSX reset or lid open signals or any other typical modchip points (like "sync")
+WIP! Only tested on PU-18 board. Should work fine on PU-7, PU-8, PU-18 and PU-20.
+Will need adaption for PU-22 to PU-41 (SCPH-750x, 900x and PSOne).
+Note: Once this is installed in a PSX, mind the Pin13 LED that many Arduino boards have. Do not upload new sketches while the PSX is on!
+(If the PSX is on while uploading a sketch (making the LED blink), a voltage will be fed back into the SCLK pin on the HC-05 in the PSX.
+This didn't break my PSX in testing but it does stun the chip and halt CD operation. I'm thinking of a better method to do this but for now I need Arduino pin13..)
+Very much recommended to install a 3.3V chip!
+psxdev
+
+-------------------------------------------------------------
+
+Update 7th of May 2017
+Branched and tweaked for use with the Position 0 switch on a PSX laser.
+(Requires a bit of sticky tape at the point where the switch touches the laser assembly.)
+This allows deterministic SCEX injections, without relying on timing. Also gets rid of connection wires for LID and RESET.
+WIP!
+psxdev
+
+--------------------------------------------------------------
+     New in this version! V6
+--------------------------------------------------------------
+A lot!
+ - The PAL SCPH-102 NTSC BIOS-patch works flawlessly! For speed reasons this is implemented in bare
+   AVR C. It is functionally identical to the OneChip modchip, this modchip firmware was disassembled,
+   documented (available on request, but written in Dutch...) and analyzed with a logic analyzer to
+   make sure PsNee works just as well.
+ - The code now is segmented in functions which make the program a lot more maintable and readable
+ - Timing is perfected, all discs (both backups and originals of PAL and NTSC games) now work in the
+   PAL SCPH-102 test machine
+ - It was found out that the gate signal doesn't havbe to be hooked up to a PAL SCPH-102 Playstation
+   to circumvent the copy protection. This is not tested on other Playstation models so the signal still
+   is available
+ - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
+ - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
+ 
+-------------------------------------------------------------
+A minor detail: The lid detection is missing its digitalRead() ;p
+psxdev
 
 -------------------------------------------------
 VERSION 2! :D 
@@ -36,116 +172,3 @@ What has changed?
  - The pin-out of the modchip is changed slightly to be able to use an interrupt for the PAL=>NTSC
    BIOS-patch for PAL SCPH-102. Please use the revised pin-out found below with this code.
 ~TheFrietMan, The Netherlands
---------------------------------------------------------------
-     New in this version! V6
---------------------------------------------------------------
-A lot!
- - The PAL SCPH-102 NTSC BIOS-patch works flawlessly! For speed reasons this is implemented in bare
-   AVR C. It is functionally identical to the OneChip modchip, this modchip firmware was disassembled,
-   documented (available on request, but written in Dutch...) and analyzed with a logic analyzer to
-   make sure PsNee works just as well.
- - The code now is segmented in functions which make the program a lot more maintable and readable
- - Timing is perfected, all discs (both backups and originals of PAL and NTSC games) now work in the
-   PAL SCPH-102 test machine
- - It was found out that the gate signal doesn't havbe to be hooked up to a PAL SCPH-102 Playstation
-   to circumvent the copy protection. This is not tested on other Playstation models so the signal still
-   is available
- - The /xlat signal is no longer required to time the PAL SCPH-102 NTSC BIOS-patch
- - Only AVR PORTB is used for compatibility reasons (almost all the AVR chips available have PORTB)
- 
--------------------------------------------------------------
-A minor detail: The lid detection is missing its digitalRead() ;p
-psxdev
--------------------------------------------------------------
-Update 7th of May 2017
-Branched and tweaked for use with the Position 0 switch on a PSX laser.
-(Requires a bit of sticky tape at the point where the switch touches the laser assembly.)
-This allows deterministic SCEX injections, without relying on timing. Also gets rid of connection wires for LID and RESET.
-WIP!
-psxdev
---------------------------------------------------------------
-Update 15th of May 2017
-PSNee now watches the subchannel data and looks at the position information contained within.
-This allows deterministic SCEX injections. It knows (almost) exactly when to inject the SCEX string.
-Therefore it is now a stealth modchip :)
-Required connections: GND, VCC, data, gate, SQCL, SUBQ
-No more need to watch the PSX reset or lid open signals or any other typical modchip points (like "sync")
-WIP! Only tested on PU-18 board. Should work fine on PU-7, PU-8, PU-18 and PU-20.
-Will need adaption for PU-22 to PU-41 (SCPH-750x, 900x and PSOne).
-Note: Once this is installed in a PSX, mind the Pin13 LED that many Arduino boards have. Do not upload new sketches while the PSX is on!
-(If the PSX is on while uploading a sketch (making the LED blink), a voltage will be fed back into the SCLK pin on the HC-05 in the PSX.
-This didn't break my PSX in testing but it does stun the chip and halt CD operation. I'm thinking of a better method to do this but for now I need Arduino pin13..)
-Very much recommended to install a 3.3V chip!
-psxdev
--------------------------------------------------------------
-Update 27th of May 2017
-This version is compatible with 8Mhz and 16Mhz ATmega328 / Arduino boards.
-It uses polling to grab the SUBQ packets. This works better than relying on interrupts.
-I even have a few cycles to spare on a 8Mhz chip! 
-psxdev
-------------------------------------------------------------
-Update 31st May 2017
-
-- supports all motherboard versions except PU-41 (PAL) (will get to it!)
-- WFCK modulated injection method for PU-22 and up, just like the last multimode 3 chips
-- minimized CD controller interference: PsNee only ever speaks when it has to (also: full stealth)
-- not relying on BIOS delays: perfect boot disregarding extension cards etc
-- might not be bug free! I'm just one guy and testing on a dozen consoles takes time ;)
-psxdev
-------------------------------------------------------------
-Update 4 June 2017
-- unified SCEX injection function / easier to read code
-- PU-22+ now work without the WFCK wire (but depends on tight timings, tested on 8 and 16Mhz mcu)
-- interrupts disabled while sampling SUBQ > much better performance capturing all events correctly
-- now blinks the built-in LED on injections for debugging
-psxdev
-
--------------------------------------------------------------
-Updat 29 June 2017
-- final modchip function I / Os: SQCK, SCLK, data, gate_wfck
-- hysteresis for injections, fixes anti-mod occasionally triggering when using worn drives
-- optimized injection timing for multi-region, multi BIOS versions (Sony added more protection checks over time)
-- first attempt to make it more portable to other Arduino variants
-- auto console detection works reliably, with and without Arduino bootloader present
-- pin assignments changed for practical / installation reasons (ICSP capability, wire routing)
-- so many changes, it surely contains all new bugs ;)
-
-Pin assignments are finalized. We can start producing final installation images / help!
-As always, I appreciate code reviews and bug fixes. I'm sorry some of it got so messy ;p
-psxdev
----------------------------------------------------------------
-Update 9 July 2017
-
-Sure. Consider it work in progress quality ;)
-Main changes:
-- figured out ATtiny pin assignments :p
-- RAM use reduced by only storing the "SCE" part of the license string once. Using a somewhat farfetched method. Maybe someone can make it nicer, without the recursion and over engineering? :p
-- tried getting debug prints but it doesn't look like it'll happen (on ATtiny45), too little RAM > the chip crashes
-- SUBQ sampling timing reverted to sample while clock is low, instead of right after it goes high
-
---------------------------------------------------------------
-
-Update: 10 July 2017
-
-- finished porting to ATtinyX5 (25,45,85 although the 25 has too little resources. for now.)
-- store the licensing symbols in flash again, frees a lot of RAM
-- bit retrieval code lifted from AttyNee (Nice work guys!)
-- extra RAM allows SoftwareSerial debugging prints on an ATtiny45!
-- nicer intro readme ;p
-
---------------------------------------------------------------
-
-Update: 16 July 2017
-
--The BIOS patch works!
-For now it only supports Arduino boards (ATmega chips).
-Also, the Arduino must either be powered on first or have no bootloader present (flashed using SPI) since I expect a signal ~1 second after power on.
-8Mhz boards are also supported.
-
-------------------------------------------------------------
-
- Update: 16 August 2017
- 
- -changed the timing for the PAL PM-41 patch to make it more reliable (I had it failing occasionally).
- Also I added a warning for people not to use 5V.
- 
