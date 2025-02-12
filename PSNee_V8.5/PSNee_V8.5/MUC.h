@@ -340,7 +340,7 @@
 #define PIN_SUBQ_READ              (PINB   &   (1<<PINB1))                      
 #define PIN_WFCK_READ              (PINB   &   (1<<PINB4))      
 
-#defintu conais les attiny 414e TIMER_INTERRUPT_ENABLE      TIMSK |=  (1<<OCIE0A)
+#define TIMER_INTERRUPT_ENABLE      TIMSK |=  (1<<OCIE0A)
 #define TIMER_INTERRUPT_DISABLE     TIMSK &= ~(1<<OCIE0A)
 
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103)
