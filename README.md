@@ -17,11 +17,9 @@ All US models, all European models, and the vast majority of Japanese models.
 - ATmega168(A/P/PA) @16Mhz
 - Atmega32U4        @16Mhz
 - ATtiny25/45/85    @8Mhz no BIOS patch!
-- ATtiny48/88       works in progress
-- LGT8F328          works in progress
 
 ## Installation
-For all useful information consult the PDF
+For all useful information consult the Wiki
 
 ## Model tested
 ![test](images/model_tested.png)
