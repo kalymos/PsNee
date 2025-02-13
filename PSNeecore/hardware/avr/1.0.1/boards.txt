@@ -11,6 +11,7 @@ menu.fuses=Fuses
 ATtinyX5.name=ATtiny25/45/85
 
 ATtinyX5.upload.tool=arduino:avrdude
+ATtinyX5.upload.low_fuses=0xff
 
 
 ATtinyX5.program.tool=arduino:avrdude
