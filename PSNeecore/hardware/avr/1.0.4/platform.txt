@@ -1,5 +1,5 @@
 name=PSNee
-version=1.0.3
+version=1.0.4
 
 tools.avrdude.path={runtime.tools.avrdude.path}
 tools.avrdude.cmd.path={path}/bin/avrdude
