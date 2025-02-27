@@ -39,7 +39,7 @@
 //------------------------------------------------------------------------------------------------
 
 //#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching.
-//#define LED_RUN
+#define LED_RUN         // Turns on the LED when injections occur (D13 for ATmega, Pin 2 for ATtiny)
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section

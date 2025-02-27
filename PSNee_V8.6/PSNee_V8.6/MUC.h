@@ -343,6 +343,12 @@
 #define TIMER_INTERRUPT_ENABLE      TIMSK |=  (1<<OCIE0A)
 #define TIMER_INTERRUPT_DISABLE     TIMSK &= ~(1<<OCIE0A)
 
+// Handling and use of the LED pin
+#define LED_RUN
+#define PIN_LED_OUTPUT              DDRB   |=  (1<<DDB3)                                
+#define PIN_LED_ON                  PORTB  |=  (1<<PB3)      
+#define PIN_LED_OFF                 PORTB  &= ~(1<<PB3)   
+
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103)
  #error "ATtiny85_45_25 Not compatible with BIOS patch, please choose a compatible SCPH. For example: SCPH_xxx1: SCPH_xxx2: SCPH_103"
 #endif
