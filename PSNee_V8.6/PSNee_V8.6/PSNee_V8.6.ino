@@ -249,14 +249,19 @@ int main() {
     ;
 #endif
 
-  Timer_Start();
+#ifdef LED_RUN
+  PIN_LED_OFF;
+#endif
 
+  Timer_Start();
+  //************************************************************************
   // Board detection
   //
   // GATE: __-----------------------  // this is a PU-7 .. PU-20 board!
   //
   // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
   // typical readouts PU-22: highs: 2449 lows: 2377
+  //************************************************************************
   do {
     if (PIN_WFCK_READ == 0) lows++;             // good for ~5000 reads in 1s
     _delay_us(200);
@@ -272,10 +277,6 @@ int main() {
   else {
     wfck_mode = 0;                             //flag oldmod
   }
-
-#ifdef LED_RUN
-  PIN_LED_OFF;
-#endif
 
   while (1) {
 
@@ -320,12 +321,14 @@ int main() {
 
     GLOBAL_INTERRUPT_ENABLE;  // End critical section
 
-    /* Check if read head is in wobble area
-    |  We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
-    |  We want to see a TOC sector repeatedly before injecting (helps with timing and marginal lasers).
-    |  All this logic is because we don't know if the HC-05 is actually processing a getSCEX() command.
-    |  Hysteresis is used because older drives exhibit more variation in read head positioning.
-    |  While the laser lens moves to correct for the error, they can pick up a few TOC sectors. */
+    //************************************************************************
+    // Check if read head is in wobble area
+    // We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
+    // We want to see a TOC sector repeatedly before injecting (helps with timing and marginal lasers).
+    // All this logic is because we don't know if the HC-05 is actually processing a getSCEX() command.
+    // Hysteresis is used because older drives exhibit more variation in read head positioning.
+    // While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
+    //************************************************************************
 
     //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
     uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
@@ -355,8 +358,12 @@ int main() {
       // Hysteresis naturally goes to 0 otherwise (the read head moved).
       hysteresis = 11;
 
+    //************************************************************************
+    //Executes the region code patch injection sequence.
+    //************************************************************************
+
 #ifdef LED_RUN
-      PIN_LED_ON;
+  PIN_LED_ON;
 #endif
 
       PIN_DATA_OUTPUT;  
@@ -383,7 +390,7 @@ int main() {
       PIN_DATA_INPUT;
 
 #ifdef LED_RUN
-      PIN_LED_OFF;
+  PIN_LED_OFF;
 #endif
     }
   }
