@@ -4,10 +4,15 @@
 
 //#define ATmega328_168  // Fuses: JAP_FAT - H: DF, L: EE, E: FF; Other - H: DF, L: FF, E: FF.
 //#define ATmega32U4_16U4
-//#define ATtiny85_45_25 // 
+//#define ATtiny85_45_25 
 
 /*  
-  Pinout Arduino,
+  Fuses: 
+  BIOS patch - H: DF, L: EE, E: FF; 
+  ATmega - H: DF, L: FF, E: FF.
+  ATtiny - H: DF, L: E2; E: FF,
+
+  Pinout Arduino:
   VCC-3.5v, PinGND-GND, 
   D2-BIOS AX (Only for Bios patch)
   D3-BIOS AY (Only for BIOS ver. 1.0j-1.1j)
@@ -19,7 +24,7 @@
   D9-GATE_WFCK
   RST-RESET* (Only for JAP_FAT)
 
-  Pinout ATtiny
+  Pinout ATtiny:
   Pin1-RESET
   Pin2-LED
   Pin3-WFCK
@@ -80,7 +85,22 @@ volatile bool wfck_mode = 0;
 //                         Code section
 //------------------------------------------------------------------------------------------------
 
-//Counter increment function  Fuses
+// *****************************************************************************************
+// Interrupt Service Routine: CTC_TIMER_VECTOR
+// Description: 
+// This ISR is triggered by the Timer/Counter Compare Match event. It increments time-related 
+// counters used for tracking microseconds and milliseconds.
+//
+// Functionality:
+// - Increments `microsec` by 10 on each interrupt call.
+// - Increments `count_isr` to keep track of the number of interrupts.
+// - When `count_isr` reaches 100, it means 1 millisecond has elapsed:
+//     - `millisec` is incremented.
+//     - `count_isr` is reset to 0.
+//
+// Notes:
+// - This method provides a simple way to maintain a software-based timekeeping system.
+// *****************************************************************************************
 ISR(CTC_TIMER_VECTOR) {
   microsec += 10;                    
   count_isr++;                  
@@ -91,9 +111,30 @@ ISR(CTC_TIMER_VECTOR) {
   }
 }
 
-//Timer register reset function
+// *****************************************************************************************
+// Function: Timer_Start
+// Description: 
+// This function initializes and starts the timer by resetting the timer counter register 
+// and enabling timer interrupts. It ensures compatibility across multiple microcontrollers.
+//
+// Supported Microcontrollers:
+// - ATmega328/168
+// - ATmega32U4/16U4
+// - ATtiny85/45/25
+//
+// Functionality:
+// - Clears the timer counter to ensure a fresh start.
+// - Enables the timer interrupt to allow periodic execution of ISR routines.
+// - If BIOS_PATCH is defined, it also clears the timer interrupt flag to prevent 
+//   unwanted immediate interrupts.
+//
+// Notes:
+// - The actual timer configuration is handled in MUC.h.
+// - This function ensures that all supported MCUs behave consistently.
+//
+// *****************************************************************************************
 void Timer_Start() {
-#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25) || defined(LGT8F328P)
+#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
   TIMER_TCNT_CLEAR;
   TIMER_INTERRUPT_ENABLE;
   #if defined(BIOS_PATCH)
@@ -102,50 +143,71 @@ void Timer_Start() {
 #endif
 }
 
-//Function to stop timer registers, and reset time counters
+// *****************************************************************************************
+// Function: Timer_Stop
+// Description: 
+// Stops the timer by disabling interrupts and resetting the timer counter. 
+// It also clears the time tracking variables (count_isr, microsec, millisec) 
+// to ensure a fresh start when the timer is restarted.
+//
+// Supported Microcontrollers:
+// - ATmega328/168
+// - ATmega32U4/16U4
+// - ATtiny85/45/25
+//
+// *****************************************************************************************
 void Timer_Stop() {
   
-  #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25) || defined(LGT8F328P)
-    TIMER_INTERRUPT_DISABLE;
-    TIMER_TCNT_CLEAR;
+  #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
+    TIMER_INTERRUPT_DISABLE;  // Disable timer interrupts to stop counting
+    TIMER_TCNT_CLEAR;         // Reset the timer counter to ensure proper timing when restarted
   #endif
+  // Reset time tracking variables
   count_isr = 0;
   microsec = 0;
   millisec = 0;
 }
 
-void Init() {
-#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25) || defined(LGT8F328P)
-  TIMER_TCNT_CLEAR;
-  SET_OCROA_DIV;
-  SET_TIMER_TCCROA;
-  SET_TIMER_TCCROB;
-#endif
-
-#if defined(PATCH_SW) && defined(BIOS_PATCH)
-  PIN_SWITCH_INPUT;
-  PIN_SWITCH_SET;
-#endif
-
-#ifdef LED_RUN
-  PIN_LED_OUTPUT;
-#endif
-
-  GLOBAL_INTERRUPT_ENABLE;
-  
-  PIN_SQCK_INPUT;
-  PIN_SUBQ_INPUT;
-}
-
-// borrowed from AttyNee. Bitmagic to get to the SCEX strings stored in flash (because Harvard architecture)
-// Read a specific bit from an array of bytes
+// *****************************************************************************************
+// Function: readBit
+// Description: 
+// Reads a specific bit from an array of bytes.
+// This function helps retrieve SCEX data efficiently while working within 
+// the constraints of Harvard architecture.
+//
+// Parameters:
+// - index: The bit position to read within the byte array.
+// - ByteSet: A pointer to the byte array containing the data.
+//
+// Return:
+// - Returns 1 if the specified bit at the given index is set (1).
+// - Returns 0 if the specified bit is cleared (0).
+//
+// Explanation:
+// - The function determines which byte contains the requested bit using (index / 8).
+// - It then calculates the bit position within that byte using (index % 8).
+// - A bitwise AND operation extracts the bit's value, and the double NOT (!!) operator 
+//   ensures a clean boolean return value (1 or 0).
+//
+// *****************************************************************************************
 uint8_t readBit(uint8_t index, const uint8_t* ByteSet) {
   return !!(ByteSet[index / 8] & (1 << (index % 8)));  // Return true if the specified bit is set in ByteSet[index]
 }
 
 
-// Static arrays storing SCEX data for different regions
+// *****************************************************************************************
+// Function: inject_SCEX
+// Description: 
+// Injects SCEX data corresponding to a given region ('e' for Europe, 'a' for America, 
+// 'i' for Japan). This function is used for modulating the SCEX signal to bypass 
+// region-locking mechanisms in certain PlayStation models.
+//
+// Parameters:
+// - region: A character ('e', 'a', or 'i') representing the target region.
+//
+// *****************************************************************************************
 void inject_SCEX(const char region) {
+  // SCEX data patterns for different regions (SCEE, SCEA, SCEI)
   static const uint8_t SCEEData[] = {
     0b01011001,
     0b11001001,
@@ -183,12 +245,12 @@ void inject_SCEX(const char region) {
     }
     else {
       // modulate DATA pin based on WFCK_READ
-      if (wfck_mode)  // If wfck_mode is true(pu22mode)
+      if (wfck_mode)  // WFCK mode (pu22mode enabled): synchronize PIN_DATA with WFCK clock signal
       {
         PIN_DATA_OUTPUT;
         Timer_Start();
         do {
-          // read wfck pin
+          // Read the WFCK pin and set or clear DATA accordingly
           if (PIN_WFCK_READ) {
             PIN_DATA_SET; 
           }
@@ -198,9 +260,9 @@ void inject_SCEX(const char region) {
           }
         }
         while (microsec < DELAY_BETWEEN_BITS);
-        Timer_Stop();  // Stop timer
+        Timer_Stop();  // Stop the timer after the delay
       }
-      // PU-18 or lower mode
+      // PU-18 or lower mode: simply set PIN_DATA as input with a delay
       else {
         PIN_DATA_INPUT;
         _delay_us(DELAY_BETWEEN_BITS);
@@ -211,6 +273,29 @@ void inject_SCEX(const char region) {
   PIN_DATA_OUTPUT;
   PIN_DATA_CLEAR;
   _delay_ms(DELAY_BETWEEN_INJECTIONS);
+}
+
+void Init() {
+#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
+  TIMER_TCNT_CLEAR;
+  SET_OCROA_DIV;
+  SET_TIMER_TCCROA;
+  SET_TIMER_TCCROB;
+#endif
+
+#if defined(PATCH_SW) && defined(BIOS_PATCH)
+  PIN_SWITCH_INPUT;
+  PIN_SWITCH_SET;
+#endif
+
+#ifdef LED_RUN
+  PIN_LED_OUTPUT;
+#endif
+
+  GLOBAL_INTERRUPT_ENABLE;
+  
+  PIN_SQCK_INPUT;
+  PIN_SUBQ_INPUT;
 }
 
 int main() {
