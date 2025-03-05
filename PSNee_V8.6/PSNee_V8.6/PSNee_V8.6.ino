@@ -2,7 +2,7 @@
 //                         Select your chip
 //------------------------------------------------------------------------------------------------
 
-//#define ATmega328_168  // Fuses: JAP_FAT - H: DF, L: EE, E: FF; Other - H: DF, L: FF, E: FF.
+//#define ATmega328_168  
 //#define ATmega32U4_16U4
 //#define ATtiny85_45_25 
 
