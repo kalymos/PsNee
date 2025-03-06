@@ -297,7 +297,10 @@ void Init() {
   PIN_SQCK_INPUT;
   PIN_SUBQ_INPUT;
 }
+void BIOS_Patching_Fonc(){
 
+  
+}
 int main() {
   uint8_t  hysteresis = 0;
   uint8_t  scbuf[12] = { 0 };             // SUBQ bit storage
@@ -309,11 +312,13 @@ int main() {
 
   Init();
 
+
+
+#if defined(BIOS_PATCH) && !defined(PATCH_SWICHE)
+
 #ifdef LED_RUN
   PIN_LED_ON;
 #endif
-
-#if defined(BIOS_PATCH) && !defined(PATCH_SWICHE)
   Bios_Patching();
 #elif defined(BIOS_PATCH) && defined(PATCH_SWICHE)
   if (PIN_SWICHE_READ != 0) {
@@ -332,11 +337,12 @@ int main() {
     ;
   while (PIN_WFCK_READ == 0)
     ;
-#endif
-
 #ifdef LED_RUN
   PIN_LED_OFF;
 #endif
+#endif
+
+
 
   Timer_Start();
   //************************************************************************
