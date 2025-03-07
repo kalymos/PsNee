@@ -1,6 +1,6 @@
 # Menu options
 menu.variant=Variant
-menu.fuses=Fuses
+#menu.fuses=Fuses
 
 ##############################
 ### ATiny25/45/85     ########
@@ -86,11 +86,11 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 # General
 328.name=ATmega328
 
-328.32u4.tool=arduino:avrdude
+328.upload.tool=arduino:avrdude
 328.upload.default_speed=57600
 328.upload.maximum_data_size=2048
 328.upload.maximum_size=30720
-
+328.upload.low_fuses=0xee
 
 328.build.core=arduino:arduino
 328.build.board=AVR_ATmega328
@@ -109,11 +109,7 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 328.menu.variant.modelPB.build.variant=pb-variant 
 328.menu.variant.modelPB.build.mcu=atmega328pb
 
-328.menu.fuses.BIOSpatch=BIOS patch
-328.menu.fuses.BIOSpatch.upload.low_fuses=0xee
 
-328.menu.fuses.NoBIOSpatch=No BIOS patch
-328.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 
 #############################
 #### ATmega168/A/P/PA/PB ####
@@ -125,6 +121,7 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 168.upload.default_speed=57600
 168.upload.maximum_size=15872
 168.upload.maximum_data_size=1024
+168.upload.low_fuses=0xee
 
 168.build.core=arduino:arduino
 168.build.board=AVR_ATmega168
@@ -143,12 +140,6 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 168.menu.variant.modelPB=168PB
 168.menu.variant.modelPB.build.variant=pb-variant
 168.menu.variant.modelPB.build.mcu=atmega168pb
-
-168.menu.fuses.BIOSpatch=BIOS patch
-168.menu.fuses.BIOSpatch.upload.low_fuses=0xee
-
-168.menu.fuses.NoBIOSpatch=No BIOS patch
-168.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 
 #############################
 #### atmega32u4          ####
@@ -188,6 +179,7 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 32u4.upload.maximum_size=30720
 32u4.upload.use_1200bps_touch=true
 32u4.upload.wait_for_upload_port=true
+32u4.upload.low_fuses=0xee
 
 
 
@@ -205,9 +197,4 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 32u4.vid.0=0x239A
 32u4.pid.0=0x800C
 
-32u4.menu.fuses.BIOSpatch=BIOS patch
-32u4.menu.fuses.BIOSpatch.upload.low_fuses=0xee
-
-32u4.menu.fuses.NoBIOSpatch=No BIOS patch
-32u4.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 
