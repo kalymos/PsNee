@@ -23,3 +23,5 @@ For all useful information consult the Wiki
 
 ## Model tested
 ![test](images/test-PSNee-v8.6.png)
+
+P.S. I don't have an American model, or SCPH_xxx3. If you have tested it, tell me.
