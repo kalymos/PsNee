@@ -15,7 +15,7 @@ tools.avrdude.program.pattern="{cmd.path}" "-C{config.path}" -F {program.verbose
 
 tools.avrdude.erase.params.verbose=-v -v -v -v
 tools.avrdude.erase.params.quiet=-q -q
-tools.avrdude.erase.pattern="{cmd.path}" "-C{config.path}" {erase.verbose} -p{build.mcu} -c{protocol} {program.extra_params} -e -Uefuse:w:0xff:m -Uhfuse:w:0xdf:m -Ulfuse:w:{bootloader.low_fuses}:m
+tools.avrdude.erase.pattern="{cmd.path}" "-C{config.path}" {erase.verbose} -p{build.mcu} -c{protocol} {program.extra_params} -e -Uefuse:w:0xfd:m -Uhfuse:w:0xdf:m -Ulfuse:w:{bootloader.low_fuses}:m
 
 ##tools.avrdude.bootloader.params.verbose=-v
 ##tools.avrdude.bootloader.params.quiet=-q -q

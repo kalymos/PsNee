@@ -5,6 +5,7 @@
 //   If a BIOS checksum is specified, it is more important than the SCPH model number!
 //------------------------------------------------------------------------------------------------
 
+//#define SCPH_xxxx        // all NTSC-U/C SCPH_xxx1, all PAL FAT models SCPH_xxx2, SCPH_103. It's 0.5 seconds longer than choosing a specific region.
 //#define SCPH_xxx1        // Use for all NTSC-U/C models. No BIOS patching needed.
 //#define SCPH_xxx2        // Use for all PAL FAT models. No BIOS patching needed.
 //#define SCPH_103         // No BIOS patching needed.
@@ -15,12 +16,13 @@
 //#define SCPH_3500_5000   // DX - D0, for 40-pin BIOS: AX - A4, for 32-pin BIOS: AX - A5. BIOS ver. 2.2j, CRC 24FC7E17 | 2.1j, CRC BC190209
 //#define SCPH_3000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.1j, CRC 3539DEF6
 //#define SCPH_1000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.0j, CRC 3B601FC8
+//#define SCPH_xxxx 
 
 //------------------------------------------------------------------------------------------------
 //                         Select your chip
 //------------------------------------------------------------------------------------------------
 
-//#define ATmega328_168  // Fuses: JAP_FAT - H: DF, L: EE, E: FF; Other - H: DF, L: FF, E: FF.
+//#define ATmega328_168  
 //#define ATmega32U4_16U4
 //#define ATtiny85_45_25 
 
@@ -57,8 +59,8 @@
 //                         Options
 //------------------------------------------------------------------------------------------------
 
-//#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching.
-#define LED_RUN         // Turns on the LED when injections occur (D13 for Arduino, Pin 2 for ATtiny)
+#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
+//#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
@@ -202,7 +204,7 @@ uint8_t readBit(uint8_t index, const uint8_t* ByteSet) {
 // Description: 
 // Injects SCEX data corresponding to a given region ('e' for Europe, 'a' for America, 
 // 'i' for Japan). This function is used for modulating the SCEX signal to bypass 
-// region-locking mechanisms in certain PlayStation models.
+// region-locking mechanisms.
 //
 // Parameters:
 // - region: A character ('e', 'a', or 'i') representing the target region.
@@ -456,7 +458,7 @@ int main() {
 
       // inject symbols now. 2 x 3 runs seems optimal to cover all boards
       for (uint8_t scex = 0; scex < 2; scex++) {
-        inject_SCEX(region[scex]);  //
+        inject_SCEX(region[scex]);
       }
 
       if (!wfck_mode)  // Set WFCK pin input

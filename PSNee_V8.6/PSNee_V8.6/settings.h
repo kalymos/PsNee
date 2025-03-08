@@ -17,7 +17,9 @@
 
 */
 
-
+#ifdef  SCPH_xxxx
+#define SCEZ
+#endif
 
 #ifdef  SCPH_xxx1
 #define SCEA
@@ -111,25 +113,29 @@
 #endif
 
 #ifdef SCEA
-const char region[3] = {'a', 'a', 'a'};
+const char region[1] = {'a'};
 #endif
 
 #ifdef SCEE
-const char region[3] = {'e', 'e', 'e'};
+const char region[1] = {'e'};
 #endif
 
 #ifdef SCEI
-const char region[3] = {'i', 'i', 'i'};
+const char region[1] = {'i'};
+#endif
+
+#ifdef SCEZ
+const char region[3] = {'a', 'e', 'i'};
 #endif
 
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000)
+    !defined(SCPH_1000) && !defined(SCPH_xxxx)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_103) ^ \
       defined(SCPH_102) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000))
+      defined(SCPH_1000) ^ defined(SCPH_xxxx))
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif
