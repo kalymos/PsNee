@@ -1,4 +1,4 @@
-# PSNee V8.5
+# PSNee V8.6
 THE modechip supports the largest number of Playstation 1 variants, and the largest number of microcontrollers
 
 ![Logo](images/PSNee_V8_logo.png)
@@ -22,4 +22,4 @@ All US models, all European models, and the vast majority of Japanese models.
 For all useful information consult the Wiki
 
 ## Model tested
-![test](images/model_tested.png)
+![test](images/test-PSNee-v8.6.png)
