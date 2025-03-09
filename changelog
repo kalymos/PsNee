@@ -1,7 +1,11 @@
+Update:mars 2025
+
+-Added led support for ATtiny
+-Added card support to simplify fuse management
+
 Update:july 2024
 
 -Reimplementation of support for MUCs ATtiny25/45/85, Atmega32u4
--added support for MUC LGF8F328
 
 -------------------------------------------------------------
 

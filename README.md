@@ -1,7 +1,7 @@
-# PSNee V8.5
+# PSNee V8.6
 THE modechip supports the largest number of Playstation 1 variants, and the largest number of microcontrollers
 
-![Logo](images/PSNee_V8_logo.png)
+![Logo](/images/PSNee-8.6-logo.png)
 
 ## Features
 - Remove Disk Region Protection
@@ -22,4 +22,6 @@ All US models, all European models, and the vast majority of Japanese models.
 For all useful information consult the Wiki
 
 ## Model tested
-![test](images/model_tested.png)
+![test](images/test-PSNee-v8.6.png)
+
+P.S. I don't have an American model, or SCPH_xxx3. If you have tested it, tell me.

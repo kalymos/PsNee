@@ -352,7 +352,7 @@
 #define PIN_LED_ON                  PORTB  |=  (1<<PB3)      
 #define PIN_LED_OFF                 PORTB  &= ~(1<<PB3)   
 
-#if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103)
+#if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && !defined(SCPH_xxxx)
  #error "ATtiny85_45_25 Not compatible with BIOS patch"
 #endif
 

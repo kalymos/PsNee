@@ -1,4 +1,29 @@
 //------------------------------------------------------------------------------------------------
+//                         Select your console
+//------------------------------------------------------------------------------------------------
+//                              Attention!
+//   If a BIOS checksum is specified, it is more important than the SCPH model number!
+//------------------------------------------------------------------------------------------------
+
+//All NTSC-U/C SCPH_xxx1, all PAL FAT models SCPH_xxx2, SCPH_103. It's 0.5 seconds longer than choosing a specific region.
+//#define SCPH_xxxx
+
+//Here the regions are specified
+//#define SCPH_xxx1        // Use for all NTSC-U/C models. No BIOS patching needed.
+//#define SCPH_xxx2        // Use for all PAL FAT models. No BIOS patching needed.
+//#define SCPH_103         // Maybe for all SCPH_xxx3 but I have no info.
+
+//And all models that require a BIOS patch
+//#define SCPH_102         // DX - D0, AX - A7. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5
+//#define SCPH_100         // DX - D0, AX - A7. BIOS ver. 4.3j, CRC F2AF798B
+//#define SCPH_7000_9000   // DX - D0, AX - A7. BIOS ver. 4.0j, CRC EC541CD0
+//#define SCPH_5500        // DX - D0, AX - A5. BIOS ver. 3.0j, CRC FF3EEB8C
+//#define SCPH_3500_5000   // DX - D0, for 40-pin BIOS: AX - A4, for 32-pin BIOS: AX - A5. BIOS ver. 2.2j, CRC 24FC7E17 | 2.1j, CRC BC190209
+//#define SCPH_3000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.1j, CRC 3539DEF6
+//#define SCPH_1000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.0j, CRC 3B601FC8
+
+
+//------------------------------------------------------------------------------------------------
 //                         Select your chip
 //------------------------------------------------------------------------------------------------
 
@@ -8,9 +33,8 @@
 
 /*  
   Fuses: 
-  BIOS patch - H: DF, L: EE, E: FF; 
-  ATmega - H: DF, L: FF, E: FF.
-  ATtiny - H: DF, L: E2; E: FF,
+  ATmega - H: DF, L: EE, E: FD. 
+  ATtiny - H: DF, L: E2; E: FD.
 
   Pinout Arduino:
   VCC-3.5v, PinGND-GND, 
@@ -35,30 +59,13 @@
   Pin8-VCC
 */
   
-//------------------------------------------------------------------------------------------------
-//                         Select your console
-//------------------------------------------------------------------------------------------------
-//                              Attention!
-//   If a BIOS checksum is specified, it is more important than the SCPH model number!
-//------------------------------------------------------------------------------------------------
-
-//#define SCPH_xxx1        // Use for all NTSC-U/C models. No BIOS patching needed.
-//#define SCPH_xxx2        // Use for all PAL FAT models. No BIOS patching needed.
-//#define SCPH_103         // No BIOS patching needed.
-//#define SCPH_102         // DX - D0, AX - A7. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5
-//#define SCPH_100         // DX - D0, AX - A7. BIOS ver. 4.3j, CRC F2AF798B
-//#define SCPH_7000_9000   // DX - D0, AX - A7. BIOS ver. 4.0j, CRC EC541CD0
-//#define SCPH_5500        // DX - D0, AX - A5. BIOS ver. 3.0j, CRC FF3EEB8C
-//#define SCPH_3500_5000   // DX - D0, for 40-pin BIOS: AX - A4, for 32-pin BIOS: AX - A5. BIOS ver. 2.2j, CRC 24FC7E17 | 2.1j, CRC BC190209
-//#define SCPH_3000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.1j, CRC 3539DEF6
-//#define SCPH_1000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.0j, CRC 3B601FC8
 
 //------------------------------------------------------------------------------------------------
 //                         Options
 //------------------------------------------------------------------------------------------------
 
-//#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching.
-#define LED_RUN         // Turns on the LED when injections occur (D13 for Arduino, Pin 2 for ATtiny)
+#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
+//#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
@@ -80,6 +87,8 @@ volatile uint16_t millisec = 0;
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
 volatile bool wfck_mode = 0;
+
+volatile bool Flag_Switch = 0;
 
 //------------------------------------------------------------------------------------------------
 //                         Code section
@@ -200,7 +209,7 @@ uint8_t readBit(uint8_t index, const uint8_t* ByteSet) {
 // Description: 
 // Injects SCEX data corresponding to a given region ('e' for Europe, 'a' for America, 
 // 'i' for Japan). This function is used for modulating the SCEX signal to bypass 
-// region-locking mechanisms in certain PlayStation models.
+// region-locking mechanisms.
 //
 // Parameters:
 // - region: A character ('e', 'a', or 'i') representing the target region.
@@ -286,6 +295,9 @@ void Init() {
 #if defined(PATCH_SW) && defined(BIOS_PATCH)
   PIN_SWITCH_INPUT;
   PIN_SWITCH_SET;
+  if (PIN_SWICHE_READ = 0){
+   Flag_Switch =1;
+  }
 #endif
 
 #ifdef LED_RUN
@@ -309,33 +321,20 @@ int main() {
 
   Init();
 
+#if defined(BIOS_PATCH)
+
 #ifdef LED_RUN
   PIN_LED_ON;
 #endif
 
-#if defined(BIOS_PATCH) && !defined(PATCH_SWICHE)
-  Bios_Patching();
-#elif defined(BIOS_PATCH) && defined(PATCH_SWICHE)
-  if (PIN_SWICHE_READ != 0) {
+  if (Flag_Switch == 0) {
     Bios_Patching();
-  } else {
-
-    while (PIN_SQCK_READ == 0)
-      ;
-    while (PIN_WFCK_READ == 0)
-      ;
   }
-  // wait for console power on and stable signals
-#else
-
-  while (PIN_SQCK_READ == 0)
-    ;
-  while (PIN_WFCK_READ == 0)
-    ;
-#endif
 
 #ifdef LED_RUN
   PIN_LED_OFF;
+#endif
+
 #endif
 
   Timer_Start();
@@ -464,7 +463,7 @@ int main() {
 
       // inject symbols now. 2 x 3 runs seems optimal to cover all boards
       for (uint8_t scex = 0; scex < 2; scex++) {
-        inject_SCEX(region[scex]);  //
+        inject_SCEX(region[scex]);
       }
 
       if (!wfck_mode)  // Set WFCK pin input
