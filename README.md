@@ -4,7 +4,7 @@ THE modechip supports the largest number of Playstation 1 variants, and the larg
 ![Logo](/images/PSNee-8.6-logo.png)
 
 ## Installation
-For all useful information consult the Wiki
+For all useful information consult the ![Wiki](https://github.com/kalymos/PsNee/wiki)
 
 
 ## Features
