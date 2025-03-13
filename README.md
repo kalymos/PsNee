@@ -22,7 +22,7 @@ All US models, all European models, and the vast majority of Japanese models.
 - Atmega32U4        @16Mhz
 - ATtiny25/45/85    @8Mhz no BIOS patch!
 
-## Model tested
+## Model that I personally tested
 ![test](images/test-PSNee-v8.6.png)
 
 P.S. I don't have an American model, or SCPH_xxx3. If you have tested it, tell me.
