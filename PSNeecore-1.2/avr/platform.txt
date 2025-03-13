@@ -1,0 +1,23 @@
+name=PSNeeCore
+version=1.2.0
+
+tools.avrdude.path={runtime.tools.avrdude.path}
+tools.avrdude.cmd.path={path}/bin/avrdude
+tools.avrdude.config.path={path}/etc/avrdude.conf
+
+
+tools.avrdude.program.params.verbose=-v
+tools.avrdude.program.params.quiet=-q -q
+# tools.avrdude.program.verify is needed for backwards compatibility with IDE 1.6.8 or older, IDE 1.6.9 or newer overrides this value
+tools.avrdude.program.verify=
+tools.avrdude.program.params.noverify=-V
+tools.avrdude.program.pattern="{cmd.path}" "-C{config.path}" -F {program.verbose} {program.verify} -p{build.mcu} -c{protocol} {program.extra_params} -Uefuse:w:0xfd:m -Uhfuse:w:0xdf:m -Ulfuse:w:{upload.low_fuses}:m "-Uflash:w:{build.path}/{build.project_name}.hex:i"
+
+tools.avrdude.erase.params.verbose=-v -v -v -v
+tools.avrdude.erase.params.quiet=-q -q
+tools.avrdude.erase.pattern="{cmd.path}" "-C{config.path}" {erase.verbose} -p{build.mcu} -c{protocol} {program.extra_params} -e -Uefuse:w:0xfd:m -Uhfuse:w:0xdf:m -Ulfuse:w:{bootloader.low_fuses}:m
+
+##tools.avrdude.bootloader.params.verbose=-v
+##tools.avrdude.bootloader.params.quiet=-q -q
+##tools.avrdude.bootloader.pattern="{cmd.path}" "-C{config.path}" {bootloader.verbose} -p{build.mcu} -c{protocol} {program.extra_params} "-Uflash:w:{runtime.platform.path}/bootloaders/{bootloader.file}:i" -Ulock:w:{bootloader.lock_bits}:m
+

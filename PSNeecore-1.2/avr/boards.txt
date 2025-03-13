@@ -1,0 +1,200 @@
+# Menu options
+menu.variant=Variant
+#menu.fuses=Fuses
+
+##############################
+### ATiny25/45/85     ########
+##############################
+
+# General
+
+ATtinyX5.name=ATtiny25/45/85
+
+ATtinyX5.upload.tool=arduino:avrdude
+ATtinyX5.upload.low_fuses=0xe2
+
+ATtinyX5.program.tool=arduino:avrdude
+ATtinyX5.program.unlock_bits=0xff
+ATtinyX5.program.lock_bits=0xff
+
+ATtinyX5.build.core=arduino:arduino
+ATtinyX5.build.board=attiny
+ATtinyX5.build.variant=tiny8
+ATtinyX5.build.f_cpu=8000000L
+
+# Variants
+
+ATtinyX5.menu.variant.attiny25=ATtiny25
+ATtinyX5.menu.variant.attiny25.upload.maximum_size=2048
+ATtinyX5.menu.variant.attiny25.upload.maximum_data_size=128
+ATtinyX5.menu.variant.attiny25.build.mcu=attiny25
+
+
+ATtinyX5.menu.variant.attiny45=ATtiny45
+ATtinyX5.menu.variant.attiny45.upload.maximum_size=4096
+ATtinyX5.menu.variant.attiny45.upload.maximum_data_size=256
+ATtinyX5.menu.variant.attiny45.build.mcu=attiny45
+
+
+ATtinyX5.menu.variant.attiny85=ATtiny85
+ATtinyX5.menu.variant.attiny85.upload.maximum_size=8192
+ATtinyX5.menu.variant.attiny85.upload.maximum_data_size=512
+ATtinyX5.menu.variant.attiny85.build.mcu=attiny85
+
+
+##############################
+###    ATiny48/88     ########
+##############################
+
+# General
+
+ATtinyX8.name=ATtiny88/48
+
+ATtinyX8.upload.tool=arduino:avrdude
+
+ATtinyX8.program.tool=arduino:avrdude
+ATtinyX8.program.unlock_bits=0xff
+ATtinyX8.program.lock_bits=0xff
+
+ATtinyX8.build.core=arduino:arduino
+ATtinyX8.build.board=AVR_ATTINYX8
+ATtinyX8.build.variant=tinyx8
+ATtinyX8.build.f_cpu=16000000L
+
+
+
+ATtinyX8.menu.variant.attiny48=ATtiny48
+ATtinyX8.menu.variant.attiny48.upload.maximum_size=4096
+ATtinyX8.menu.variant.attiny48.upload.maximum_data_size=256
+ATtinyX8.menu.variant.attiny48.build.mcu=attiny48
+
+ATtinyX8.menu.variant.attiny88=ATtiny88
+ATtinyX8.menu.variant.attiny88.upload.maximum_size=8192
+ATtinyX8.menu.variant.attiny88.upload.maximum_data_size=512
+ATtinyX8.menu.variant.attiny88.build.mcu=attiny88
+
+ATtinyX8.menu.fuses.BIOSpatch=BIOS patch
+ATtinyX8.menu.fuses.BIOSpatch.upload.low_fuses=0xee
+
+ATtinyX8.menu.fuses.NoBIOSpatch=No BIOS patch
+ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
+
+#############################
+#### ATmega328/A/P/PA/PB ####
+#############################
+
+# General
+328.name=ATmega328
+
+328.upload.tool=arduino:avrdude
+328.upload.default_speed=57600
+328.upload.maximum_data_size=2048
+328.upload.maximum_size=30720
+328.upload.low_fuses=0xee
+
+328.build.core=arduino:arduino
+328.build.board=AVR_ATmega328
+328.build.f_cpu=16000000L
+
+# Variants
+328.menu.variant.modelP=328P / 328PA
+328.menu.variant.modelP.build.variant=standard
+328.menu.variant.modelP.build.mcu=atmega328p
+
+328.menu.variant.modelNonP=328 / 328A
+328.menu.variant.modelNonP.build.variant=standard
+328.menu.variant.modelNonP.build.mcu=atmega328
+
+328.menu.variant.modelPB=328PB
+328.menu.variant.modelPB.build.variant=pb-variant 
+328.menu.variant.modelPB.build.mcu=atmega328pb
+
+
+
+#############################
+#### ATmega168/A/P/PA/PB ####
+#############################
+
+168.name=ATmega168
+
+168.upload.tool=arduino:avrdude
+168.upload.default_speed=57600
+168.upload.maximum_size=15872
+168.upload.maximum_data_size=1024
+168.upload.low_fuses=0xee
+
+168.build.core=arduino:arduino
+168.build.board=AVR_ATmega168
+168.build.f_cpu=16000000L
+
+
+# Variants
+168.menu.variant.modelP=168P / 168PA
+168.menu.variant.modelP.build.variant=standard
+168.menu.variant.modelP.build.mcu=atmega168p
+
+168.menu.variant.modelNonP=168 / 168A
+168.menu.variant.modelNonP.build.variant=standard
+168.menu.variant.modelNonP.build.mcu=atmega168
+
+168.menu.variant.modelPB=168PB
+168.menu.variant.modelPB.build.variant=pb-variant
+168.menu.variant.modelPB.build.mcu=atmega168pb
+
+#############################
+#### atmega32u4          ####
+#############################
+
+32u4.name=ATmega32u4
+
+32u4.vid.0=0x2341
+32u4.pid.0=0x0037
+32u4.vid.1=0x2341
+32u4.pid.1=0x8037
+32u4.vid.2=0x2A03
+32u4.pid.2=0x0037
+32u4.vid.3=0x2A03
+32u4.pid.3=0x8037
+32u4.vid.4=0x2341
+32u4.pid.4=0x0237
+32u4.vid.5=0x2341
+32u4.pid.5=0x8237
+32u4.upload_port.0.vid=0x2341
+32u4.upload_port.0.pid=0x0037
+32u4.upload_port.1.vid=0x2341
+32u4.upload_port.1.pid=0x8037
+32u4.upload_port.2.vid=0x2A03
+32u4.upload_port.2.pid=0x0037
+32u4.upload_port.3.vid=0x2A03
+32u4.upload_port.3.pid=0x8037
+32u4.upload_port.4.vid=0x2341
+32u4.upload_port.4.pid=0x0237
+32u4.upload_port.5.vid=0x2341
+32u4.upload_port.5.pid=0x8237
+32u4.upload_port.6.board=micro
+
+32u4.upload.tool=arduino:avrdude
+32u4.upload.default_speed=57600
+32u4.upload.maximum_data_size=2048
+32u4.upload.maximum_size=30720
+32u4.upload.use_1200bps_touch=true
+32u4.upload.wait_for_upload_port=true
+32u4.upload.low_fuses=0xee
+
+
+
+32u4.build.mcu=atmega32u4
+32u4.build.f_cpu=16000000L
+32u4.build.vid=0x2341
+32u4.build.pid=0x8037
+32u4.build.usb_product="Arduino Micro"
+32u4.build.board=AVR_MICRO
+32u4.build.core=arduino:arduino
+32u4.build.variant=micro
+32u4.build.extra_flags={build.usb_flags}
+
+
+32u4.vid.0=0x239A
+32u4.pid.0=0x800C
+
+
