@@ -3,6 +3,10 @@ THE modechip supports the largest number of Playstation 1 variants, and the larg
 
 ![Logo](/images/PSNee-8.6-logo.png)
 
+## Installation
+For all useful information consult the Wiki
+
+
 ## Features
 - Remove Disk Region Protection
 - Patch BIOS additional region features
@@ -17,9 +21,6 @@ All US models, all European models, and the vast majority of Japanese models.
 - ATmega168(A/P/PA) @16Mhz
 - Atmega32U4        @16Mhz
 - ATtiny25/45/85    @8Mhz no BIOS patch!
-
-## Installation
-For all useful information consult the Wiki
 
 ## Model tested
 ![test](images/test-PSNee-v8.6.png)
