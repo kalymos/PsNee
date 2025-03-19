@@ -4,12 +4,12 @@ THE modechip supports the largest number of Playstation 1 variants, and the larg
 ![Logo](/images/PSNee-8.6-logo.png)
 
 ## Installation
-For all useful information consult the ![Wiki](https://github.com/kalymos/PsNee/wiki)
+# For all useful information consult the ![Wiki](https://github.com/kalymos/PsNee/wiki)
 
 
 ## Features
 - Remove Disk Region Protection
-- Patch BIOS additional region features
+- Patch BIOS 
 - A specific library for card support, to solve the fuse setting problem.
 - The mode does not take care of changing PAL <-> NTSC video output (in other words if you use a Japanese console and you put European games, or in older European models you use American or Japanese games... the display will not be correct)
 
