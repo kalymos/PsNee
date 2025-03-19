@@ -1,11 +1,8 @@
 # PSNee V8.6
 THE modechip supports the largest number of Playstation 1 variants, and the largest number of microcontrollers
-
-![Logo](/images/PSNee-8.6-logo.png)
-
-## Installation
 # For all useful information consult the ![Wiki](https://github.com/kalymos/PsNee/wiki)
 
+![Logo](/images/PSNee-8.6-logo.png)
 
 ## Features
 - Remove Disk Region Protection
