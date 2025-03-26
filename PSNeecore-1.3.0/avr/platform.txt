@@ -1,5 +1,5 @@
 name=PSNeeCore
-version=1.3.0
+version=1.3.1
 
 tools.avrdude.path={runtime.tools.avrdude.path}
 tools.avrdude.cmd.path={path}/bin/avrdude
@@ -21,6 +21,5 @@ tools.avrdude.erase.pattern="{cmd.path}" "-C{config.path}" {erase.verbose} -p{bu
 ##tools.avrdude.bootloader.params.quiet=-q -q
 ##tools.avrdude.bootloader.pattern="{cmd.path}" "-C{config.path}" {bootloader.verbose} -p{build.mcu} -c{protocol} {program.extra_params} "-Uflash:w:{runtime.platform.path}/bootloaders/{bootloader.file}:i" -Ulock:w:{bootloader.lock_bits}:m
 
-recipe.postupload.0.pattern="{runtime.tools.avrdude.path}/bin/avrdude" -c arduino -p {build.mcu} -P {serial.port} -U flash:r:{build.path}/readback.hex:i"
-recipe.postupload.1.pattern="{runtime.tools.avrdude.path}/bin/avrdude" -c arduino -p {build.mcu} -P {serial.port} -U flash:v:{build.path}/{build.project_name}.hex:i"
-recipe.postupload.2.pattern="{runtime.tools.avrdude.path}/bin/avrdude" -c arduino -p {build.mcu} -P {serial.port} -U lfuse:r:-:h -U hfuse:r:-:h -U efuse:r:-:h | findstr /I /C:{build.f_cpu}
+
+tools.avrdude.upload.pattern="{runtime.tools.avrdude.path}/bin/avrdude" -c arduino -p {build.mcu} -P {serial.port} -U flash:w:{build.path}/{build.project_name}.hex:i && {runtime.tools.avrdude.path}/bin/avrdude -c arduino -p {build.mcu} -P {serial.port} -U flash:r:{build.path}/readback.hex:i && (diff -q {build.path}/readback.hex {build.path}/{build.project_name}.hex || fc /b {build.path}\readback.hex {build.path}\{build.project_name}.hex) || echo 'Error: MCU firmware does not match!'"
