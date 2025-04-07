@@ -77,8 +77,9 @@
 
 //Initializing values ​​for region code injection timing
 #define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
-#define DELAY_BETWEEN_INJECTIONS 90  // PU-22+ work best with 80 to 100 (milliseconds)  72 in oldcrow. pu_23 pu-22 MAX 250 MIN 50
-#define HYSTERESIS_MAX 14            //pu-23 pu-22 min 5 max 200
+#define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
+#define HYSTERESIS_MAX 17            // The sweet spot is between 11~19. All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
+                                     // On fat models if your reader is really bad you can increase this value in steps of 5.
 
 //Creation of the different variables for the counter
 volatile uint8_t count_isr = 0;
