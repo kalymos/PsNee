@@ -355,7 +355,7 @@
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && !defined(SCPH_xxxx)
  #error "ATtiny85_45_25 Not compatible with BIOS patch"
 #endif
-
+#endif
 
 // *****************************************************************************************************************
 // WARNING:
@@ -369,8 +369,10 @@
 #define TIMER_TCNT_CLEAR            TCNT0   =   0x00             //TCNT0 - Timer/Counter Register
 #define SET_OCROA_DIV               OCR0A   =   159;             //OCR0A – Output Compare Register A, 0x10011111, 100KHz
 #define SET_TIMER_TCCROA            TCCR0A |=  (1 << CTC0 );     //TCCR0A – Timer/Counter Control Register A. turn on CTC mode, CTC0
-#define SET_TIMER_TCCROB            TCCR0A |=  (1 << CS00);      //TCCR0B – Timer/Counter Control Register B,  CS00: Clock Select,  clk I/O
-                                                                 //Waveform Generation Mode, Mode 2 CTC
+// On ATtiny88, TCCR0B doesn't exist — clock select bits (CS01, CS00) are in TCCR0A.
+// This sets the prescaler to 1, so the timer runs at full system clock (16 MHz).
+#define SET_TIMER_TCCROB            TCCR0A |=  (1 << CS01) | (1 << CS00)
+
 #define CTC_TIMER_VECTOR            TIMER0_COMPA_vect            //interrupt vector for match event, OCR0A comparison and Timer/Counter 0
 
 
@@ -411,10 +413,10 @@
 #define PIN_WFCK_READ              (PINB   &   (1<<PINB1))                                                       
 
 // Handling and use of the LED pin
-//#define LED_RUN
-//#define PIN_LED_OUTPUT              DDRB   |=  (1<<DDB5)                                
-//#define PIN_LED_ON                  PORTB  |=  (1<<PB5)      
-//#define PIN_LED_OFF                 PORTB  &= ~(1<<PB5)   
+#define LED_RUN
+#define PIN_LED_OUTPUT              DDRB   |=  (1<<DDB5)                                
+#define PIN_LED_ON                  PORTB  |=  (1<<PB5)      
+#define PIN_LED_OFF                 PORTB  &= ~(1<<PB5)   
 
 // Handling the BIOS patch
 
@@ -750,4 +752,4 @@
 
 #endif
 
-#endif
+
