@@ -1,7 +1,8 @@
 
 #pragma once
 
-#ifdef BIOS_PATCH
+#if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+
 
 void Timer_Start(void);
 void Timer_Stop(void);

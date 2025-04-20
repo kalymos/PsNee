@@ -17,25 +17,10 @@
 
 */
 
-#ifdef  SCPH_xxxx
-#define SCEZ
-#endif
-
-#ifdef  SCPH_xxx1
-#define SCEA
-#endif
-
-#ifdef  SCPH_xxx2
-#define SCEE
-#endif
-
-#ifdef  SCPH_103
-#define SCEI
-#endif
 
 #ifdef  SCPH_102
-#define SCEE
-#define BIOS_PATCH
+//#define SCEE
+//#define BIOS_PATCH
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.2)
 #define CHECKPOINT 83900
@@ -43,8 +28,8 @@
 #endif
 
 #ifdef  SCPH_100
-#define SCEI
-#define BIOS_PATCH
+//#define SCEI
+//#define BIOS_PATCH
 #define HOLD _delay_us(2.7)
 #define PATCHING _delay_us(0.2)
 #define CHECKPOINT 83900
@@ -52,8 +37,8 @@
 #endif
 
 #ifdef  SCPH_7000_9000
-#define SCEI
-#define BIOS_PATCH
+//#define SCEI
+//#define BIOS_PATCH
 #define HOLD _delay_us(2.85) 
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 75270
@@ -61,8 +46,8 @@
 #endif
 
 #ifdef  SCPH_5500
-#define SCEI
-#define BIOS_PATCH
+//#define SCEI
+//#define BIOS_PATCH
 #define HOLD _delay_us(2.85)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 76130
@@ -71,8 +56,8 @@
 #endif
 
 #ifdef  SCPH_3500_5000
-#define SCEI
-#define BIOS_PATCH
+//#define SCEI
+//#define BIOS_PATCH
 #define HOLD _delay_us(2.85)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 75260
@@ -81,8 +66,8 @@
 #endif
 
 #ifdef  SCPH_3000
-#define SCEI
-#define BIOS_PATCH                                                    
+//#define SCEI
+//#define BIOS_PATCH                                                    
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 83000      
@@ -97,8 +82,8 @@
 #endif
 
 #ifdef  SCPH_1000
-#define SCEI
-#define BIOS_PATCH
+//#define SCEI
+//#define BIOS_PATCH
 #define HOLD _delay_us(2.7)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 83000
@@ -112,29 +97,38 @@
 #define TRIGGER2 71
 #endif
 
-#ifdef SCEA
+#if defined(SCPH_xxx1) || defined(SCPH_101)
 const char region[1] = {'a'};
 #endif
 
-#ifdef SCEE
+#if defined(SCPH_102) || defined(SCPH_xxx2)
 const char region[1] = {'e'};
 #endif
 
-#ifdef SCEI
+#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_103) || defined(SCPH_xxx3)
 const char region[1] = {'i'};
 #endif
 
-#ifdef SCEZ
+#ifdef SCPH_xxxx
 const char region[3] = {'a', 'e', 'i'};
 #endif
 
-#if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && \
-    !defined(SCPH_102) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
+//All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
+#if defined(SCPH_100) || defined(SCPH_101) || defined(SCPH_102) || defined(SCPH_103) || defined(SCPH_xxxx)
+#define HYSTERESIS_MAX 15
+#endif
+
+#if defined(SCPH_xxx1) || defined(SCPH_xxx2) || defined(SCPH_xxx3) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+#define HYSTERESIS_MAX 20 
+#endif
+
+#if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxx3) && !defined(SCPH_103) && \
+    !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
     !defined(SCPH_1000) && !defined(SCPH_xxxx)
  #error "Console not selected! Please uncoment #define with SCPH model number."
-#elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_103) ^ \
-      defined(SCPH_102) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
+#elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_xxx3) ^ defined(SCPH_103) ^ \
+      defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
       defined(SCPH_1000) ^ defined(SCPH_xxxx))
  #error "May be selected only one console! Please check #define with SCPH model number."
