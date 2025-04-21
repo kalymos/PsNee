@@ -1,38 +1,19 @@
 //------------------------------------------------------------------------------------------------
 //                         Select your console
 //------------------------------------------------------------------------------------------------
-
-//Legacy mode works the same as V7.
-
-//All NTSC-U/C SCPH_xxx1, all PAL FAT models SCPH_xxx2, SCPH_103. It's 0.5 seconds longer than choosing a specific region.
-//On models with problematic CD players the HYSTERESIS_MAX setting may be a little short.
-
-//#define SCPH_xxxx
-
-//-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
-
-//Here the regions are specified. No BIOS patching needed.
-
-//Here the setting of HYSTERESIS_MAX goes up to 20.
-
-//#define SCPH_xxx1        // NTSC-U/C FAT.
-//#define SCPH_xxx2        // PAL FAT.
-//#define SCPH_xxx3        // NTSC-Asia FAT.
-
-//Here the HYSTERESIS_MAX setting is 15.
-
-//#define SCPH_101         // NTSC-U/C.
-//#define SCPH_103         // NTSC-Asia.
-
-//_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
-
-//And all models that require a BIOS patch.
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 //                              Attention!
 //   If a BIOS checksum is specified, it is more important than the SCPH model number!
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//------------------------------------------------------------------------------------------------
 
+//All NTSC-U/C SCPH_xxx1, all PAL FAT models SCPH_xxx2, SCPH_103. It's 0.5 seconds longer than choosing a specific region.
+//#define SCPH_xxxx
+
+//Here the regions are specified
+//#define SCPH_xxx1        // Use for all NTSC-U/C models. No BIOS patching needed.
+//#define SCPH_xxx2        // Use for all PAL FAT models. No BIOS patching needed.
+//#define SCPH_103         // Maybe for all SCPH_xxx3 but I have no info.
+
+//And all models that require a BIOS patch
 //#define SCPH_102         // DX - D0, AX - A7. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5
 //#define SCPH_100         // DX - D0, AX - A7. BIOS ver. 4.3j, CRC F2AF798B
 //#define SCPH_7000_9000   // DX - D0, AX - A7. BIOS ver. 4.0j, CRC EC541CD0
@@ -46,11 +27,10 @@
 //                         Select your chip
 //------------------------------------------------------------------------------------------------
 
-
 //#define ATmega328_168  
 //#define ATmega32U4_16U4
 //#define ATtiny85_45_25 
-#define ATtiny88_48
+
 /*  
   Fuses: 
   ATmega - H: DF, L: EE, E: FD. 
@@ -85,21 +65,21 @@
 //------------------------------------------------------------------------------------------------
 
 #define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
-#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
+//#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
 //------------------------------------------------------------------------------------------------
 
-#include "MCU.h"
+#include "MUC.h"
 #include "settings.h"
 #include "BIOS_patching.h"
 
 //Initializing values ​​for region code injection timing
 #define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
 #define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
-//#define HYSTERESIS_MAX 17            // The sweet spot is between 11~19. All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
-
+#define HYSTERESIS_MAX 17            // The sweet spot is between 11~19. All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
+                                     // On fat models if your reader is really bad you can increase this value in steps of 5.
 
 //Creation of the different variables for the counter
 volatile uint8_t count_isr = 0;
@@ -313,10 +293,10 @@ void Init() {
   SET_TIMER_TCCROB;
 #endif
 
-#if defined(PATCH_SWITCH) && defined(BIOS_PATCH)
+#if defined(PATCH_SW) && defined(BIOS_PATCH)
   PIN_SWITCH_INPUT;
   PIN_SWITCH_SET;
-  if (PIN_SWITCH_READ == 0){
+  if (PIN_SWICHE_READ = 0){
    Flag_Switch =1;
   }
 #endif
