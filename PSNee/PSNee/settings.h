@@ -20,7 +20,7 @@
 
 #ifdef  SCPH_102
 //#define SCEE
-//#define BIOS_PATCH
+#define BIOS_PATCH
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.2)
 #define CHECKPOINT 83900
@@ -29,7 +29,7 @@
 
 #ifdef  SCPH_100
 //#define SCEI
-//#define BIOS_PATCH
+#define BIOS_PATCH
 #define HOLD _delay_us(2.7)
 #define PATCHING _delay_us(0.2)
 #define CHECKPOINT 83900
@@ -38,7 +38,7 @@
 
 #ifdef  SCPH_7000_9000
 //#define SCEI
-//#define BIOS_PATCH
+#define BIOS_PATCH
 #define HOLD _delay_us(2.85) 
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 75270
@@ -47,7 +47,7 @@
 
 #ifdef  SCPH_5500
 //#define SCEI
-//#define BIOS_PATCH
+#define BIOS_PATCH
 #define HOLD _delay_us(2.85)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 76130
@@ -57,7 +57,7 @@
 
 #ifdef  SCPH_3500_5000
 //#define SCEI
-//#define BIOS_PATCH
+#define BIOS_PATCH
 #define HOLD _delay_us(2.85)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 75260
@@ -67,7 +67,7 @@
 
 #ifdef  SCPH_3000
 //#define SCEI
-//#define BIOS_PATCH                                                    
+#define BIOS_PATCH                                                    
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 83000      
@@ -83,7 +83,7 @@
 
 #ifdef  SCPH_1000
 //#define SCEI
-//#define BIOS_PATCH
+#define BIOS_PATCH
 #define HOLD _delay_us(2.7)
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 83000
@@ -98,15 +98,15 @@
 #endif
 
 #if defined(SCPH_xxx1) || defined(SCPH_101)
-const char region[1] = {'a'};
+const char region[3] = {'a', 'a', 'a'};
 #endif
 
 #if defined(SCPH_102) || defined(SCPH_xxx2)
-const char region[1] = {'e'};
+const char region[3] = {'e', 'e', 'e'};
 #endif
 
 #if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_103) || defined(SCPH_xxx3)
-const char region[1] = {'i'};
+const char region[3] = {'i', 'i', 'i'};
 #endif
 
 #ifdef SCPH_xxxx
@@ -119,7 +119,7 @@ const char region[3] = {'a', 'e', 'i'};
 #endif
 
 #if defined(SCPH_xxx1) || defined(SCPH_xxx2) || defined(SCPH_xxx3) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
-#define HYSTERESIS_MAX 20 
+#define HYSTERESIS_MAX 25 
 #endif
 
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxx3) && !defined(SCPH_103) && \
