@@ -17,6 +17,14 @@
 
 */
 
+#ifdef  SCPH_102A
+//#define SCEE
+#define BIOS_PATCH
+#define SATBILIZATIONPOINT 100
+#define DELAYPOINT 1350
+#define HOLD _delay_us(17)
+#define PATCHING _delay_us(4)
+#endif
 
 #ifdef  SCPH_102
 //#define SCEE
@@ -101,7 +109,7 @@
 const char region[3] = {'a', 'a', 'a'};
 #endif
 
-#if defined(SCPH_102) || defined(SCPH_xxx2)
+#if defined(SCPH_102) || defined(SCPH_xxx2) || defined(SCPH_102A)
 const char region[3] = {'e', 'e', 'e'};
 #endif
 
@@ -114,7 +122,7 @@ const char region[3] = {'a', 'e', 'i'};
 #endif
 
 //All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
-#if defined(SCPH_100) || defined(SCPH_101) || defined(SCPH_102) || defined(SCPH_103) || defined(SCPH_xxxx)
+#if defined(SCPH_100) || defined(SCPH_101) || defined(SCPH_102) || defined(SCPH_102A) || defined(SCPH_103) || defined(SCPH_xxxx)
 #define HYSTERESIS_MAX 15
 #endif
 
@@ -125,11 +133,11 @@ const char region[3] = {'a', 'e', 'i'};
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxx3) && !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx)
+    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102A)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_xxx3) ^ defined(SCPH_103) ^ \
       defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx))
+      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102A))
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif

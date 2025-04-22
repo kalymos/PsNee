@@ -36,6 +36,7 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 //#define SCPH_102         // DX - D0, AX - A7. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5
+//#define SCPH_102A        // ! works in progress DX - D2, AX - A18. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5 
 //#define SCPH_100         // DX - D0, AX - A7. BIOS ver. 4.3j, CRC F2AF798B
 //#define SCPH_7000_9000   // DX - D0, AX - A7. BIOS ver. 4.0j, CRC EC541CD0
 //#define SCPH_5500        // DX - D0, AX - A5. BIOS ver. 3.0j, CRC FF3EEB8C
@@ -49,10 +50,10 @@
 //------------------------------------------------------------------------------------------------
 
 
-//#define ATmega328_168  
+#define ATmega328_168  
 //#define ATmega32U4_16U4
 //#define ATtiny85_45_25 
-//#define ATtiny88_48
+
 /*  
   Fuses: 
   ATmega - H: DF, L: EE, E: FD. 
@@ -86,8 +87,8 @@
 //                         Options
 //------------------------------------------------------------------------------------------------
 
-#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
-#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
+//#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
+//#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
@@ -104,7 +105,7 @@
 //Creation of the different variables for the counter
 volatile uint8_t count_isr = 0;
 volatile uint32_t microsec = 0;
-volatile uint16_t millisec = 0;
+volatile uint32_t millisec = 0;
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
 volatile bool wfck_mode = 0;
@@ -342,14 +343,18 @@ int main() {
 
   Init();
 
-#if defined(BIOS_PATCH)
+#ifdef BIOS_PATCH
 
 #ifdef LED_RUN
   PIN_LED_ON;
 #endif
 
   if (Flag_Switch == 0) {
-    Bios_Patching();
+    #ifdef SCPH_102A
+      Bios_Patching_SCPH_102A();
+    #else
+      Bios_Patching();
+    #endif
   }
 
 #ifdef LED_RUN

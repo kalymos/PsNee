@@ -158,7 +158,7 @@
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+  #if defined(SCPH_102) || defined(SCPH_102A) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
 
     // Clear the timer interrupt flag
     #define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
@@ -262,7 +262,7 @@
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+  #if defined(SCPH_102) || defined(SCPH_102A) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
   // Pins input
     #define PIN_AX_INPUT DDRD &= ~(1 << DDD1)
     #define PIN_AY_INPUT DDRD &= ~(1 << DDD0)
@@ -362,7 +362,7 @@
     #define PIN_LED_OFF PORTB &= ~(1 << PB3)
   #endif
 
-  #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && !defined(SCPH_xxxx)
+  #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && && !defined(SCPH_xxx3) !defined(SCPH_103) && && !defined(SCPH_101) !defined(SCPH_xxxx) 
    #error "ATtiny85_45_25 Not compatible with BIOS patch"
   #endif
 

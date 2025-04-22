@@ -1,7 +1,7 @@
 
 #pragma once
 
-#if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+#if defined(SCPH_102A) || defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
 
 
 void Timer_Start(void);
@@ -9,10 +9,15 @@ void Timer_Stop(void);
 
 extern volatile uint8_t count_isr;
 extern volatile uint32_t microsec;
+extern volatile uint32_t millisec;
 
 
 volatile uint8_t impulse = 0;
 volatile uint8_t patch = 0;
+
+#endif
+
+#if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
 
 ISR(PIN_AX_INTERRUPT_VECTOR) {
 	impulse++;                         
@@ -97,5 +102,46 @@ void Bios_Patching(){
 
 	#endif
 }
+#endif
+
+#ifdef SCPH_102A
+void Bios_Patching_SCPH_102A() {
+
+  PIN_AX_INPUT;                          //A18
+  PIN_DX_INPUT;                          //D2
+
+  Timer_Start();
+  while (millisec < SATBILIZATIONPOINT);               // this is right after SQCK appeared. wait a little to avoid noise
+  while (PIN_AX_READ != 0);
+  Timer_Stop();
+ // {
+  //  ;                                   //wait for stage 1 A18 pulse
+ // }
+
+  Timer_Start();
+  while (millisec < DELAYPOINT);       //wait through stage 1 of A18 activity delay(1350)
+  Timer_Stop();
+
+  //noInterrupts();                       // start critical section
+  Timer_Start();
+  while (PIN_AX_READ != 0);
+  {
+    ;                                   //wait for priming A18 pulse
+  }
+  //while (microsec < HOLD );      // delayMicroseconds(17) min 13us max 17us for 16Mhz ATmega (maximize this when tuning!)
+  HOLD;
+  PIN_DX_CLEAR;                            // store a low
+  PIN_DX_OUTPUT;                           // D2 = output. drags line low now
+  PATCHING;
+  //while (microsec < PATCHING );  // delayMicroseconds(4) min 2us for 16Mhz ATmega, 8Mhz requires 3us (minimize this when tuning, after maximizing first us delay!)
+  PIN_DX_INPUT;                            // D2 = input / high-z
+  //interrupts();                         // end critical section
+  Timer_Stop();
+                                          // not necessary but I want to make sure these pins are now high-z again
+  PIN_AX_INPUT;
+  PIN_DX_INPUT;
+}
+
 
 #endif
+
