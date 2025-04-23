@@ -107,41 +107,93 @@ void Bios_Patching(){
 #ifdef SCPH_102A
 void Bios_Patching_SCPH_102A() {
 
-  PIN_AX_INPUT;                          //A18
-  PIN_DX_INPUT;                          //D2
+//   PIN_AX_INPUT;                          //A18
+//   PIN_DX_INPUT;                          //D2
 
-  Timer_Start();
-  while (millisec < SATBILIZATIONPOINT);               // this is right after SQCK appeared. wait a little to avoid noise
-  while (PIN_AX_READ != 0);
-  Timer_Stop();
- // {
-  //  ;                                   //wait for stage 1 A18 pulse
- // }
+//   Timer_Start();
+//   while (millisec < SATBILIZATIONPOINT);               // this is right after SQCK appeared. wait a little to avoid noise
+//   while (PIN_AX_READ != 0);
+//   Timer_Stop();
 
-  Timer_Start();
-  while (millisec < DELAYPOINT);       //wait through stage 1 of A18 activity delay(1350)
-  Timer_Stop();
+//   //                                  //wait for stage 1 A18 pulse
 
-  //noInterrupts();                       // start critical section
-  Timer_Start();
-  while (PIN_AX_READ != 0);
-  {
-    ;                                   //wait for priming A18 pulse
-  }
-  //while (microsec < HOLD );      // delayMicroseconds(17) min 13us max 17us for 16Mhz ATmega (maximize this when tuning!)
-  HOLD;
-  PIN_DX_CLEAR;                            // store a low
-  PIN_DX_OUTPUT;                           // D2 = output. drags line low now
-  PATCHING;
-  //while (microsec < PATCHING );  // delayMicroseconds(4) min 2us for 16Mhz ATmega, 8Mhz requires 3us (minimize this when tuning, after maximizing first us delay!)
-  PIN_DX_INPUT;                            // D2 = input / high-z
-  //interrupts();                         // end critical section
-  Timer_Stop();
-                                          // not necessary but I want to make sure these pins are now high-z again
-  PIN_AX_INPUT;
-  PIN_DX_INPUT;
+
+//   Timer_Start();
+//   while (millisec < DELAYPOINT);       //wait through stage 1 of A18 activity delay(1350)
+//   Timer_Stop();
+
+//   //noInterrupts();                       // start critical section
+//   GLOBAL_INTERRUPT_DISABLE;
+//   Timer_Start();
+//   while (PIN_AX_READ != 0);
+//   {
+//     ;                                   //wait for priming A18 pulse
+//   }
+//   //while (microsec < HOLD );      // delayMicroseconds(17) min 13us max 17us for 16Mhz ATmega (maximize this when tuning!)
+//   HOLD;
+//   PIN_DX_CLEAR;                            // store a low
+//   PIN_DX_OUTPUT;                           // D2 = output. drags line low now
+//   PATCHING;
+//   //while (microsec < PATCHING );  // delayMicroseconds(4) min 2us for 16Mhz ATmega, 8Mhz requires 3us (minimize this when tuning, after maximizing first us delay!)
+//   PIN_DX_INPUT;                            // D2 = input / high-z
+//   GLOBAL_INTERRUPT_ENABLE;
+//   //interrupts();                         // end critical section
+//   Timer_Stop();
+//                                           // not necessary but I want to make sure these pins are now high-z again
+//   PIN_AX_INPUT;
+//   PIN_DX_INPUT;
+// }
+
+// Original function equivalent to NTSC_fix(), using macros
+void Bios_Patching_SCPH_102A(void) {
+
+    // configure A18 and D2 as inputs
+    PIN_AX_INPUT;
+    PIN_DX_INPUT;
+
+    // arm A18 interrupt for noise immunity (optional)
+    PIN_AX_INTERRUPT_RISING;
+    PIN_AX_INTERRUPT_ENABLE;
+
+    // initial stabilization delay
+    Timer_Start();
+    SATBILIZATIONPOINT;    // _delay_ms(100)
+    Timer_Stop();
+
+    // wait for stage 1 A18 pulse
+    while (!PIN_AX_READ) ;
+
+    // wait through stage 1 of A18 activity
+    Timer_Start();
+    DELAYPOINT;            // _delay_ms(1350)
+    Timer_Stop();
+
+    // critical section
+    noInterrupts();
+    // wait for priming A18 pulse
+    while (!PIN_AX_READ) ;
+    Timer_Start();
+    HOLD;                  // _delay_us(17)
+    Timer_Stop();
+
+    // drive D2 low for patch
+    PIN_DX_CLEAR;          // clear D2
+    PIN_DX_OUTPUT;         // set D2 as output
+    Timer_Start();
+    PATCH;                 // _delay_us(4)
+    Timer_Stop();
+    PIN_DX_INPUT;          // release D2 (input/high-Z)
+    interrupts();
+
+    // restore pins to input
+    PIN_AX_INPUT;
+    PIN_DX_INPUT;
+
+    // disable A18 interrupt now that patch is done
+    PIN_AX_INTERRUPT_DISABLE;
 }
 
 
 #endif
+
 
