@@ -117,7 +117,7 @@ const char region[3] = {'e', 'e', 'e'};
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
-#ifdef SCPH_xxxx
+#if defined(SCPH_xxxx) || defined(SCPH_hyma)
 const char region[3] = {'a', 'e', 'i'};
 #endif
 
@@ -126,18 +126,18 @@ const char region[3] = {'a', 'e', 'i'};
 #define HYSTERESIS_MAX 15
 #endif
 
-#if defined(SCPH_xxx1) || defined(SCPH_xxx2) || defined(SCPH_xxx3) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+#if defined(SCPH_xxx1) || defined(SCPH_xxx2) || defined(SCPH_xxx3) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_hyma)
 #define HYSTERESIS_MAX 25 
 #endif
 
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxx3) && !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102A)
+    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102A) && !defined(SCPH_hyma)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_xxx3) ^ defined(SCPH_103) ^ \
       defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102A))
+      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102A) ^ defined(SCPH_hyma))
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif

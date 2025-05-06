@@ -1,94 +1,108 @@
 //                         PSNee-8.7.0
 
 //------------------------------------------------------------------------------------------------
-//                         Select your console
+//                         Console selection
 //------------------------------------------------------------------------------------------------
 
-//Legacy mode works the same as V7.
+//No BIOS patching.
 
-//All NTSC-U/C SCPH_xxx1, all PAL FAT models SCPH_xxx2, SCPH_103. It's 0.5 seconds longer than choosing a specific region.
-//On models with problematic CD players the HYSTERESIS_MAX setting may be a little short.
+//   SCPH model number      |  common noun  | HYSTERESIS_MAX
+//-------------------------------------------------------------------------------------------------
+//#define SCPH_xxx1         | NTSC-U/C  FAT | 25
+//#define SCPH_xxx2         | PAL       FAT | 25
+//#define SCPH_xxx3         | NTSC-Asia FAT | 25
+//#define SCPH_101          | NTSC-U/C      | 15  
+//#define SCPH_103          | NTSC-Asia     | 15
 
-//#define SCPH_xxxx
+//Models that require a BIOS patch.
 
-//-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
-
-//Here the regions are specified. No BIOS patching needed.
-
-//Here the setting of HYSTERESIS_MAX goes up to 20.
-
-//#define SCPH_xxx1        // NTSC-U/C FAT.
-//#define SCPH_xxx2        // PAL FAT.
-//#define SCPH_xxx3        // NTSC-Asia FAT.
-
-//Here the HYSTERESIS_MAX setting is 15.
-
-//#define SCPH_101         // NTSC-U/C.
-//#define SCPH_103         // NTSC-Asia.
-
-//_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
-
-//And all models that require a BIOS patch.
+//                                                    Adres pin
+//   SCPH model number      | Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS ver
+//-------------------------------------------------------------------------------------------------
+//#define SCPH_102          | DX - D0  | AX - A7          |                  | 4.4e, 4.5e
+//#define SCPH_102A         | ! works in progress DX - D2, AX - A18.         | 4.4e, 4.5e
+//#define SCPH_100          | DX - D0  | AX - A7          |                  | 4.3j
+//#define SCPH_7000 - 9000  | DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+//#define SCPH_5500         | DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
+//#define SCPH_3500 - 5000  | DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
+//#define SCPH_3000         | DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
+//#define SCPH_1000         | DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 //                              Attention!
 //   If a BIOS checksum is specified, it is more important than the SCPH model number!
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-#define SCPH_102         // DX - D0, AX - A7. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5
-//#define SCPH_102A        // ! works in progress DX - D2, AX - A18. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5 
-//#define SCPH_100         // DX - D0, AX - A7. BIOS ver. 4.3j, CRC F2AF798B
-//#define SCPH_7000_9000   // DX - D0, AX - A7. BIOS ver. 4.0j, CRC EC541CD0
-//#define SCPH_5500        // DX - D0, AX - A5. BIOS ver. 3.0j, CRC FF3EEB8C
-//#define SCPH_3500_5000   // DX - D0, for 40-pin BIOS: AX - A4, for 32-pin BIOS: AX - A5. BIOS ver. 2.2j, CRC 24FC7E17 | 2.1j, CRC BC190209
-//#define SCPH_3000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.1j, CRC 3539DEF6
-//#define SCPH_1000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.0j, CRC 3B601FC8
+//-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
 
+//Legacy mode works the same as V7. NTSC-U/C SCPH_xxx1, PAL FAT models SCPH_xxx2, NTSC-Asia SCPH_xxx3.
+
+//                  | HYSTERESIS_MAX |
+//--------------------------------------------------------------
+//#define SCPH_xxxx | 15             | Legacy
+//#define SCPH_hyma | 25             | For models with problematic CD players
 
 //------------------------------------------------------------------------------------------------
-//                         Select your chip
+//                         MCU selection
 //------------------------------------------------------------------------------------------------
 
-
-#define ATmega328_168  
-//#define ATmega32U4_16U4
-//#define ATtiny85_45_25 
-
-/*  
-  Fuses: 
-  ATmega - H: DF, L: EE, E: FD. 
-  ATtiny - H: DF, L: E2; E: FD.
-
-  Pinout Arduino:
-  VCC-3.5v, PinGND-GND, 
-  D2-BIOS AX (Only for Bios patch)
-  D3-BIOS AY (Only for BIOS ver. 1.0j-1.1j)
-  D4-BIOS DX (Only for Bios patch)
-  D5-Switch* (Optional for Bios patch)
-  D6-SQCK
-  D7-SUBQ
-  D8-DATA
-  D9-GATE_WFCK
-  RST-RESET* (Only for JAP_FAT)
-
-  Pinout ATtiny:
-  Pin1-RESET
-  Pin2-LED
-  Pin3-WFCK
-  Pin4-GND
-  Pin5-SQCK (MOSI)
-  Pin6-SUBQ (MISO)
-  Pin7_DATA (SCK)
-  Pin8-VCC
-*/
-  
+//       MCU               |     Arduino
+//--------------------------------------------------------------
+//#define ATmega328_168    | Nano, Pro Mini, Uno
+//#define ATmega32U4_16U4  | Micro, Pro Micro
+//#define ATtiny85_45_25   | ATtiny
 
 //------------------------------------------------------------------------------------------------
 //                         Options
 //------------------------------------------------------------------------------------------------
 
-//#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
-//#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
+#define LED_RUN         // Turns on the LED when injections occur.
+//                         D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
+
+//#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching.
+//                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash.
+//                         In rare cases where the BIOS patch prevents the playback of original games.
+
+//------------------------------------------------------------------------------------------------
+//                          Fuses, Pinout
+//------------------------------------------------------------------------------------------------
+
+/*  
+
+  Fuses  
+  MCU    | High | Low | Extended
+  --------------------------------------------------
+  ATmega | DF   | EE  | FD 
+  ATtiny | DF   | E2  | FD
+
+  Pinout
+  Arduino   | PSNee     |
+  ---------------------------------------------------
+  VCC       | VCC       |
+  GND       | GND       |
+  RST       | RESET     | Only for JAP_FAT
+  D2        | BIOS AX   | Only for Bios patch
+  D3        | BIOS AY   | Only for BIOS patch ver, 1.0j, 1.1j
+  D4        | BIOS DX   | Only for Bios patch
+  D5        | SWITCH    | Optional for disabling Bios patch
+  D6        | SQCK      |
+  D7        | SUBQ      |
+  D8        | DATA      |
+  D9        | GATE_WFCK |
+  D13 - D10 | LED       | D10 for ATmega32U4_16U4
+
+  ATtiny | PSNee | ISP
+  ---------------------------------------------------
+  Pin1   |       | RESET
+  Pin2   | LED   |
+  Pin3   | WFCK  |
+  Pin4   | GND   | GND
+  Pin5   | SQCK  | MOSI
+  Pin6   | SUBQ  | MISO
+  Pin7   | DATA  | SCK 
+  Pin8   | VCC   | VCC
+
+*/
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
