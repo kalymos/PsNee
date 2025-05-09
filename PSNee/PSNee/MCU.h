@@ -1,6 +1,6 @@
 // *****************************************************************************************************************
-// Configuration for different microcontrollers (MUC) to ensure compatibility with the code:
-// - Defines the clock speed, timers, and interrupts for each MUC.
+// Configuration for different microcontrollers (MCU) to ensure compatibility with the code:
+// - Defines the clock speed, timers, and interrupts for each MCU.
 // - Configures I/O pins for data, clocks, and switches according to the requirements.
 // - Enables pull-up resistors on input pins where needed.
 // - Manages external interrupts and LED outputs for system feedback.
@@ -158,14 +158,13 @@
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_102A) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+  #if defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
 
     // Clear the timer interrupt flag
     #define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
 
     // Define input pins for the BIOS patch
     #define PIN_AX_INPUT DDRD &= ~(1 << DDD2)  // Set DDRD register to configure PIND2 as input
-    #define PIN_AY_INPUT DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
     #define PIN_DX_INPUT DDRD &= ~(1 << DDD4)  // Set DDRD register to configure PIND4 as input
 
     // Define output pins for the BIOS patch
@@ -179,24 +178,26 @@
 
     // Read the input pins for the BIOS patch
     #define PIN_AX_READ (PIND & (1 << PIND2))  // Read the state of PIND2
-    #define PIN_AY_READ (PIND & (1 << PIND3))  // Read the state of PIND3
 
     // External interrupt configuration for BIOS patch
     #define PIN_AX_INTERRUPT_ENABLE EIMSK |= (1 << INT0)  // Enable external interrupt on INT0 (PINB2)
-    #define PIN_AY_INTERRUPT_ENABLE EIMSK |= (1 << INT1)  // Enable external interrupt on INT1 (PINB3)
-
     #define PIN_AX_INTERRUPT_DISABLE EIMSK &= ~(1 << INT0)  // Disable external interrupt on INT0
-    #define PIN_AY_INTERRUPT_DISABLE EIMSK &= ~(1 << INT1)  // Disable external interrupt on INT1
-
     #define PIN_AX_INTERRUPT_RISING EICRA |= (1 << ISC01) | (1 << ISC00)  // Configure INT0 for rising edge trigger
-    #define PIN_AY_INTERRUPT_RISING EICRA |= (1 << ISC11) | (1 << ISC10)  // Configure INT1 for rising edge trigger
-
     #define PIN_AX_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC00)) | (1 << ISC01))  // Configure INT0 for falling edge trigger
-    #define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))  // Configure INT1 for falling edge trigger
 
     // Interrupt vectors for external interrupts
     #define PIN_AX_INTERRUPT_VECTOR INT0_vect  // Interrupt vector for INT0 (external interrupt)
-    #define PIN_AY_INTERRUPT_VECTOR INT1_vect  // Interrupt vector for INT1 (external interrupt)
+
+    // Defin PIN_AY for HIGH_PATCH
+    #if defined(SCPH_3000) || defined(SCPH_1000)
+      #define PIN_AY_INPUT DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
+      #define PIN_AY_READ (PIND & (1 << PIND3))  // Read the state of PIND3
+      #define PIN_AY_INTERRUPT_ENABLE EIMSK |= (1 << INT1)  // Enable external interrupt on INT1 (PINB3)
+      #define PIN_AY_INTERRUPT_DISABLE EIMSK &= ~(1 << INT1)  // Disable external interrupt on INT1
+      #define PIN_AY_INTERRUPT_RISING EICRA |= (1 << ISC11) | (1 << ISC10)  // Configure INT1 for rising edge trigger
+      #define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))  // Configure INT1 for falling edge trigger
+      #define PIN_AY_INTERRUPT_VECTOR INT1_vect  // Interrupt vector for INT1 (external interrupt)
+    #endif
 
     // Handle switch input for BIOS patch
     #ifdef PATCH_SWITCH
@@ -262,7 +263,7 @@
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_102A) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+  #if defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
   // Pins input
     #define PIN_AX_INPUT DDRD &= ~(1 << DDD1)
     #define PIN_AY_INPUT DDRD &= ~(1 << DDD0)

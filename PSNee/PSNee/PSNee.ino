@@ -1,56 +1,44 @@
-//                         PSNee-8.7.0
+//                           PSNee-8.7.0
 
 //------------------------------------------------------------------------------------------------
 //                         Console selection
 //------------------------------------------------------------------------------------------------
 
-//No BIOS patching.
-
-//   SCPH model number      |  common noun  | HYSTERESIS_MAX
+// No BIOS patching. 
+// You can use injection via USB.
+//                     // HYSTERESIS | region |
 //-------------------------------------------------------------------------------------------------
-//#define SCPH_xxx1         | NTSC-U/C  FAT | 25
-//#define SCPH_xxx2         | PAL       FAT | 25
-//#define SCPH_xxx3         | NTSC-Asia FAT | 25
-//#define SCPH_101          | NTSC-U/C      | 15  
-//#define SCPH_103          | NTSC-Asia     | 15
+//#define SCPH_xxxx    // 15         | All    | mode works the same as V7.
+//#define SCPH_xxxx_25 // 25         | All    | Only FAT! For models with problematic CD players.
 
-//Models that require a BIOS patch.
-
-//                                                    Adres pin
-//   SCPH model number      | Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS ver
+// Models that require a BIOS patch.
+//                                   |                Adres pin            |
+//   SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
 //-------------------------------------------------------------------------------------------------
-//#define SCPH_102          | DX - D0  | AX - A7          |                  | 4.4e, 4.5e
-//#define SCPH_102A         | ! works in progress DX - D2, AX - A18.         | 4.4e, 4.5e
-//#define SCPH_100          | DX - D0  | AX - A7          |                  | 4.3j
-//#define SCPH_7000 - 9000  | DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
-//#define SCPH_5500         | DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
-//#define SCPH_3500 - 5000  | DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
-//#define SCPH_3000         | DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
-//#define SCPH_1000         | DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
-
+//#define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
+//#define SCPH_102_legacy // ! works in progress DX - D2, AX - A18.         | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
+//#define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
+//#define SCPH_7000_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+//#define SCPH_5500       // DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
+//#define SCPH_3500_5000  // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
+//#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
+//#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
+//
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//                              Attention!
-//   If a BIOS checksum is specified, it is more important than the SCPH model number!
+//                              Caution!
+// For the patch to work, the BIOS version is more important than the SCPH number, 
+// and you MUST use injection via ISP!
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-//-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
-
-//Legacy mode works the same as V7. NTSC-U/C SCPH_xxx1, PAL FAT models SCPH_xxx2, NTSC-Asia SCPH_xxx3.
-
-//                  | HYSTERESIS_MAX |
-//--------------------------------------------------------------
-//#define SCPH_xxxx | 15             | Legacy
-//#define SCPH_hyma | 25             | For models with problematic CD players
 
 //------------------------------------------------------------------------------------------------
 //                         MCU selection
 //------------------------------------------------------------------------------------------------
 
-//       MCU               |     Arduino
-//--------------------------------------------------------------
-//#define ATmega328_168    | Nano, Pro Mini, Uno
-//#define ATmega32U4_16U4  | Micro, Pro Micro
-//#define ATtiny85_45_25   | ATtiny
+//       MCU               //     Arduino
+//------------------------------------------------------------------------------------------------
+//#define ATmega328_168    // Nano, Pro Mini, Uno
+//#define ATmega32U4_16U4  // Micro, Pro Micro
+//#define ATtiny85_45_25   // ATtiny
 
 //------------------------------------------------------------------------------------------------
 //                         Options
@@ -60,11 +48,29 @@
 //                         D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
 
 //#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching.
-//                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash.
+//                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash (No problem in game).
 //                         In rare cases where the BIOS patch prevents the playback of original games.
 
 //------------------------------------------------------------------------------------------------
-//                          Fuses, Pinout
+//                         Make your own sauce
+//------------------------------------------------------------------------------------------------
+
+// Here you can have fun making your ideal mode, you just have to choose a region, and a duration of histeresis.
+
+//                             Region
+//------------------------------------------------------------------------------------------------
+//#define SCEA // AMERICA
+//#define SCEE // EUROP
+//#define SCEI // ASIA
+//#define All  // All regions
+
+//                          Hysteresis 
+//------------------------------------------------------------------------------------------------
+//#define HYSTERESIS_MAX 15         // All model
+//#define HYSTERESIS_MAX 25         // Only FAT! For models with problematic CD players.
+
+//------------------------------------------------------------------------------------------------
+//    Summary of practical information. Fuses. Pinout
 //------------------------------------------------------------------------------------------------
 
 /*  
@@ -174,7 +180,7 @@ ISR(CTC_TIMER_VECTOR) {
 //   unwanted immediate interrupts.
 //
 // Notes:
-// - The actual timer configuration is handled in MUC.h.
+// - The actual timer configuration is handled in MCU.h.
 // - This function ensures that all supported MCUs behave consistently.
 //
 // *****************************************************************************************
@@ -364,8 +370,8 @@ int main() {
 #endif
 
   if (Flag_Switch == 0) {
-    #ifdef SCPH_102A
-      Bios_Patching_SCPH_102A();
+    #ifdef SCPH_102_legacy
+      Bios_Patching_SCPH_102_legacy();
     #else
       Bios_Patching();
     #endif
