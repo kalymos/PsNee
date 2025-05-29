@@ -65,7 +65,7 @@
 //------------------------------------------------------------------------------------------------
 
 #define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
-//#define PATCH_SWICHE  // Enables hardware support for disabling BIOS patching. Useful in rare cases where the BIOS patch prevents the playback of original games
+//#define PATCH_SWITCHE  // Enables hardware support for disabling BIOS patching, to allow access to the console memory card menu for model 7000. Useful in rare cases where the BIOS patch prevents the playback of original games
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
@@ -293,10 +293,10 @@ void Init() {
   SET_TIMER_TCCROB;
 #endif
 
-#if defined(PATCH_SW) && defined(BIOS_PATCH)
+#if defined(PATCH_SWITCHE) && defined(BIOS_PATCH)
   PIN_SWITCH_INPUT;
   PIN_SWITCH_SET;
-  if (PIN_SWICHE_READ = 0){
+  if (PIN_SWICHE_READ == 0){
    Flag_Switch =1;
   }
 #endif
