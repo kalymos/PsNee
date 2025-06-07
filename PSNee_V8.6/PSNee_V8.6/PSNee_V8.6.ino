@@ -34,7 +34,7 @@
 /*  
   Fuses: 
   ATmega - H: DF, L: EE, E: FD. 
-  ATtiny - H: DF, L: E2; E: FD.
+  ATtiny - H: DF, L: E2; E: FF.
 
   Pinout Arduino:
   VCC-3.5v, PinGND-GND, 
