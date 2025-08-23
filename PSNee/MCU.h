@@ -208,6 +208,13 @@
 
   #endif
 
+  #if defined(PSNEEDEBUG)
+    #define DEBUG_PRINT(x)     Serial.print(x)
+    #define DEBUG_PRINTHEX(x)  Serial.print(x, HEX)
+    #define DEBUG_PRINTLN(x)   Serial.println(x)
+    #define DEBUG_FLUSH        Serial.flush()
+  #endif
+
 #endif
 
 
@@ -365,6 +372,15 @@
 
   #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && && !defined(SCPH_xxx3) !defined(SCPH_103) && && !defined(SCPH_101) !defined(SCPH_xxxx) 
    #error "ATtiny85_45_25 Not compatible with BIOS patch"
+  #endif
+
+  #if defined(PSNEEDEBUG)
+    #include <SoftwareSerial.h>
+    SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
+    #define DEBUG_PRINT(x)     mySerial.print(x)
+    #define DEBUG_PRINTHEX(x)  mySerial.print(x, HEX)
+    #define DEBUG_PRINTLN(x)   mySerial.println(x)
+    #define DEBUG_FLUSH        mySerial.flush()
   #endif
 
 #endif

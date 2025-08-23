@@ -105,15 +105,15 @@
 #define TRIGGER2 71
 #endif
 
-#ifdef SCEA
+#if defined(SCEA) || defined(SCPH_xxx1_15) || defined(SCPH_xxx1_25)  
 const char region[3] = {'a', 'a', 'a'};
 #endif
 
-#if defined(SCEE) || defined(SCPH_102)
+#if defined(SCEE) || defined(SCPH_102)  || defined(SCPH_xxx2_15)  || defined(SCPH_xxx2_25)  
 const char region[3] = {'e', 'e', 'e'};
 #endif
 
-#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_103) || defined(SCEI)
+#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCEI) || defined(SCPH_xxx3_15)  || defined(SCPH_xxx3_25)  
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
@@ -122,22 +122,31 @@ const char region[3] = {'a', 'e', 'i'};
 #endif
 
 //All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
-#if  defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_103) || defined(SCPH_xxxx) //|| defined(HYSTERESIS_15)
+#if  defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_xxxx) || defined(SCPH_xxx1_15) || defined(SCPH_xxx2_15) || defined(SCPH_xxx3_15)    
 #define HYSTERESIS_MAX 15
 #endif
 
-#if  defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxxx_25)// || defined(HYSTERESIS_25)
+#if  defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxxx_25) || defined(SCPH_xxx1_25) || defined(SCPH_xxx2_25)   || defined(SCPH_xxx3_25)  
 #define HYSTERESIS_MAX 25 
 #endif
+
+
+
+
+
 
 #if !defined(SCEA) && !defined(SCEE) && !defined(SCEI) && !defined(All) && !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102_legacy) && !defined(SCPH_xxxx_25)
+    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102_legacy) && !defined(SCPH_xxxx_25) &&\
+    !defined(SCPH_xxx1_25) && !defined(SCPH_xxx2_25) && !defined(SCPH_xxxx3_25) && !defined(SCPH_xxx1_15) &&\
+    !defined(SCPH_xxx2_15) && !defined(SCPH_xxx3_15)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !(defined(SCEA) ^ defined(SCEE) ^ defined(SCEAI) ^ defined(All) ^ defined(SCPH_103) ^ \
       defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102_legacy) ^ defined(SCPH_xxxx_25))
+      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102_legacy) ^ defined(SCPH_xxxx_25) ^ \
+      defined(SCPH_xxx1_25) ^ defined(SCPH_xxx2_25) ^ defined(SCPH_xxx3_25) ^ defined(SCPH_xxx1_15) ^ \
+      defined(SCPH_xxx2_15) ^ defined(SCPH_xxx3_15))
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif

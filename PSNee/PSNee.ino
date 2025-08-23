@@ -6,10 +6,18 @@
 
 // No BIOS patching. 
 // You can use injection via USB.
-//                     // HYSTERESIS | region |
+//                      // HYSTERESIS | region   |
 //-------------------------------------------------------------------------------------------------
-//#define SCPH_xxxx    // 15         | All    | mode works the same as V7.
-//#define SCPH_xxxx_25 // 25         | All    | Only FAT! For models with problematic CD players.
+//#define SCPH_xxxx_15  // 15         | All      | mode works the same as V7.
+//#define SCPH_xxxx_25  // 25         | All      | Only FAT! For models with problematic CD players.
+//#define SCPH_xxx1_15  // 15         | NTSC U/C | America.
+//#define SCPH_xxx1_25  // 25         | NTSC U/C | America only FAT! For models with problematic CD players.
+//#define SCPH_xxx2_15  // 15         | PAL      | Europ.
+//#define SCPH_xxx2_25  // 25         | PAL      | Europ only FAT! For models with problematic CD players.
+//#define SCPH_xxx3_15  // 15         | NTSC J   | Asia.
+//#define SCPH_xxx3_25  // 25         | NTSC J   | Asia only FAT! For models with problematic CD players.
+
+
 
 // Models that require a BIOS patch.
 //                                   |                Adres pin            |
@@ -50,7 +58,7 @@
 //#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching.
 //                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash (No problem in game).
 //                         In rare cases where the BIOS patch prevents the playback of original games.
-
+//#define PSNEEDEBUG
 //------------------------------------------------------------------------------------------------
 //                         Make your own sauce
 //------------------------------------------------------------------------------------------------
@@ -59,9 +67,9 @@
 
 //                             Region
 //------------------------------------------------------------------------------------------------
-//#define SCEA // AMERICA
-//#define SCEE // EUROP
-//#define SCEI // ASIA
+//#define SCEA // NTSC U/C
+//#define SCEE // PAL
+//#define SCEI // NTSC J
 //#define All  // All regions
 
 //                          Hysteresis 
@@ -350,6 +358,15 @@ void Init() {
   
   PIN_SQCK_INPUT;
   PIN_SUBQ_INPUT;
+
+#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
+  pinMode(debugtx, OUTPUT); // software serial tx pin
+  mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
+#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
+  Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
+  // DEBUG_PRINT("MCU frequency: "); DEBUG_PRINT(F_CPU); DEBUG_PRINTLN(" Hz");
+  // DEBUG_PRINTLN("Waiting for SQCK..");
+#endif
 }
 
 int main() {
@@ -408,6 +425,21 @@ int main() {
     wfck_mode = 0;                             //flag oldmod
   }
 
+#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
+  DEBUG_PRINT("m "); DEBUG_PRINTLN(wfck_mode);
+#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
+  //DEBUG_PRINT("highs: "); DEBUG_PRINT(highs); 
+  DEBUG_PRINT(" lows: "); DEBUG_PRINTLN(lows);
+  DEBUG_PRINT("wfck_mode: "); DEBUG_PRINTLN(wfck_mode);
+  // Power saving
+  // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
+  ADCSRA = ADCSRA & B01111111;
+  // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
+  ACSR = B10000000;
+  // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
+  DIDR0 = DIDR0 | B00111111;
+#endif
+
   while (1) {
 
     _delay_ms(1); /* Start with a small delay, which can be necessary 
@@ -450,6 +482,32 @@ int main() {
     while (scpos < 12);             // Repeat for all 12 bytes
 
     GLOBAL_INTERRUPT_ENABLE;  // End critical section
+
+
+
+  // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
+#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
+  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)) { // a bad sector read is all 0 except for the CRC fields. Don't log it.
+    for (int i = 0; i < 12; i++) {
+      if (scbuf[i] < 0x10) {
+        DEBUG_PRINT("0"); // padding
+      }
+      DEBUG_PRINTHEX(scbuf[i]);
+    }
+    DEBUG_PRINTLN("");
+  }
+#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
+  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)) {
+    for (int i = 0; i < 12; i++) {
+      if (scbuf[i] < 0x10) {
+        DEBUG_PRINT("0"); // padding
+      }
+      DEBUG_PRINTHEX(scbuf[i]);
+      DEBUG_PRINT(" ");
+    }
+    DEBUG_PRINTLN("");
+  }
+#endif
 
     //************************************************************************
     // Check if read head is in wobble area
@@ -521,6 +579,12 @@ int main() {
 
 #ifdef LED_RUN
   PIN_LED_OFF;
+#endif
+
+#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
+    DEBUG_PRINTLN("!");
+#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
+    DEBUG_PRINTLN("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
 #endif
     }
   }
