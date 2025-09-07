@@ -1,6 +1,16 @@
 //                           PSNee-8.7.0
 
 //------------------------------------------------------------------------------------------------
+//                         MCU selection
+//------------------------------------------------------------------------------------------------
+
+//       MCU               //     Arduino
+//------------------------------------------------------------------------------------------------
+//#define ATmega328_168    // Nano, Pro Mini, Uno
+//#define ATmega32U4_16U4  // Micro, Pro Micro
+//#define ATtiny85_45_25   // ATtiny
+
+//------------------------------------------------------------------------------------------------
 //                         Console selection
 //------------------------------------------------------------------------------------------------
 
@@ -16,9 +26,20 @@
 
 
 // Models that require a BIOS patch.
-// It is only possible to inject the code via ISP! 
-// The delay in starting up caused by the bootloader of the Arduino cards prevents the injection of the BIOS patch within the delay,
-// that's why you have to use the ISP which eliminates the bootloader.
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                              Caution!
+
+ For the patch to work, the BIOS version is more important than the SCPH number.
+
+ It is only possible to inject the code via ISP! 
+ 
+ The delay in starting up caused by the bootloader of the Arduino cards prevents the injection of the BIOS patch within the delay,
+ that's why you have to use the ISP which eliminates the bootloader.
+ 
+ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+*/
+
 //                                    |                Adres pin            |
 //   SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
 //-------------------------------------------------------------------------------------------------
@@ -30,22 +51,6 @@
 //#define SCPH_3500_5000  // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
 //#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
 //#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
-//
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//                              Caution!
-// For the patch to work, the BIOS version is more important than the SCPH number, 
-// and you MUST use injection via ISP!
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-//------------------------------------------------------------------------------------------------
-//                         MCU selection
-//------------------------------------------------------------------------------------------------
-
-//       MCU               //     Arduino
-//------------------------------------------------------------------------------------------------
-//#define ATmega328_168    // Nano, Pro Mini, Uno
-//#define ATmega32U4_16U4  // Micro, Pro Micro
-//#define ATtiny85_45_25   // ATtiny
 
 //------------------------------------------------------------------------------------------------
 //                         Options
