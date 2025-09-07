@@ -105,42 +105,43 @@
 #define TRIGGER2 71
 #endif
 
-#if defined(SCEA) || defined(SCPH_xxx1_15) || defined(SCPH_xxx1_25)  
+#if defined(SCPH_xxx15)
 const char region[3] = {'a', 'a', 'a'};
 #endif
 
-#if defined(SCEE) || defined(SCPH_102)  || defined(SCPH_xxx2_15)  || defined(SCPH_xxx2_25)  
+#if defined(SCPH_102)  || defined(SCPH_xxx2)
 const char region[3] = {'e', 'e', 'e'};
 #endif
 
-#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCEI) || defined(SCPH_xxx3_15)  || defined(SCPH_xxx3_25)  
+#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxx3)
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
-#if defined(SCPH_xxxx) || defined(SCPH_xxxx_25)  || defined(SCPH_102_legacy)  || defined(All)
+#if defined(SCPH_xxxx)
 const char region[3] = {'a', 'e', 'i'};
 #endif
 
 //All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
-#if  defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_xxxx) || defined(SCPH_xxx1_15) || defined(SCPH_xxx2_15) || defined(SCPH_xxx3_15)    
-#define HYSTERESIS_MAX 15
-#endif
+// #if  defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_xxxx) || defined(SCPH_xxx1_15) || defined(SCPH_xxx2_15) || defined(SCPH_xxx3_15)    
+// #define HYSTERESIS_MAX 15
+// #endif
 
-#if  defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxxx_25) || defined(SCPH_xxx1_25) || defined(SCPH_xxx2_25)   || defined(SCPH_xxx3_25)  
-#define HYSTERESIS_MAX 25 
-#endif
+// #if  defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxxx_25) || defined(SCPH_xxx1_25) || defined(SCPH_xxx2_25)   || defined(SCPH_xxx3_25)  
+// #define HYSTERESIS_MAX 25 
+// #endif
 
 
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
 
 void Debug_Log (int Lows, int Wfck_mode){
 
 #if  defined(ATtiny85_45_25)
-  DEBUG_PRINT("m "); DEBUG_PRINTLN(Wfck_mode);
+   mySerial.print("m "); mySerial.println(Wfck_mode);
 #elif !defined(ATtiny85_45_25)
   //DEBUG_PRINT("highs: "); DEBUG_PRINT(highs); 
-  DEBUG_PRINT(" lows: "); DEBUG_PRINTLN(Lows);
-  DEBUG_PRINT(" wfck_mode: "); DEBUG_PRINTLN(Wfck_mode);
-  DEBUG_PRINT(" region: "); DEBUG_PRINT(region[0]); DEBUG_PRINT(region[1]); DEBUG_PRINTLN (region[2]);
+   Serial.print(" lows: "); Serial.println(Lows);
+   Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
+   Serial.print(" region: "); Serial.print(region[0]); Serial.print(region[1]); Serial.println(region[2]);
   // Power saving
   // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
   ADCSRA = ADCSRA & B01111111;
@@ -151,22 +152,53 @@ void Debug_Log (int Lows, int Wfck_mode){
 #endif
 }
 
+  // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
+void Debug_Scbuf (uint8_t *Scbuf){
+#if defined(ATtiny85_45_25)
+  if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) { // a bad sector read is all 0 except for the CRC fields. Don't log it.
+    for (int i = 0; i < 12; i++) {
+      if (Scbuf[i] < 0x10) {
+        mySerial.print("0"); // padding
+      }
+      mySerial.print(Scbuf[i, HEX]);
+    }
+   mySerial.println("");
+  }
+#elif !defined(ATtiny85_45_25)
+  if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) {
+    for (int i = 0; i < 12; i++) {
+      if (Scbuf[i] < 0x10) {
+        Serial.print("0"); // padding
+      }
+      Serial.print(Scbuf[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println("");
+  }
+#endif
+}
 
+void Debug_Inject(){
 
+#if defined(ATtiny85_45_25)
+    mySerial.print("!");
+#elif  !defined(ATtiny85_45_25)
+    Serial.println("           INJECT ! ");
+#endif
+}
 
+#endif
 
-#if !defined(SCEA) && !defined(SCEE) && !defined(SCEI) && !defined(All) && !defined(SCPH_103) && \
+#if !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102_legacy) && !defined(SCPH_xxxx_25) &&\
-    !defined(SCPH_xxx1_25) && !defined(SCPH_xxx2_25) && !defined(SCPH_xxxx3_25) && !defined(SCPH_xxx1_15) &&\
-    !defined(SCPH_xxx2_15) && !defined(SCPH_xxx3_15)
+    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102_legacy) && \
+    !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxxx3)
  #error "Console not selected! Please uncoment #define with SCPH model number."
-#elif !(defined(SCEA) ^ defined(SCEE) ^ defined(SCEAI) ^ defined(All) ^ defined(SCPH_103) ^ \
+#elif !defined(SCPH_103) ^ \
       defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102_legacy) ^ defined(SCPH_xxxx_25) ^ \
-      defined(SCPH_xxx1_25) ^ defined(SCPH_xxx2_25) ^ defined(SCPH_xxx3_25) ^ defined(SCPH_xxx1_15) ^ \
-      defined(SCPH_xxx2_15) ^ defined(SCPH_xxx3_15))
+      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102_legacy) ^ \
+      defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_xxx3)
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif

@@ -6,21 +6,20 @@
 
 // No BIOS patching. 
 // You can use injection via USB.
-//                      // HYSTERESIS | region   |
-//-------------------------------------------------------------------------------------------------
-//#define SCPH_xxxx_15  // 15         | All      | mode works the same as V7.
-#define SCPH_xxxx_25  // 25         | All      | Only FAT! For models with problematic CD players.
-//#define SCPH_xxx1_15  // 15         | NTSC U/C | America.
-//#define SCPH_xxx1_25  // 25         | NTSC U/C | America only FAT! For models with problematic CD players.
-//#define SCPH_xxx2_15  // 15         | PAL      | Europ.
-//#define SCPH_xxx2_25  // 25         | PAL      | Europ only FAT! For models with problematic CD players.
-//#define SCPH_xxx3_15  // 15         | NTSC J   | Asia.
-//#define SCPH_xxx3_25  // 25         | NTSC J   | Asia only FAT! For models with problematic CD players.
 
+// SCPH model number //  region code | region
+//-------------------------------------------------------------------------------------------------
+//#define SCPH_xxx1  //  NTSC U/C    | America.
+//#define SCPH_xxx2  //  PAL         | Europ.
+//#define SCPH_xxx3  //  NTSC J      | Asia.
+//#define SCPH_xxxx  //              | All mode works the same as V7, but that's not what I recommend the most.
 
 
 // Models that require a BIOS patch.
-//                                   |                Adres pin            |
+// It is only possible to inject the code via ISP! 
+// The delay in starting up caused by the bootloader of the Arduino cards prevents the injection of the BIOS patch within the delay,
+// that's why you have to use the ISP which eliminates the bootloader.
+//                                    |                Adres pin            |
 //   SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
 //-------------------------------------------------------------------------------------------------
 //#define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
@@ -44,7 +43,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-#define ATmega328_168    // Nano, Pro Mini, Uno
+//#define ATmega328_168    // Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  // Micro, Pro Micro
 //#define ATtiny85_45_25   // ATtiny
 
@@ -58,23 +57,18 @@
 //#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching.
 //                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash (No problem in game).
 //                         In rare cases where the BIOS patch prevents the playback of original games.
-#define PSNEEDEBUG
-//------------------------------------------------------------------------------------------------
-//                         Make your own sauce
-//------------------------------------------------------------------------------------------------
 
-// Here you can have fun making your ideal mode, you just have to choose a region, and a duration of histeresis.
+//#define PSNEE_DEBUG_SERIAL_MONITOR  // Enables serial monitor output.
+//                                     For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
+//                                       Arduino   |   ATtiny
+//                                       ---------------------
+//                                       TXD--RXD  |  PB3--RXD
+//                                       GND--GND  |  GND--GND
 
-//                             Region
 //------------------------------------------------------------------------------------------------
-//#define SCEA // NTSC U/C
-//#define SCEE // PAL
-//#define SCEI // NTSC J
-//#define All  // All regions
-
 //                          Hysteresis 
 //------------------------------------------------------------------------------------------------
-//#define HYSTERESIS_MAX 15         // All model
+#define HYSTERESIS_MAX 15         // All model
 //#define HYSTERESIS_MAX 25         // Only FAT! For models with problematic CD players.
 
 //------------------------------------------------------------------------------------------------
@@ -86,8 +80,8 @@
   Fuses  
   MCU    | High | Low | Extended
   --------------------------------------------------
-  ATmega | DF   | EE  | FD 
-  ATtiny | DF   | E2  | FD
+  ATmega | DF   | EE  | FF 
+  ATtiny | DF   | E2  | FF
 
   Pinout
   Arduino   | PSNee     |
@@ -103,18 +97,18 @@
   D7        | SUBQ      |
   D8        | DATA      |
   D9        | GATE_WFCK |
-  D13 - D10 | LED       | D10 for ATmega32U4_16U4
+  D13 ^ D10 | LED       | D10 only for ATmega32U4_16U4
 
-  ATtiny | PSNee | ISP
+  ATtiny | PSNee        | ISP   |
   ---------------------------------------------------
-  Pin1   |       | RESET
-  Pin2   | LED   |
-  Pin3   | WFCK  |
-  Pin4   | GND   | GND
-  Pin5   | SQCK  | MOSI
-  Pin6   | SUBQ  | MISO
-  Pin7   | DATA  | SCK 
-  Pin8   | VCC   | VCC
+  Pin1   |              | RESET |
+  Pin2   | LED ^ serial |       | serial only for PSNEE_DEBUG_SERIAL_MONITOR
+  Pin3   | WFCK         |       |
+  Pin4   | GND          | GND   |
+  Pin5   | SQCK         | MOSI  |
+  Pin6   | SUBQ         | MISO  |
+  Pin7   | DATA         | SCK   |
+  Pin8   | VCC          | VCC   |
 
 */
 
@@ -129,8 +123,6 @@
 //Initializing values ​​for region code injection timing
 #define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
 #define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
-
-#define N_T_S 12
 
 //Creation of the different variables for the counter
 volatile uint8_t count_isr = 0;
@@ -361,10 +353,10 @@ void Init() {
   PIN_SQCK_INPUT;
   PIN_SUBQ_INPUT;
 
-#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(ATtiny85_45_25)
   pinMode(debugtx, OUTPUT); // software serial tx pin
   mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
-#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
+#elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(ATtiny85_45_25)
   Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
   // DEBUG_PRINT("MCU frequency: "); DEBUG_PRINT(F_CPU); DEBUG_PRINTLN(" Hz");
   // DEBUG_PRINTLN("Waiting for SQCK..");
@@ -373,7 +365,7 @@ void Init() {
 
 int main() {
   uint8_t  hysteresis = 0;
-  uint8_t  scbuf[N_T_S] = { 0 };             // SUBQ bit storage
+  uint8_t  scbuf[12] = { 0 };             // SUBQ bit storage
   uint16_t timeout_clock_counter = 0;
   uint8_t  bitbuf = 0;
   uint8_t  bitpos = 0;
@@ -427,7 +419,7 @@ int main() {
     wfck_mode = 0;                             //flag oldmod
   }
 
-#if defined(PSNEEDEBUG)
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
  Debug_Log(lows, wfck_mode);
 #endif
 
@@ -476,28 +468,9 @@ int main() {
 
 
 
-  // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
-#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
-  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)) { // a bad sector read is all 0 except for the CRC fields. Don't log it.
-    for (int i = 0; i < 12; i++) {
-      if (scbuf[i] < 0x10) {
-        DEBUG_PRINT("0"); // padding
-      }
-      DEBUG_PRINTHEX(scbuf[i]);
-    }
-    DEBUG_PRINTLN("");
-  }
-#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
-  if (!(scbuf[0] == 0 && scbuf[1] == 0 && scbuf[2] == 0 && scbuf[3] == 0)) {
-    for (int i = 0; i < 12; i++) {
-      if (scbuf[i] < 0x10) {
-        DEBUG_PRINT("0"); // padding
-      }
-      DEBUG_PRINTHEX(scbuf[i]);
-      DEBUG_PRINT(" ");
-    }
-    DEBUG_PRINTLN("");
-  }
+
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  Debug_Scbuf(scbuf);
 #endif
 
     //************************************************************************
@@ -572,11 +545,10 @@ int main() {
   PIN_LED_OFF;
 #endif
 
-#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
-    DEBUG_PRINTLN("!");
-#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
-    DEBUG_PRINTLN("           INJECT ! ");
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+ Debug_Inject();
 #endif
+
     }
   }
 }
