@@ -9,7 +9,7 @@
 //                      // HYSTERESIS | region   |
 //-------------------------------------------------------------------------------------------------
 //#define SCPH_xxxx_15  // 15         | All      | mode works the same as V7.
-//#define SCPH_xxxx_25  // 25         | All      | Only FAT! For models with problematic CD players.
+#define SCPH_xxxx_25  // 25         | All      | Only FAT! For models with problematic CD players.
 //#define SCPH_xxx1_15  // 15         | NTSC U/C | America.
 //#define SCPH_xxx1_25  // 25         | NTSC U/C | America only FAT! For models with problematic CD players.
 //#define SCPH_xxx2_15  // 15         | PAL      | Europ.
@@ -44,7 +44,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-//#define ATmega328_168    // Nano, Pro Mini, Uno
+#define ATmega328_168    // Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  // Micro, Pro Micro
 //#define ATtiny85_45_25   // ATtiny
 
@@ -58,7 +58,7 @@
 //#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching.
 //                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash (No problem in game).
 //                         In rare cases where the BIOS patch prevents the playback of original games.
-//#define PSNEEDEBUG
+#define PSNEEDEBUG
 //------------------------------------------------------------------------------------------------
 //                         Make your own sauce
 //------------------------------------------------------------------------------------------------
@@ -129,6 +129,8 @@
 //Initializing values ​​for region code injection timing
 #define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
 #define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
+
+#define N_T_S 12
 
 //Creation of the different variables for the counter
 volatile uint8_t count_isr = 0;
@@ -371,7 +373,7 @@ void Init() {
 
 int main() {
   uint8_t  hysteresis = 0;
-  uint8_t  scbuf[12] = { 0 };             // SUBQ bit storage
+  uint8_t  scbuf[N_T_S] = { 0 };             // SUBQ bit storage
   uint16_t timeout_clock_counter = 0;
   uint8_t  bitbuf = 0;
   uint8_t  bitpos = 0;
@@ -425,19 +427,8 @@ int main() {
     wfck_mode = 0;                             //flag oldmod
   }
 
-#if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
-  DEBUG_PRINT("m "); DEBUG_PRINTLN(wfck_mode);
-#elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
-  //DEBUG_PRINT("highs: "); DEBUG_PRINT(highs); 
-  DEBUG_PRINT(" lows: "); DEBUG_PRINTLN(lows);
-  DEBUG_PRINT("wfck_mode: "); DEBUG_PRINTLN(wfck_mode);
-  // Power saving
-  // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
-  ADCSRA = ADCSRA & B01111111;
-  // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
-  ACSR = B10000000;
-  // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
-  DIDR0 = DIDR0 | B00111111;
+#if defined(PSNEEDEBUG)
+ Debug_Log(lows, wfck_mode);
 #endif
 
   while (1) {
@@ -584,7 +575,7 @@ int main() {
 #if defined(PSNEEDEBUG) && defined(ATtiny85_45_25)
     DEBUG_PRINTLN("!");
 #elif defined(PSNEEDEBUG) && !defined(ATtiny85_45_25)
-    DEBUG_PRINTLN("INJECT!INJECT!INJECT!INJECT!INJECT!INJECT!");
+    DEBUG_PRINTLN("           INJECT ! ");
 #endif
     }
   }
