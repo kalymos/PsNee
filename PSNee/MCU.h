@@ -428,7 +428,7 @@
   #define PIN_WFCK_OUTPUT DDRB |= (1 << DDB1)  // |= updates the DDRB register with the OR operator and the mask, DDRB bxxxxxxxx OR mask b00000001 = bxxxxxxx1
 
   // Define pull-ups and set high at the main pin
-  #define PIN_DATA_SET PORTB |= (1 << PB0)  // Create a mask (1<<0) with the first bit at 1 b00000001, \
+  #define PIN_DATA_SET PORTB |= (1 << PB0)  // Create a mask (1<<0) with the first bit at 1 b00000001, 
                                             // |= updates the PORTB register with the OR operator and the mask, PORTB bxxxxxxxx OR mask b00000001 = bxxxxxxx1
 
   // Define pull-ups set down at the main pin

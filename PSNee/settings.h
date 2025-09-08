@@ -136,19 +136,13 @@ const char region[3] = {'a', 'e', 'i'};
 void Debug_Log (int Lows, int Wfck_mode){
 
 #if  defined(ATtiny85_45_25)
-   mySerial.print("m "); mySerial.println(Wfck_mode);
+  mySerial.print("m "); mySerial.println(Wfck_mode);
 #elif !defined(ATtiny85_45_25)
-  //DEBUG_PRINT("highs: "); DEBUG_PRINT(highs); 
-   Serial.print(" lows: "); Serial.println(Lows);
-   Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
-   Serial.print(" region: "); Serial.print(region[0]); Serial.print(region[1]); Serial.println(region[2]);
-  // Power saving
-  // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
-  ADCSRA = ADCSRA & B01111111;
-  // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
-  ACSR = B10000000;
-  // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
-  DIDR0 = DIDR0 | B00111111;
+  Serial.print(" MCU frequency: "); Serial.print(F_CPU); Serial.println(" Hz");
+  //Serial.println("Waiting for SQCK..");
+  Serial.print(" lows: "); Serial.println(Lows);
+  Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
+  Serial.print(" region: "); Serial.print(region[0]); Serial.print(region[1]); Serial.println(region[2]);
 #endif
 }
 
@@ -173,7 +167,7 @@ void Debug_Scbuf (uint8_t *Scbuf){
       Serial.print(Scbuf[i], HEX);
       Serial.print(" ");
     }
-    Serial.println("");
+    Serial.print("");
   }
 #endif
 }

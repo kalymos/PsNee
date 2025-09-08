@@ -6,9 +6,9 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-//#define ATmega328_168    // Nano, Pro Mini, Uno
-//#define ATmega32U4_16U4  // Micro, Pro Micro
-//#define ATtiny85_45_25   // ATtiny
+//#define ATmega328_168    //  Nano, Pro Mini, Uno
+//#define ATmega32U4_16U4  //  Micro, Pro Micro
+//#define ATtiny85_45_25   //  ATtiny
 
 //------------------------------------------------------------------------------------------------
 //                         Console selection
@@ -341,6 +341,16 @@ void Init() {
   SET_TIMER_TCCROB;
 #endif
 
+#if defined(ATmega328_168)
+  // Power saving
+  // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
+  ADCSRA = ADCSRA & B01111111;
+  // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
+  ACSR = B10000000;
+  // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
+  DIDR0 = DIDR0 | B00111111;
+#endif
+
 #if defined(PATCH_SWITCH) && defined(BIOS_PATCH)
   PIN_SWITCH_INPUT;
   PIN_SWITCH_SET;
@@ -363,8 +373,6 @@ void Init() {
   mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
 #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(ATtiny85_45_25)
   Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
-  // DEBUG_PRINT("MCU frequency: "); DEBUG_PRINT(F_CPU); DEBUG_PRINTLN(" Hz");
-  // DEBUG_PRINTLN("Waiting for SQCK..");
 #endif
 }
 
@@ -507,7 +515,7 @@ int main() {
     else if (hysteresis > 0) {
       hysteresis--;  
     }
-
+    Serial.println(hysteresis);
     // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
     // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate
     if (hysteresis >= HYSTERESIS_MAX) {
