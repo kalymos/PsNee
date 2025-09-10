@@ -16,6 +16,7 @@
 
 
 */
+// Specific parameter section for BIOS patches
 
 #ifdef  SCPH_102_legacy
 //#define SCEE
@@ -105,20 +106,23 @@
 #define TRIGGER2 71
 #endif
 
-#if defined(SCPH_xxx15)
+
+// Region Settings Section
+
+#if defined(SCPH_xxx1)                            //  NTSC U/C    | America.
 const char region[3] = {'a', 'a', 'a'};
 #endif
 
-#if defined(SCPH_102)  || defined(SCPH_xxx2)
+#if defined(SCPH_102)  || defined(SCPH_xxx2)      //  PAL         | Europ.
 const char region[3] = {'e', 'e', 'e'};
 #endif
 
-#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxx3)
+#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxx3)     //  NTSC J      | Asia.
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
-#if defined(SCPH_xxxx)
-const char region[3] = {'a', 'e', 'i'};
+#if defined(SCPH_xxxx)                           //              | All
+const char region[3] = {'a', 'e', 'i'}; 
 #endif
 
 //All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
@@ -130,10 +134,11 @@ const char region[3] = {'a', 'e', 'i'};
 // #define HYSTERESIS_MAX 25 
 // #endif
 
+// serial debug section
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
 
-void Debug_Log (int Lows, int Wfck_mode){
+void Debug_Log (int Lows, int Wfck_mode){          //Information about the MCU, and old or late console mode.
 
 #if  defined(ATtiny85_45_25)
   mySerial.print("m "); mySerial.println(Wfck_mode);
@@ -147,7 +152,7 @@ void Debug_Log (int Lows, int Wfck_mode){
 }
 
   // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
-void Debug_Scbuf (uint8_t *Scbuf){
+void Debug_Scbuf (uint8_t *Scbuf){         // Data from the DATA bus
 #if defined(ATtiny85_45_25)
   if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) { // a bad sector read is all 0 except for the CRC fields. Don't log it.
     for (int i = 0; i < 12; i++) {
@@ -172,7 +177,7 @@ void Debug_Scbuf (uint8_t *Scbuf){
 #endif
 }
 
-void Debug_Inject(){
+void Debug_Inject(){       // Confirmation of region code injection
 
 #if defined(ATtiny85_45_25)
     mySerial.print("!");
@@ -182,6 +187,8 @@ void Debug_Inject(){
 }
 
 #endif
+
+// Compilation message
 
 #if !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
@@ -195,4 +202,14 @@ void Debug_Inject(){
       defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102_legacy) ^ \
       defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_xxx3)
  #error "May be selected only one console! Please check #define with SCPH model number."
+#endif
+
+#if !defined(ATmega328_168) && !defined(ATmega32U4_16U4) && !defined(ATtiny85_45_25)
+ #error "MCU not selected! Please choose one"
+#elif !defined(ATmega328_168) ^ defined(ATmega32U4_16U4 ) ^ defined(ATtiny85_45_25)
+ #error "May be selected only one MCU"
+#endif
+
+#if defined(LED_RUN) && defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(ATtiny85_45_25)
+ #error"Compilation options LED_RUN and PSNEE_DEBUG_SERIAL_MONITOR are not simultaneously compatible with ATtiny85_45_25"
 #endif

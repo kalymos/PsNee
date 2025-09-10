@@ -370,13 +370,14 @@
     #define PIN_LED_OFF PORTB &= ~(1 << PB3)
   #endif
 
-  #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && && !defined(SCPH_xxx3) !defined(SCPH_103) && && !defined(SCPH_101) !defined(SCPH_xxxx) 
+  #if defined(SCPH_1000) || defined(SCPH_3000) || defined(SCPH_3500_5000) || defined(SCPH_5500) || defined(SCPH_7000_9000) || defined(SCPH_100) || defined(SCPH_102_legacy) || defined(SCPH_102) 
    #error "ATtiny85_45_25 Not compatible with BIOS patch"
   #endif
 
   #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
     #include <SoftwareSerial.h>
     SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
+    #define PIN_TXD_OUTPUT DDRB |= (1 << DDB3)
     // #define DEBUG_PRINT(x)     mySerial.print(x)
     // #define DEBUG_PRINTHEX(x)  mySerial.print(x, HEX)
     // #define DEBUG_PRINTLN(x)   mySerial.println(x)

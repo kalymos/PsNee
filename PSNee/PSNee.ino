@@ -73,7 +73,7 @@
 //------------------------------------------------------------------------------------------------
 //                          Hysteresis 
 //------------------------------------------------------------------------------------------------
-#define HYSTERESIS_MAX 15         // All model
+#define HYSTERESIS_MAX 15         // All model.  
 //#define HYSTERESIS_MAX 25         // Only FAT! For models with problematic CD players.
 
 //------------------------------------------------------------------------------------------------
@@ -369,7 +369,7 @@ void Init() {
   PIN_SUBQ_INPUT;
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(ATtiny85_45_25)
-  pinMode(debugtx, OUTPUT); // software serial tx pin
+  //pinMode(debugtx, OUTPUT); // software serial tx pin
   mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
 #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(ATtiny85_45_25)
   Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
@@ -515,7 +515,7 @@ int main() {
     else if (hysteresis > 0) {
       hysteresis--;  
     }
-    Serial.println(hysteresis);
+    //Serial.println(hysteresis);
     // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
     // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate
     if (hysteresis >= HYSTERESIS_MAX) {
