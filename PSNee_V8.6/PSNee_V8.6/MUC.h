@@ -355,7 +355,123 @@
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && !defined(SCPH_xxxx)
  #error "ATtiny85_45_25 Not compatible with BIOS patch"
 #endif
+#endif
 
+#ifdef ATmega4809
+
+// Define the clock speed for the microcontroller
+#define F_CPU 16000000L
+
+// Set the main clock to 16 MHz by clearing the clock divider
+#define SET_CLOCK                   _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 0x00);
+
+// Configure Timer for 100 kHz periodic tick using TCB0
+#define TIMER_TCNT_CLEAR            TCB0.CNT = 0x00;            // TCB0.CNT - Timer/Counter B Register, clears the timer count
+
+// Set TCB0.CCMP to achieve a 100KHz clock frequency
+#define SET_OCROA_DIV               TCB0.CCMP = 159;            // TCB0.CCMP – Compare/Capture Register, 100KHz clock generation
+
+// Configure Timer/Counter B0 for Periodic Interrupt mode and enable the clock source
+#define SET_TIMER_TCCROA            TCB0.CTRLB = TCB_CNTMODE_INT_gc;    // TCB0.CTRLB – Control Register B, enable Periodic Interrupt mode
+#define SET_TIMER_TCCROB            TCB0.CTRLA = TCB_CLKSEL_CLKDIV1_gc; // TCB0.CTRLA – Control Register A, set clock select to CLK_PER (No Prescaling)
+                                                                        // Mode: Periodic Interrupt
+
+// Interrupt vector for timer compare match event
+#define CTC_TIMER_VECTOR            TCB0_INT_vect               // Interrupt vector for TCB0 compare match event
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/sfr_defs.h>
+#include <util/delay.h>
+
+// Global interrupt control settings
+#define GLOBAL_INTERRUPT_ENABLE     sei()
+#define GLOBAL_INTERRUPT_DISABLE    cli()
+
+// Main pin configuration for input and output
+
+// Define the main pins as inputs
+#define PIN_DATA_INPUT              PORTE.DIRCLR = PIN3_bm      // D8 -> PE3
+#define PIN_WFCK_INPUT              PORTB.DIRCLR = PIN0_bm      // D9 -> PB0
+#define PIN_SQCK_INPUT              PORTF.DIRCLR = PIN4_bm      // D6 -> PF4
+#define PIN_SUBQ_INPUT              PORTA.DIRCLR = PIN1_bm      // D7 -> PA1
+
+// Define the main pins as outputs
+#define PIN_DATA_OUTPUT             PORTE.DIRSET = PIN3_bm
+#define PIN_WFCK_OUTPUT             PORTB.DIRSET = PIN0_bm
+
+// Define pull-ups and set high at the main pin
+#define PIN_DATA_SET                PORTE.OUTSET = PIN3_bm
+
+// Clear the main pins (set low)
+#define PIN_DATA_CLEAR              PORTE.OUTCLR = PIN3_bm
+#define PIN_WFCK_CLEAR              PORTB.OUTCLR = PIN0_bm
+
+// Read the state of the main input pins
+#define PIN_SQCK_READ              (PORTF.IN & PIN4_bm)
+#define PIN_SUBQ_READ              (PORTA.IN & PIN1_bm)
+#define PIN_WFCK_READ              (PORTB.IN & PIN0_bm)
+
+
+// LED pin handling (for indication)
+#define LED_RUN
+#define PIN_LED_OUTPUT              PORTE.DIRSET = PIN2_bm      // D13 -> PE2
+#define PIN_LED_ON                  PORTE.OUTSET = PIN2_bm
+#define PIN_LED_OFF                 PORTE.OUTCLR = PIN2_bm
+
+// Handling the BIOS patch
+
+// Enable/Disable timer interrupts for TCB0
+// This macro now also enables the timer itself.
+#define TIMER_INTERRUPT_ENABLE      TCB0.INTCTRL = TCB_CAPT_bm; TCB0.CTRLA |= TCB_ENABLE_bm
+#define TIMER_INTERRUPT_DISABLE     TCB0.CTRLA &= ~TCB_ENABLE_bm; TCB0.INTCTRL = 0
+
+// Clear the timer interrupt flag
+#define TIMER_TIFR_CLEAR            TCB0.INTFLAGS = TCB_CAPT_bm      // Clear the TCB0 Compare Match interrupt flag
+
+// Define input pins for the BIOS patch
+#define PIN_AX_INPUT                PORTA.DIRCLR = PIN0_bm          // D2 -> PA0
+#define PIN_AY_INPUT                PORTF.DIRCLR = PIN5_bm          // D3 -> PF5
+#define PIN_DX_INPUT                PORTC.DIRCLR = PIN6_bm          // D4 -> PC6
+
+// Define output pins for the BIOS patch
+#define PIN_DX_OUTPUT               PORTC.DIRSET = PIN6_bm
+
+// Set pull-ups high on output pins
+#define PIN_DX_SET                  PORTC.OUTSET = PIN6_bm
+
+// Set pull-ups low on output pins
+#define PIN_DX_CLEAR                PORTC.OUTCLR = PIN6_bm
+
+// Read the input pins for the BIOS patch
+#define PIN_AX_READ                (PORTA.IN & PIN0_bm)
+#define PIN_AY_READ                (PORTF.IN & PIN5_bm)
+
+// External interrupt configuration for BIOS patch
+#define PIN_AX_INTERRUPT_ENABLE     PORTA.PIN0CTRL |= PORT_ISC_BOTHEDGES_gc
+#define PIN_AY_INTERRUPT_ENABLE     PORTF.PIN5CTRL |= PORT_ISC_BOTHEDGES_gc
+
+#define PIN_AX_INTERRUPT_DISABLE    PORTA.PIN0CTRL &= ~PORT_ISC_gm
+#define PIN_AY_INTERRUPT_DISABLE    PORTF.PIN5CTRL &= ~PORT_ISC_gm
+
+#define PIN_AX_INTERRUPT_RISING     PORTA.PIN0CTRL = (PORTA.PIN0CTRL & ~PORT_ISC_gm) | PORT_ISC_RISING_gc
+#define PIN_AY_INTERRUPT_RISING     PORTF.PIN5CTRL = (PORTF.PIN5CTRL & ~PORT_ISC_gm) | PORT_ISC_RISING_gc
+
+#define PIN_AX_INTERRUPT_FALLING    PORTA.PIN0CTRL = (PORTA.PIN0CTRL & ~PORT_ISC_gm) | PORT_ISC_FALLING_gc
+#define PIN_AY_INTERRUPT_FALLING    PORTF.PIN5CTRL = (PORTF.PIN5CTRL & ~PORT_ISC_gm) | PORT_ISC_FALLING_gc
+
+// Interrupt vectors for external interrupts
+#define PIN_AX_INTERRUPT_VECTOR     PORTA_PORT_vect
+#define PIN_AY_INTERRUPT_VECTOR     PORTF_PORT_vect
+
+// Handle switch input for BIOS patch
+#define PIN_SWITCH_INPUT            PORTB.DIRCLR = PIN2_bm          // D5 -> PB2
+#define PIN_SWITCH_SET              PORTB.OUTSET = PIN2_bm
+#define PIN_SWITCH_READ            (PORTB.IN & PIN2_bm)
+
+#endif
 
 // *****************************************************************************************************************
 // WARNING:
@@ -747,7 +863,5 @@
 #define PIN_SWITCH_INPUT            GPIOA->MODER &= ~(GPIO_MODER_MODER5)                              
 #define PIN_SWITCH_SET              GPIOA->ODR  |=  (GPIO_ODR_ODR_5)                                
 #define PIN_SWICHE_READ            (GPIOA->IDR   &   (GPIO_IDR_IDR_5))
-
-#endif
 
 #endif
