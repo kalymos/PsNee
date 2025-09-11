@@ -1,8 +1,8 @@
 //                           PSNee-8.7.0
 
-//------------------------------------------------------------------------------------------------
-//                         MCU selection
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+                            MCU selection
+------------------------------------------------------------------------------------------------*/
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
@@ -10,15 +10,15 @@
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
-//------------------------------------------------------------------------------------------------
-//                         Console selection
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+                          Console selection
+--------------------------------------------------------------------------------------------------
 
-// No BIOS patching. 
-// You can use injection via USB.
+   No BIOS patching. 
+   You can use injection via USB.
 
-// SCPH model number //  region code | region
-//-------------------------------------------------------------------------------------------------
+   SCPH model number //  region code | region
+-------------------------------------------------------------------------------------------------*/
 //#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
@@ -30,19 +30,19 @@
 /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
                               Caution!
 
- For the patch to work, the BIOS version is more important than the SCPH number.
-
  It is only possible to inject the code via ISP! 
+
+ For the patch to work, the BIOS version is more important than the SCPH number.
  
  The delay in starting up caused by the bootloader of the Arduino cards prevents the injection of the BIOS patch within the delay,
  that's why you have to use the ISP which eliminates the bootloader.
  
- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-*/
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-//                                    |                Adres pin            |
-//   SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
-//-------------------------------------------------------------------------------------------------
+
+                                      |                Adres pin            |
+     SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
+-------------------------------------------------------------------------------------------------*/
 //#define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
 //#define SCPH_102_legacy // ! works in progress DX - D2, AX - A18.         | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
 //#define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
@@ -52,9 +52,9 @@
 //#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
 //#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
-//------------------------------------------------------------------------------------------------
-//                         Options
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+                           Options
+------------------------------------------------------------------------------------------------*/
 
 #define LED_RUN         // Turns on the LED when injections occur.
 //                         D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
@@ -63,25 +63,26 @@
 //                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash (No problem in game).
 //                         In rare cases where the BIOS patch prevents the playback of original games.
 
-//#define PSNEE_DEBUG_SERIAL_MONITOR  // Enables serial monitor output.
-//                                     For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
-//                                       Arduino   |   ATtiny
-//                                       ---------------------
-//                                       TXD--RXD  |  PB3--RXD
-//                                       GND--GND  |  GND--GND
+//#define PSNEE_DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
+/*                                       Requires compilation with Arduino libs!
+                                         For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
+                                           Arduino   |   ATtiny
+                                           ---------------------
+                                           TXD--RXD  |  PB3--RXD
+                                           GND--GND  |  GND--GND */
 
-//------------------------------------------------------------------------------------------------
-//                          Hysteresis 
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+                          Hysteresis 
+------------------------------------------------------------------------------------------------*/
 #define HYSTERESIS_MAX 15         // All model.  
 //#define HYSTERESIS_MAX 25         // Only FAT! For models with problematic CD players.
+//           Determines the number of times the data in the DATA line must match the filter of the region code injection function to trigger the injection.
 
-//------------------------------------------------------------------------------------------------
-//    Summary of practical information. Fuses. Pinout
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+            Summary of practical information. Fuses. Pinout
+------------------------------------------------------------------------------------------------*/
 
 /*  
-
   Fuses  
   MCU    | High | Low | Extended
   --------------------------------------------------
@@ -101,7 +102,7 @@
   D6        | SQCK      |
   D7        | SUBQ      |
   D8        | DATA      |
-  D9        | GATE_WFCK |
+  D9        | WFCK |
   D13 ^ D10 | LED       | D10 only for ATmega32U4_16U4
 
   ATtiny | PSNee        | ISP   |
@@ -114,12 +115,11 @@
   Pin6   | SUBQ         | MISO  |
   Pin7   | DATA         | SCK   |
   Pin8   | VCC          | VCC   |
-
 */
 
-//------------------------------------------------------------------------------------------------
-//                         pointer and variable section
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+                         pointer and variable section
+------------------------------------------------------------------------------------------------*/
 
 #include "MCU.h"
 #include "settings.h"
@@ -139,26 +139,26 @@ volatile bool wfck_mode = 0;
 
 volatile bool Flag_Switch = 0;
 
-//------------------------------------------------------------------------------------------------
-//                         Code section
-//------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------
+                         Code section
+------------------------------------------------------------------------------------------------*/
 
-// *****************************************************************************************
-// Interrupt Service Routine: CTC_TIMER_VECTOR
-// Description: 
-// This ISR is triggered by the Timer/Counter Compare Match event. It increments time-related 
-// counters used for tracking microseconds and milliseconds.
-//
-// Functionality:
-// - Increments `microsec` by 10 on each interrupt call.
-// - Increments `count_isr` to keep track of the number of interrupts.
-// - When `count_isr` reaches 100, it means 1 millisecond has elapsed:
-//     - `millisec` is incremented.
-//     - `count_isr` is reset to 0.
-//
-// Notes:
-// - This method provides a simple way to maintain a software-based timekeeping system.
-// *****************************************************************************************
+/*------------------------------------------------------------------------------------------------
+ Interrupt Service Routine: CTC_TIMER_VECTOR
+ Description: 
+ This ISR is triggered by the Timer/Counter Compare Match event. It increments time-related 
+ counters used for tracking microseconds and milliseconds.
+
+ Functionality:
+ - Increments `microsec` by 10 on each interrupt call.
+ - Increments `count_isr` to keep track of the number of interrupts.
+ - When `count_isr` reaches 100, it means 1 millisecond has elapsed:
+     - `millisec` is incremented.
+     - `count_isr` is reset to 0.
+
+ Notes:
+ - This method provides a simple way to maintain a software-based timekeeping system.
+------------------------------------------------------------------------------------------------*/
 ISR(CTC_TIMER_VECTOR) {
   microsec += 10;                    
   count_isr++;                  
@@ -408,14 +408,16 @@ int main() {
 #endif
 
   Timer_Start();
-  //************************************************************************
-  // Board detection
-  //
-  // GATE: __-----------------------  // this is a PU-7 .. PU-20 board!
-  //
-  // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
-  // typical readouts PU-22: highs: 2449 lows: 2377
-  //************************************************************************
+  /*----------------------------------------------------------------------
+   Board detection
+  
+   WFCK: __-----------------------  // this is a PU-7 .. PU-20 board!
+  
+        __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
+  
+   typical readouts PU-22: highs: 2449 lows: 2377
+  
+  -----------------------------------------------------------------------*/
   do {
     if (PIN_WFCK_READ == 0) lows++;             // good for ~5000 reads in 1s
     _delay_us(200);
@@ -486,14 +488,14 @@ int main() {
   Debug_Scbuf(scbuf);
 #endif
 
-    //************************************************************************
-    // Check if read head is in wobble area
-    // We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
-    // We want to see a TOC sector repeatedly before injecting (helps with timing and marginal lasers).
-    // All this logic is because we don't know if the HC-05 is actually processing a getSCEX() command.
-    // Hysteresis is used because older drives exhibit more variation in read head positioning.
-    // While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
-    //************************************************************************
+    /*-------------------------------------------------------------------------------
+     Check if read head is in wobble area
+     We only want to unlock game discs (0x41) and only if the read head is in the outer TOC area.
+     We want to see a TOC sector repeatedly before injecting (helps with timing and marginal lasers).
+     All this logic is because we don't know if the HC-05 is actually processing a getSCEX() command.
+     Hysteresis is used because older drives exhibit more variation in read head positioning.
+     While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
+    -------------------------------------------------------------------------------*/
 
     //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
     uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
@@ -515,7 +517,7 @@ int main() {
     else if (hysteresis > 0) {
       hysteresis--;  
     }
-    //Serial.println(hysteresis);
+
     // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
     // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate
     if (hysteresis >= HYSTERESIS_MAX) {
@@ -523,13 +525,13 @@ int main() {
       // Hysteresis naturally goes to 0 otherwise (the read head moved).
       hysteresis = 11;
 
-    //************************************************************************
-    //Executes the region code patch injection sequence.
-    //************************************************************************
-
 #ifdef LED_RUN
   PIN_LED_ON;
 #endif
+
+/*-------------------------------------------------------------------------------
+        Executes the region code injection sequence.
+-------------------------------------------------------------------------------*/
 
       PIN_DATA_OUTPUT;  
       PIN_DATA_CLEAR;   

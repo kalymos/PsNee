@@ -14,12 +14,13 @@
    HOLD _delay_us(2.75)    = 44  clock cycles
    PATCHING _delay_us(0.2) = 3,2 clock cycles
 
-
 */
-// Specific parameter section for BIOS patches
+
+/*------------------------------------------------------------------------------------------------
+           Specific parameter section for BIOS patches
+------------------------------------------------------------------------------------------------*/
 
 #ifdef  SCPH_102_legacy
-//#define SCEE
 #define BIOS_PATCH
 #define SATBILIZATIONPOINT 100
 #define DELAYPOINT 1350
@@ -28,7 +29,6 @@
 #endif
 
 #ifdef  SCPH_102
-//#define SCEE
 #define BIOS_PATCH
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.2)
@@ -37,7 +37,6 @@
 #endif
 
 #ifdef  SCPH_100
-//#define SCEI
 #define BIOS_PATCH
 #define HOLD _delay_us(2.7)
 #define PATCHING _delay_us(0.2)
@@ -46,7 +45,6 @@
 #endif
 
 #ifdef  SCPH_7000_9000
-//#define SCEI
 #define BIOS_PATCH
 #define HOLD _delay_us(2.85) 
 #define PATCHING _delay_us(0.1)
@@ -55,7 +53,6 @@
 #endif
 
 #ifdef  SCPH_5500
-//#define SCEI
 #define BIOS_PATCH
 #define HOLD _delay_us(2.85)
 #define PATCHING _delay_us(0.1)
@@ -65,7 +62,6 @@
 #endif
 
 #ifdef  SCPH_3500_5000
-//#define SCEI
 #define BIOS_PATCH
 #define HOLD _delay_us(2.85)
 #define PATCHING _delay_us(0.1)
@@ -75,7 +71,6 @@
 #endif
 
 #ifdef  SCPH_3000
-//#define SCEI
 #define BIOS_PATCH                                                    
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.1)
@@ -91,7 +86,6 @@
 #endif
 
 #ifdef  SCPH_1000
-//#define SCEI
 #define BIOS_PATCH
 #define HOLD _delay_us(2.7)
 #define PATCHING _delay_us(0.1)
@@ -106,8 +100,9 @@
 #define TRIGGER2 71
 #endif
 
-
-// Region Settings Section
+/*------------------------------------------------------------------------------------------------
+                  Region Settings Section
+------------------------------------------------------------------------------------------------*/
 
 #if defined(SCPH_xxx1)                            //  NTSC U/C    | America.
 const char region[3] = {'a', 'a', 'a'};
@@ -125,26 +120,19 @@ const char region[3] = {'i', 'i', 'i'};
 const char region[3] = {'a', 'e', 'i'}; 
 #endif
 
-//All models have bad behavior below 11, PU-41 can start to have bad behavior beyond 20, for fat models we can go up to 60
-// #if  defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_xxxx) || defined(SCPH_xxx1_15) || defined(SCPH_xxx2_15) || defined(SCPH_xxx3_15)    
-// #define HYSTERESIS_MAX 15
-// #endif
 
-// #if  defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxxx_25) || defined(SCPH_xxx1_25) || defined(SCPH_xxx2_25)   || defined(SCPH_xxx3_25)  
-// #define HYSTERESIS_MAX 25 
-// #endif
-
-// serial debug section
+/*------------------------------------------------------------------------------------------------
+               serial debug section
+------------------------------------------------------------------------------------------------*/
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
 
-void Debug_Log (int Lows, int Wfck_mode){          //Information about the MCU, and old or late console mode.
+void Debug_Log (uint16_t Lows, int Wfck_mode){          //Information about the MCU, and old or late console mode.
 
 #if  defined(ATtiny85_45_25)
   mySerial.print("m "); mySerial.println(Wfck_mode);
 #elif !defined(ATtiny85_45_25)
   Serial.print(" MCU frequency: "); Serial.print(F_CPU); Serial.println(" Hz");
-  //Serial.println("Waiting for SQCK..");
   Serial.print(" lows: "); Serial.println(Lows);
   Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
   Serial.print(" region: "); Serial.print(region[0]); Serial.print(region[1]); Serial.println(region[2]);
@@ -172,7 +160,7 @@ void Debug_Scbuf (uint8_t *Scbuf){         // Data from the DATA bus
       Serial.print(Scbuf[i], HEX);
       Serial.print(" ");
     }
-    Serial.print("");
+    Serial.println("");
   }
 #endif
 }
@@ -188,7 +176,9 @@ void Debug_Inject(){       // Confirmation of region code injection
 
 #endif
 
-// Compilation message
+/*------------------------------------------------------------------------------------------------
+               Compilation message
+-----------------------------------------------------------------------------------------------*/
 
 #if !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
