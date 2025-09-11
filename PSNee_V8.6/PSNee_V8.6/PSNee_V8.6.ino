@@ -369,9 +369,11 @@ int main() {
   // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
   // typical readouts PU-22: highs: 2449 lows: 2377
   //************************************************************************
+  uint32_t last_read;
   do {
     if (PIN_WFCK_READ == 0) lows++;             // good for ~5000 reads in 1s
-    _delay_us(200);
+    last_read = microsec;
+    while (microsec - last_read < 200) { }
   } 
   while (millisec < 1000);                     // sample 1s
 
