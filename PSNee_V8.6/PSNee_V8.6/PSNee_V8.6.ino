@@ -30,7 +30,8 @@
 //#define ATmega328_168  
 //#define ATmega32U4_16U4
 //#define ATtiny85_45_25 
-
+//#define ATmega4809
+ 
 /*  
   Fuses: 
   ATmega - H: DF, L: EE, E: FD. 
@@ -57,6 +58,19 @@
   Pin6-SUBQ (MISO)
   Pin7_DATA (SCK)
   Pin8-VCC
+
+  Pinout Arduino Nano Every:
+  VCC-3.5v, PinGND-GND, 
+  D2(PA0)-BIOS AX (Only for Bios patch)
+  D3(PF5)-BIOS AY (Only for BIOS ver. 1.0j-1.1j)
+  D4(PC6)-BIOS DX (Only for Bios patch)
+  D5(PB2)-Switch* (Optional for Bios patch)
+  D6(PF4)-SQCK
+  D7(PA1)-SUBQ
+  D8(PE3)-DATA
+  D9(PB0)-GATE_WFCK
+  D13(PE2)-LED (Built-in LED)
+  RST-RESET* (Only for JAP_FAT)
 */
   
 
@@ -119,6 +133,10 @@ ISR(CTC_TIMER_VECTOR) {
     millisec++;
     count_isr = 0;
   }
+#if defined(ATmega4809)
+  // Clear TCB0 capture/interrupt flag to allow next interrupt
+  TCB0.INTFLAGS = TCB_CAPT_bm;
+#endif
 }
 
 // *****************************************************************************************
@@ -144,7 +162,7 @@ ISR(CTC_TIMER_VECTOR) {
 //
 // *****************************************************************************************
 void Timer_Start() {
-#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
+#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25) || defined(ATmega4809)
   TIMER_TCNT_CLEAR;
   TIMER_INTERRUPT_ENABLE;
   #if defined(BIOS_PATCH)
@@ -168,7 +186,7 @@ void Timer_Start() {
 // *****************************************************************************************
 void Timer_Stop() {
   
-  #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
+  #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25) || defined(ATmega4809)
     TIMER_INTERRUPT_DISABLE;  // Disable timer interrupts to stop counting
     TIMER_TCNT_CLEAR;         // Reset the timer counter to ensure proper timing when restarted
   #endif
@@ -286,7 +304,11 @@ void inject_SCEX(const char region) {
 }
 
 void Init() {
-#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
+#if defined(ATmega4809)
+ SET_CLOCK;
+#endif
+
+#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25) || defined(ATmega4809)
   TIMER_TCNT_CLEAR;
   SET_OCROA_DIV;
   SET_TIMER_TCCROA;
