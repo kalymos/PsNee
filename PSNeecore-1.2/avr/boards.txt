@@ -12,6 +12,8 @@ ATtinyX5.name=ATtiny25/45/85
 
 ATtinyX5.upload.tool=arduino:avrdude
 ATtinyX5.upload.low_fuses=0xe2
+ATtinyX5.upload.extended_fuses=fd
+ATtinyX5.upload.high_fuses=df
 
 ATtinyX5.program.tool=arduino:avrdude
 ATtinyX5.program.unlock_bits=0xff
@@ -48,36 +50,36 @@ ATtinyX5.menu.variant.attiny85.build.mcu=attiny85
 
 # General
 
-ATtinyX8.name=ATtiny88/48
+#ATtinyX8.name=ATtiny88/48
 
-ATtinyX8.upload.tool=arduino:avrdude
+#ATtinyX8.upload.tool=arduino:avrdude
 
-ATtinyX8.program.tool=arduino:avrdude
-ATtinyX8.program.unlock_bits=0xff
-ATtinyX8.program.lock_bits=0xff
+#ATtinyX8.program.tool=arduino:avrdude
+#ATtinyX8.program.unlock_bits=0xff
+#ATtinyX8.program.lock_bits=0xff
 
-ATtinyX8.build.core=arduino:arduino
-ATtinyX8.build.board=AVR_ATTINYX8
-ATtinyX8.build.variant=tinyx8
-ATtinyX8.build.f_cpu=16000000L
+#ATtinyX8.build.core=arduino:arduino
+#ATtinyX8.build.board=AVR_ATTINYX8
+#ATtinyX8.build.variant=tinyx8
+#ATtinyX8.build.f_cpu=16000000L
 
 
 
-ATtinyX8.menu.variant.attiny48=ATtiny48
-ATtinyX8.menu.variant.attiny48.upload.maximum_size=4096
-ATtinyX8.menu.variant.attiny48.upload.maximum_data_size=256
-ATtinyX8.menu.variant.attiny48.build.mcu=attiny48
+#ATtinyX8.menu.variant.attiny48=ATtiny48
+#ATtinyX8.menu.variant.attiny48.upload.maximum_size=4096
+#ATtinyX8.menu.variant.attiny48.upload.maximum_data_size=256
+#ATtinyX8.menu.variant.attiny48.build.mcu=attiny48
 
-ATtinyX8.menu.variant.attiny88=ATtiny88
-ATtinyX8.menu.variant.attiny88.upload.maximum_size=8192
-ATtinyX8.menu.variant.attiny88.upload.maximum_data_size=512
-ATtinyX8.menu.variant.attiny88.build.mcu=attiny88
+#ATtinyX8.menu.variant.attiny88=ATtiny88
+#ATtinyX8.menu.variant.attiny88.upload.maximum_size=8192
+#ATtinyX8.menu.variant.attiny88.upload.maximum_data_size=512
+#ATtinyX8.menu.variant.attiny88.build.mcu=attiny88
 
-ATtinyX8.menu.fuses.BIOSpatch=BIOS patch
-ATtinyX8.menu.fuses.BIOSpatch.upload.low_fuses=0xee
+#ATtinyX8.menu.fuses.BIOSpatch=BIOS patch
+#ATtinyX8.menu.fuses.BIOSpatch.upload.low_fuses=0xee
 
-ATtinyX8.menu.fuses.NoBIOSpatch=No BIOS patch
-ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
+#ATtinyX8.menu.fuses.NoBIOSpatch=No BIOS patch
+#ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 
 #############################
 #### ATmega328/A/P/PA/PB ####
@@ -91,6 +93,7 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 328.upload.maximum_data_size=2048
 328.upload.maximum_size=30720
 328.upload.low_fuses=0xee
+328.upload.high_fuses=0xdf
 
 328.build.core=arduino:arduino
 328.build.board=AVR_ATmega328
@@ -100,14 +103,18 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 328.menu.variant.modelP=328P / 328PA
 328.menu.variant.modelP.build.variant=standard
 328.menu.variant.modelP.build.mcu=atmega328p
+328.menu.variant.modelP.upload.extended_fuses=0xfd
 
 328.menu.variant.modelNonP=328 / 328A
 328.menu.variant.modelNonP.build.variant=standard
 328.menu.variant.modelNonP.build.mcu=atmega328
+328.menu.variant.modelNonP.upload.extended_fuses=0xfd
 
 328.menu.variant.modelPB=328PB
 328.menu.variant.modelPB.build.variant=pb-variant 
 328.menu.variant.modelPB.build.mcu=atmega328pb
+328.menu.variant.modelPB.upload.extended_fuses=0xf5
+
 
 
 
@@ -122,6 +129,7 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 168.upload.maximum_size=15872
 168.upload.maximum_data_size=1024
 168.upload.low_fuses=0xee
+168.upload.high_fuses=0xdf
 
 168.build.core=arduino:arduino
 168.build.board=AVR_ATmega168
@@ -132,14 +140,17 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 168.menu.variant.modelP=168P / 168PA
 168.menu.variant.modelP.build.variant=standard
 168.menu.variant.modelP.build.mcu=atmega168p
+168.menu.variant.modelP.upload.extended_fuses=0xfd
 
 168.menu.variant.modelNonP=168 / 168A
 168.menu.variant.modelNonP.build.variant=standard
 168.menu.variant.modelNonP.build.mcu=atmega168
+168.menu.variant.modelNonP.upload.extended_fuses=0xfd
 
 168.menu.variant.modelPB=168PB
 168.menu.variant.modelPB.build.variant=pb-variant
 168.menu.variant.modelPB.build.mcu=atmega168pb
+168.menu.variant.modelPB.upload.extended_fuses=0xf5
 
 #############################
 #### atmega32u4          ####
@@ -180,7 +191,8 @@ ATtinyX8.menu.fuses.NoBIOSpatch.upload.low_fuses=0xff
 32u4.upload.use_1200bps_touch=true
 32u4.upload.wait_for_upload_port=true
 32u4.upload.low_fuses=0xee
-
+32u4.upload.high_fuses=0xdf
+32u4.upload.extended_fuses=0xfd
 
 
 32u4.build.mcu=atmega32u4
