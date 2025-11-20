@@ -33,11 +33,13 @@
 
 /*  
   Fuses: 
-  ATmega - H: DF, L: EE, E: FD. 
-  ATtiny - H: DF, L: E2; E: FF.
+  ATmega 328/168  - H: DF, L: EE, E: FD. 
+  ATmega32U4_16U4 - H: DF, L: EE, E: FB. 
+  ATmega 328PB    - H: DF, L: EE, E: F5.
+  ATtiny          - H: DF, L: E2; E: FF.
 
   Pinout Arduino:
-  VCC-3.5v, PinGND-GND, 
+  5v-VCC, PinGND-GND, 
   D2-BIOS AX (Only for Bios patch)
   D3-BIOS AY (Only for BIOS ver. 1.0j-1.1j)
   D4-BIOS DX (Only for Bios patch)
@@ -45,8 +47,9 @@
   D6-SQCK
   D7-SUBQ
   D8-DATA
-  D9-GATE_WFCK
+  D9-WFCK
   RST-RESET* (Only for JAP_FAT)
+  GND-GND
 
   Pinout ATtiny:
   Pin1-RESET
@@ -342,7 +345,7 @@ int main() {
   //************************************************************************
   // Board detection
   //
-  // GATE: __-----------------------  // this is a PU-7 .. PU-20 board!
+  // WFCK: __-----------------------  // this is a PU-7 .. PU-20 board!
   //
   // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
   // typical readouts PU-22: highs: 2449 lows: 2377
