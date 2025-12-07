@@ -54,8 +54,8 @@
 #if defined(ARDUINO_328_BOARD)
 // board pins (code requires porting to reflect any changes)
 #if defined(APPLY_PSONE_PAL_BIOS_PATCH)
-#define BIOS_A18 3          // connect to PSOne BIOS A18 (pin 31 on that chip)
-#define BIOS_D2  4          // connect to PSOne BIOS D2 (pin 15 on that chip)
+#define BIOS_A18 4          // connect to PSOne BIOS A18 (pin 31 on that chip)
+#define BIOS_D2  5          // connect to PSOne BIOS D2 (pin 15 on that chip)
 #endif
 #define sqck 6          // connect to PSX HC-05 SQCK pin
 #define subq 7          // connect to PSX HC-05 SUBQ pin
