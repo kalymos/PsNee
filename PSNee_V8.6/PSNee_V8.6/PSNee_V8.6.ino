@@ -349,6 +349,13 @@ int main() {
   //
   // WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
   // typical readouts PU-22: highs: 2449 lows: 2377
+  // The detection performed here allows us to determine the code's behavior.
+  //
+  // In the case of older generations like PU-7 through PU-20, we are connected to the output of an operational amplifier used as a buffer 
+  //(this part of the motherboard was detailed in the official schematics; by convention, this point was labeled GATE). 
+  //In normal operation, this line is always high, but pulling it down frees the DATA line, allowing the SCEX code to be injected without any further issues.
+  //
+  //If we are dealing with PU-22 or newer models, it is connected to a WFCK clock output. This clock signal will be used to synchronize the SCEX injection.
   //************************************************************************
   do {
     if (PIN_WFCK_READ == 0) lows++;             // good for ~5000 reads in 1s
@@ -470,7 +477,7 @@ int main() {
         inject_SCEX(region[scex]);
       }
 
-      if (!wfck_mode)  // Set WFCK pin input
+      if (!wfck_mode)  
       {
         PIN_WFCK_INPUT;  
       }
