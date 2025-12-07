@@ -108,45 +108,118 @@
 //******************************************************************************************************************
 
 //******************************************************************************************************************
-// Example: EICRA |= (1<<ISC01) | (1<<ISC00);  
 
-// This operation configures the external interrupt sense control (ISC) for interrupt INT0 (External Interrupt Request 0).
-// Specifically, it sets the mode of INT0 to "rising edge" trigger, meaning the interrupt will be triggered when the pin 
-// transitions from low to high (rising edge).
+// Enables (masks in) the Hardware External Interrupt 0 (INT0).
+
+// Equivalent to the Arduino function: attachInterrupt(digitalPinToInterrupt(2), myFunctionName, CHANGE);
 //
-// EICRA (External Interrupt Control Register A) controls how external interrupts INT0 and INT1 are triggered. 
-// The bits ISC01 and ISC00 in this register define the trigger mode for interrupt INT0.
-// 
-// - Setting ISC01 to 1 and ISC00 to 1 (via the OR operation) configures INT0 to trigger on the rising edge.
-// 
-// Before:  EICRA = b00000000  // Initial value of EICRA, all interrupt sense control bits are cleared (no trigger mode set).
-// Operation: EICRA |= (1<<ISC01) | (1<<ISC00)  // Set ISC01 and ISC00 to 1 for rising edge trigger.
-// After:   EICRA = b00000011  // The bits ISC01 and ISC00 are now set, configuring INT0 to trigger on rising edge.
-// 
-// This technique is commonly used to configure external interrupts to trigger based on specific events like a rising 
-// or falling edge on the external interrupt pin (INT0 or INT1).
+// Example: EIMSK |= (1<<INT0);
+//
+// Creates a mask by shifting the bit 1 to the left to the position of the INT0 bit.
+// A bitwise OR operation is then applied to the EIMSK (External Interrupt Mask Register) register to set that specific bit to 1.
+// Enabling this bit tells the microcontroller to start listening for signals on the physical pin associated with INT0 (typically Pin D2 on the Arduino UNO/Nano).
+//
+// For instance, if EIMSK = b00000000 (all interrupts disabled), the generated mask is (1<<INT0) = b00000001 (assuming INT0 is defined as 0).
+// The bitwise OR operation ensures the INT0 bit is set to 1, without affecting the other interrupts.
+//
+// Before: EIMSK = b00000000 // All interrupts disabled
+// Mask: (1<<INT0) = b00000001 // Generated enable mask
+// Operation: EIMSK | b00000001 = b00000001 // The INT0 interrupt is now enabled
+//
 //******************************************************************************************************************
 
 //******************************************************************************************************************
-// Example: EICRA = (EICRA & ~(1<<ISC00)) | (1<<ISC01);  
 
-// This operation configures the external interrupt sense control (ISC) for interrupt INT0 (External Interrupt Request 0). 
-// Specifically, it sets INT0 to trigger on a "falling edge" (when the signal transitions from high to low).
-// 
-// The bits ISC01 and ISC00 in the EICRA register define how the external interrupt INT0 is triggered. The operation 
-// clears the bit ISC00 while setting ISC01 to 1, configuring INT0 to trigger when the pin transitions from high to low, 
-// i.e., on the falling edge.
-// 
-// EICRA (External Interrupt Control Register A) controls how external interrupts INT0 and INT1 are triggered.
-// - ISC01 = 1, ISC00 = 0 configures INT0 to trigger on falling edge (high to low transition).
-// 
+// Disables (masks out) the Hardware External Interrupt 0 (INT0).
+
+// Equivalent to the Arduino function: detachInterrupt(digitalPinToInterrupt(2));
+//
+// Example: EIMSK &= ~(1<<INT0);
+//
+// Creates a mask by shifting the bit 1 to the left by the position of the INT0 bit.
+// The mask is then inverted at the bit level (binary NOT) to create a clearing mask (all bits are 1 except the target bit, which is 0).
+// A bitwise AND operation is applied to the EIMSK (External Interrupt Mask Register) register to force that specific bit to 0.
+// Disabling this bit tells the microcontroller to stop listening for signals on the physical pin associated with INT0 (typically Pin D2 on the Arduino UNO/Nano).
+//
+// For instance, if EIMSK = b00000001 (INT0 interrupt is enabled), the generated mask is (1<<INT0) = b00000001.
+// Inverting (NOT) the mask yields ~(1<<INT0) = b11111110.
+// The bitwise AND operation between EIMSK and the clearing mask ensures the INT0 bit becomes 0 (disabled).
+//
+// Before: EIMSK = b00000001 // INT0 interrupt is enabled
+// Mask: ~(1<<INT0) = b11111110 // Generated disable mask
+// Operation: EIMSK & b11111110 = b00000000 // The INT0 interrupt is now disabled
+//
+//******************************************************************************************************************
+
+//******************************************************************************************************************
+
+// Configures the external interrupt 0 (INT0) to trigger on a RISING edge (when the signal goes from LOW to HIGH).
+
+// Equivalent to the Arduino function: attachInterrupt(digitalPinToInterrupt(2), myFunctionName, RISING);
+//
+// Example: EICRA |= (1<<ISC01)|(1<<ISC00);
+//
+// This operation sets both the ISC01 and ISC00 bits within the EICRA register (External Interrupt Control Register A) to 1.
+// These two bits together form a 2-bit control field that determines how the INT0 pin should react to changes in voltage.
+// The specific combination of ISC01=1 and ISC00=1 defines the "RISING Edge" mode according to the AVR datasheet.
+//
+// EICRA register (simplified view of relevant bits):
+// | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 (ISC01) | Bit 0 (ISC00) |
+// | :---: | :---: | :---: | :---: | :---: | :---: | :-----------: | :-----------: |
+// | | | | | | | 1 | 1 |
+//
+// The bitwise OR (|=) ensures that only these two specific bits are modified, leaving all other interrupt configurations unchanged.
+//
+// Before: EICRA = b00000000 // Default state (usually LOW level triggers)
+// Mask: (1<<ISC01)|(1<<ISC00) = b00000011 // Mask to set both bits 0 and 1
+// Operation: EICRA | b00000011 = b00000011 // INT0 is now configured for RISING edge triggers
+//
+//******************************************************************************************************************
+
+//******************************************************************************************************************
+
+// Configures the external interrupt 0 (INT0) to trigger on a FALLING edge (when the signal goes from HIGH to LOW).
+// Equivalent to the Arduino function: attachInterrupt(digitalPinToInterrupt(2), myFunctionName, FALLING);
+//
+// Example: (EICRA = (EICRA & ~(1<<ISC00)) | (1<<ISC01));
+//
+// This combined operation first ensures that the ISC00 bit is cleared to 0 (& ~(1<<ISC00)), and then sets the ISC01 bit to 1 (| (1<<ISC01)).
+// These two bits together form a 2-bit control field that determines how the INT0 pin should react to changes in voltage.
+// The specific combination of ISC01=1 and ISC00=0 defines the "FALLING Edge" mode according to the AVR datasheet.
+//
+// EICRA register (simplified view of relevant bits):
+// | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 (ISC01) | Bit 0 (ISC00) |
+// | :---: | :---: | :---: | :---: | :---: | :---: | :-----------: | :-----------: |
+// | | | | | | | 1 | 0 |
+//
+// The complex bitwise operation ensures that we set a specific 2-bit value while leaving other unrelated bits in the EICRA register unchanged.
+//
+// Operation Breakdown:
+// 1. Clear ISC00 bit: EICRA & ~(1<<ISC00)
+// 2. Set ISC01 bit: ... | (1<<ISC01)
 // Before:  EICRA = b00000011  // Initial value with ISC01 = 1 and ISC00 = 1 (rising edge trigger for INT0)
 // Operation: EICRA & ~(1<<ISC00) clears ISC00 bit (sets it to 0) while keeping ISC01 at 1. Then OR operation with (1<<ISC01) ensures ISC01 stays 1.
 // After:   EICRA = b00000010  // The bit ISC00 is now cleared, configuring INT0 to trigger on the falling edge.
-// 
-// This technique is used to configure the interrupt to trigger on the falling edge (transition from high to low),
-// without changing the state of other control bits in the EICRA register.
+//
 //******************************************************************************************************************
+
+//******************************************************************************************************************
+// Identifier for the Interrupt Vector for External Interrupt 0 (INT0).
+//
+// Example: ISR(INT0_vect) { ... }
+//
+// This is not an executable instruction but a symbolic name (an alias or macro) defined in the AVR-GCC header files
+// (<avr/interrupt.h>). It points to the specific memory address in the microcontroller's flash memory where the
+// Interrupt Service Routine (ISR) for the INT0 event must reside.
+//
+// When you write ISR(INT0_vect) { ... }, you are telling the compiler: "Place this block of code at the
+// location the CPU jumps to when a hardware signal is detected on the INT0 pin."
+//
+// In Arduino code, this identifier is hidden from the user and managed internally by the
+// attachInterrupt() function.
+//
+//******************************************************************************************************************
+
 
 #pragma once
 
