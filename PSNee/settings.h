@@ -22,6 +22,7 @@
 
 #ifdef  SCPH_102_legacy
 #define BIOS_PATCH
+//#define INTERRUPT_RISING
 #define SATBILIZATIONPOINT 100
 #define DELAYPOINT 1350
 #define HOLD _delay_us(17)
@@ -30,74 +31,85 @@
 
 #ifdef  SCPH_102
 #define BIOS_PATCH
-#define HOLD _delay_us(2.75)
-#define PATCHING _delay_us(0.2)
-#define CHECKPOINT 83900
+#define INTERRUPT_RISING
+#define CHECKPOINT 83.9
 #define TRIGGER 48
+#define HOLD 2.75
+#define PATCHING 0.2
 #endif
 
 #ifdef  SCPH_100
 #define BIOS_PATCH
-#define HOLD _delay_us(2.7)
-#define PATCHING _delay_us(0.2)
-#define CHECKPOINT 83900
+#define INTERRUPT_RISING
+#define CHECKPOINT 83.9
 #define TRIGGER 48
+#define HOLD 2.8
+#define PATCHING 0.2
 #endif
 
-#ifdef  SCPH_7000_9000
+#ifdef  SCPH_7500_9000
 #define BIOS_PATCH
-#define HOLD _delay_us(2.85) 
-#define PATCHING _delay_us(0.1)
-#define CHECKPOINT 75270
+#define INTERRUPT_RISING
+#define CHECKPOINT 75.2 // ms SCPH_9000 74.95-75.55.
 #define TRIGGER 16
+#define HOLD 2.8
+#define PATCHING 0.2
+#endif
+
+#ifdef  SCPH_7000
+#define BIOS_PATCH
+//#define PATCH_SWITCH
+#define INTERRUPT_RISING
+#define CHECKPOINT 74.7
+#define TRIGGER 16
+#define HOLD 2.75
+#define PATCHING 0.6
 #endif
 
 #ifdef  SCPH_5500
 #define BIOS_PATCH
-#define HOLD _delay_us(2.85)
-#define PATCHING _delay_us(0.1)
-#define CHECKPOINT 76130
+#define INTERRUPT_FALLING
+#define CHECKPOINT 76.13
 #define TRIGGER 21
-#define LOW_TRIGGER
+#define HOLD 2.85
+#define PATCHING 0.1
 #endif
 
 #ifdef  SCPH_3500_5000
 #define BIOS_PATCH
-#define HOLD _delay_us(2.85)
-#define PATCHING _delay_us(0.1)
-#define CHECKPOINT 75260
+#define INTERRUPT_FALLING
+#define CHECKPOINT 75.26
 #define TRIGGER 21
-#define LOW_TRIGGER
+#define HOLD 2.85
+#define PATCHING 0.1
 #endif
 
 #ifdef  SCPH_3000
-#define BIOS_PATCH                                                    
-#define HOLD _delay_us(2.75)
-#define PATCHING _delay_us(0.1)
-#define CHECKPOINT 83000      
+#define BIOS_PATCH
+#define INTERRUPT_RISING_HIGH_PATCH     
+#define CHECKPOINT 83   
 #define TRIGGER 60                                               
-//#define DOUBLE_PATCH 
-//#define LOW_TRIGGER2
+#define HOLD 2.75
+#define PATCHING 0.1                                               
 #define HIGH_PATCH
-#define HOLD2 _delay_us(2.88)
-#define PATCHING2 _delay_us(0.15)
 #define CHECKPOINT2 253300
 #define TRIGGER2 43  
+#define HOLD2 2.88
+#define PATCHING2 0.15
 #endif
 
 #ifdef  SCPH_1000
 #define BIOS_PATCH
-#define HOLD _delay_us(2.7)
-#define PATCHING _delay_us(0.1)
-#define CHECKPOINT 83000
+#define INTERRUPT_RISING_HIGH_PATCH
+#define CHECKPOINT 83
 #define TRIGGER 92
-//#define DOUBLE_PATCH
-//#define LOW_TRIGGER2
+#define HOLD 2.7
+#define PATCHING 0.1
 #define HIGH_PATCH
-#define HOLD2 _delay_us(2.88)
-#define PATCHING2 _delay_us(0.15)
-#define CHECKPOINT2 272800
+#define CHECKPOINT2 27.28
 #define TRIGGER2 71
+#define HOLD2 2.88
+#define PATCHING2 0.15
 #endif
 
 /*------------------------------------------------------------------------------------------------
@@ -108,11 +120,11 @@
 const char region[3] = {'a', 'a', 'a'};
 #endif
 
-#if defined(SCPH_102)  || defined(SCPH_xxx2)      //  PAL         | Europ.
+#if defined(SCPH_102)  || defined(SCPH_xxx2)    //  PAL         | Europ.
 const char region[3] = {'e', 'e', 'e'};
 #endif
 
-#if defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxx3)     //  NTSC J      | Asia.
+#if defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxx3)     //  NTSC J      | Asia.
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
@@ -169,7 +181,7 @@ void Debug_Inject(){       // Confirmation of region code injection
 
 #if defined(ATtiny85_45_25)
     mySerial.print("!");
-#elif  !defined(ATtiny85_45_25)
+#elif  !defined(ATtiny85_45_25)|| defined(SCPH_102_legacy) 
     Serial.println("           INJECT ! ");
 #endif
 }
@@ -180,17 +192,17 @@ void Debug_Inject(){       // Confirmation of region code injection
                Compilation message
 -----------------------------------------------------------------------------------------------*/
 
-#if !defined(SCPH_103) && \
-    !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
-    !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_102_legacy) && \
-    !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxxx3)
+#if !defined(SCPH_xxx3) && \
+    !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7500_9000) && \
+    !defined(SCPH_7000) && !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
+    !defined(SCPH_1000) && !defined(SCPH_xxxx)  && \
+    !defined(SCPH_xxx1) && !defined(SCPH_xxx2)
  #error "Console not selected! Please uncoment #define with SCPH model number."
-#elif !defined(SCPH_103) ^ \
-      defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
-      defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_102_legacy) ^ \
-      defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_xxx3)
+#elif !defined(SCPH_xxx3) ^ \
+      defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7500_9000) ^ \
+      defined(SCPH_7000) ^ defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
+      defined(SCPH_1000) ^ defined(SCPH_xxxx)  ^ \
+      defined(SCPH_xxx1) ^ defined(SCPH_xxx2)
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif
 

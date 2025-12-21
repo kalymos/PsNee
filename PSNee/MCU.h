@@ -96,21 +96,45 @@
 
 #ifdef ATmega328_168
 
+
+  // Configuring Port C (A0-A5) as Digital Inputs
+  // DDRC at 0 = Input. Ensure that the first 6 bits are 0. 
+  #define A DDRC &= ~0x3F; 
+
+  // Disable the ADC (Analog-to-Digital Converter)
+  // ADEN at 0 disables the module. PRADC at 1 disables the module's clock.
+  #define B ADCSRA &= ~(1 << ADEN);
+  #define C PRR    |= (1 << PRADC);
+
+  // Configure DIDR0 (Digital Input Disable Register)
+  // To read digitally via PINC, the bits of DIDR0 MUST be set to 0.
+  // (0 = Digital Buffer enabled)
+  #define D DIDR0 &= ~0x3F;
+
+  // Stop Timer 0 (Stops Arduino millis/micros)
+  // Setting TCCR0B to 0 stops the clock source. Setting TIMSK0 to 0 disables interrupts.
+  #define E TCCR0B = 0;
+  #define F TIMSK0 = 0;
+
+  // Disable the Analog Comparator (Frees up resources on PD6/PD7)
+  // ACD at 1 = Comparator off.
+  #define G ACSR |= (1 << ACD);
+
   // Define the clock speed for the microcontroller
   #define F_CPU 16000000L
 
   // Clear the timer count register (TCNT0)
-  #define TIMER_TCNT_CLEAR TCNT0 = 0x00  // TCNT0 - Timer/Counter Register, clears the timer count
+  //#define TIMER_TCNT_CLEAR TCNT0 = 0x00  // TCNT0 - Timer/Counter Register, clears the timer count
 
   // Set OCR0A to achieve a 100KHz clock frequency
-  #define SET_OCROA_DIV OCR0A = 159;  // OCR0A – Output Compare Register A, 100KHz clock generation, 0x10011111
+  //#define SET_OCROA_DIV OCR0A = 159;  // OCR0A – Output Compare Register A, 100KHz clock generation, 0x10011111
 
   // Configure Timer/Counter 0 for CTC mode and enable the clock source
-  #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);  // TCCR0A – Timer/Counter Control Register A, enable CTC mode (WGM01)
-  #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);   // TCCR0B – Timer/Counter Control Register B, set clock source to I/O clock
+  //#define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);  // TCCR0A – Timer/Counter Control Register A, enable CTC mode (WGM01)
+  //#define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);   // TCCR0B – Timer/Counter Control Register B, set clock source to I/O clock
                                                     //Waveform Generation Mode, Mode 2 CTC
   // Interrupt vector for timer compare match event
-  #define CTC_TIMER_VECTOR TIMER0_COMPA_vect  //interrupt vector for match event, OCR0A comparison and Timer/Counter 0
+  //#define CTC_TIMER_VECTOR TIMER0_COMPA_vect  //interrupt vector for match event, OCR0A comparison and Timer/Counter 0
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -124,8 +148,8 @@
   #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
 
   // Enable/Disable timer interrupts
-  #define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)    // Enable interrupt on Timer0 Compare Match A
-  #define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)  // Disable interrupt on Timer0 Compare Match A
+  //#define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)    // Enable interrupt on Timer0 Compare Match A
+  //#define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)  // Disable interrupt on Timer0 Compare Match A
 
   // Main pin configuration for input and output
 
@@ -159,10 +183,10 @@
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+  #if defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
 
     // Clear the timer interrupt flag
-    #define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
+    //#define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
 
     // Define input pins for the BIOS patch
     #define PIN_AX_INPUT DDRD &= ~(1 << DDD2)  // Set DDRD register to configure PIND2 as input
@@ -604,11 +628,6 @@
 #ifdef LGT8F328P
 
 #define F_CPU 32000000L
-#define TIMER_TCNT_CLEAR TCNT0 = 0x00
-#define SET_OCROA_DIV OCR0A = 319;
-#define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
-#define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
-#define CTC_TIMER_VECTOR TIMER0_COMPA_vect
 
 
 #include <stdint.h>
@@ -699,89 +718,3 @@
 
 #endif
 
-#ifdef CH32V003
-
-#include "ch32v003.h"  // Inclure le fichier d'en-tête spécifique au microcontrôleur
-#include <stdint.h>
-#include <stdbool.h>
-
-// Fréquence d'horloge
-#define F_CPU 8000000L
-
-// Configuration du timer pour une fréquence de 100 kHz
-#define TIMER_TCNT_CLEAR TIM2_CNT = 0x00          // ok Effacer le compteur du Timer 2
-#define SET_OCROA_DIV TIM2_ARR = 79               // not Définir la valeur de comparaison pour générer une interruption à 100 kHz
-#define SET_TIMER_TCCROA TIM2_CR1 |= TIM_CR1_OPM  // notMettre le Timer en mode One Pulse (à adapter selon le mode souhaité)
-#define SET_TIMER_TCCROB TIM2_PSC = 0             // ok Définir le prescaler à 0 pour une fréquence maximale
-
-// Vecteur d'interruption pour le Timer 2
-#define CTC_TIMER_VECTOR TIM2_UP_IRQHandler  // Remplacer par le vecteur d'interruption approprié
-
-// Interruption globale
-#define GLOBAL_INTERRUPT_ENABLE __enable_irq()
-#define GLOBAL_INTERRUPT_DISABLE __disable_irq()
-
-// Configuration des broches GPIO
-#define PIN_DATA_INPUT GPIOA->INDR &= ~(GPIO_MODER_MODER0)
-#define PIN_WFCK_INPUT GPIOA->INDR &= ~(GPIO_MODER_MODER1)
-#define PIN_SQCK_INPUT GPIOA->INDR &= ~(GPIO_MODER_MODER6)
-#define PIN_SUBQ_INPUT GPIOA->INDR &= ~(GPIO_MODER_MODER7)
-
-#define PIN_DATA_OUTPUT GPIOA->OUTDR |= (GPIO_MODER_MODER0_0)
-#define PIN_WFCK_OUTPUT GPIOA->OUTDR |= (GPIO_MODER_MODER1_0)
-
-#define PIN_DATA_SET GPIOA->BSHR |= (GPIO_ODR_ODR_0)
-
-#define PIN_DATA_CLEAR GPIOA->BRC &= ~(GPIO_ODR_ODR_0)
-#define PIN_WFCK_CLEAR GPIOA->BRC &= ~(GPIO_ODR_ODR_1)
-
-#define PIN_SQCK_READ (GPIOA->IDR & (GPIO_IDR_IDR_6))
-#define PIN_SUBQ_READ (GPIOA->IDR & (GPIO_IDR_IDR_7))
-#define PIN_WFCK_READ (GPIOA->IDR & (GPIO_IDR_IDR_1))
-
-// Gestion de la broche LED
-#define PIN_LED_OUTPUT GPIOA->MODER |= (GPIO_MODER_MODER5_0)
-#define PIN_LED_ON GPIOA->ODR |= (GPIO_ODR_ODR_5)
-#define PIN_LED_OFF GPIOA->ODR &= ~(GPIO_ODR_ODR_5)
-
-// Gestion des interruptions du timer
-#define TIMER_INTERRUPT_ENABLE TIM2_DIER |= (TIM_DIER_UIE)
-#define TIMER_INTERRUPT_DISABLE TIM2_DIER &= ~(TIM_DIER_UIE)
-#define TIMER_TIFR_CLEAR TIM2_SR &= ~(TIM_SR_UIF)
-
-// Configuration des broches pour le BIOS
-#define PIN_AX_INPUT GPIOA->MODER &= ~(GPIO_MODER_MODER2)AFIO_EXTICR
-#define PIN_AY_INPUT GPIOA->MODER &= ~(GPIO_MODER_MODER3)
-#define PIN_DX_INPUT GPIOA->MODER &= ~(GPIO_MODER_MODER4)
-
-#define PIN_DX_OUTPUT GPIOA->MODER |= (GPIO_MODER_MODER4_0)
-
-#define PIN_DX_SET GPIOA->ODR |= (GPIO_ODR_ODR_4)
-
-#define PIN_DX_CLEAR GPIOA->ODR &= ~(GPIO_ODR_ODR_4)
-
-#define PIN_AX_READ (GPIOA->IDR & (GPIO_IDR_IDR_2))
-#define PIN_AY_READ (GPIOA->IDR & (GPIO_IDR_IDR_3))
-
-// Gestion des interruptions externes
-#define PIN_AX_INTERRUPT_ENABLE EXTI->IMR |= (EXTI_IMR_MR0)  //1<<EXTI_INTENR_MR0
-#define PIN_AY_INTERRUPT_ENABLE EXTI->IMR |= (EXTI_IMR_MR1)
-
-#define PIN_AX_INTERRUPT_DISABLE EXTI->IMR &= ~(EXTI_IMR_MR0)  //EXTI_INTENR
-#define PIN_AY_INTERRUPT_DISABLE EXTI->IMR &= ~(EXTI_IMR_MR1)
-
-#define PIN_AX_INTERRUPT_RISING EXTI->RTSR |= (EXTI_RTSR_TR0)  //EXTI_RTENR
-#define PIN_AY_INTERRUPT_RISING EXTI->RTSR |= (EXTI_RTSR_TR1)
-
-#define PIN_AX_INTERRUPT_FALLING EXTI->FTSR |= (EXTI_FTENR_MR0)  //EXTI_FTENR
-#define PIN_AY_INTERRUPT_FALLING EXTI->FTSR |= (EXTI_FTENR_MR1)
-
-#define PIN_AX_INTERRUPT_VECTOR EXTI0_IRQHandler
-#define PIN_AY_INTERRUPT_VECTOR EXTI1_IRQHandler
-
-// Gestion de la broche de commutation pour le BIOS
-#define PIN_SWITCH_INPUT GPIOA->MODER &= ~(GPIO_MODER_MODER5)
-#define PIN_SWITCH_SET GPIOA->ODR |= (GPIO_ODR_ODR_5)
-#define PIN_SWITCH_READ (GPIOA->IDR & (GPIO_IDR_IDR_5))
-
-#endif

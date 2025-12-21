@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-//#define ATmega328_168    //  Nano, Pro Mini, Uno
+#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -44,9 +44,9 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
      SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
 -------------------------------------------------------------------------------------------------*/
 //#define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
-//#define SCPH_102_legacy // ! works in progress DX - D2, AX - A18.         | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
 //#define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
-//#define SCPH_7000_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+//#define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+//#define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
 //#define SCPH_5500       // DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
 //#define SCPH_3500_5000  // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
 //#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
@@ -59,9 +59,6 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #define LED_RUN         // Turns on the LED when injections occur.
 //                         D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
 
-//#define PATCH_SWITCH  // Enables hardware support for disabling BIOS patching.
-//                         With SCPH_7000 - 9000 models, Bios 4.0j, the bios patch prevents reading memory cards in the console interface, and in some cases can cause a crash (No problem in game).
-//                         In rare cases where the BIOS patch prevents the playback of original games.
 
 //#define PSNEE_DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
 /*                                       Requires compilation with Arduino libs!
@@ -125,14 +122,6 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "settings.h"
 #include "BIOS_patching.h"
 
-//Initializing values ​​for region code injection timing
-#define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
-#define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
-
-//Creation of the different variables for the counter
-volatile uint8_t count_isr = 0;
-volatile uint32_t microsec = 0;
-volatile uint32_t millisec = 0;
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
 volatile bool wfck_mode = 0;
@@ -142,89 +131,6 @@ volatile bool Flag_Switch = 0;
 /*------------------------------------------------------------------------------------------------
                          Code section
 ------------------------------------------------------------------------------------------------*/
-
-/*------------------------------------------------------------------------------------------------
- Interrupt Service Routine: CTC_TIMER_VECTOR
- Description: 
- This ISR is triggered by the Timer/Counter Compare Match event. It increments time-related 
- counters used for tracking microseconds and milliseconds.
-
- Functionality:
- - Increments `microsec` by 10 on each interrupt call.
- - Increments `count_isr` to keep track of the number of interrupts.
- - When `count_isr` reaches 100, it means 1 millisecond has elapsed:
-     - `millisec` is incremented.
-     - `count_isr` is reset to 0.
-
- Notes:
- - This method provides a simple way to maintain a software-based timekeeping system.
-------------------------------------------------------------------------------------------------*/
-ISR(CTC_TIMER_VECTOR) {
-  microsec += 10;                    
-  count_isr++;                  
-  if (count_isr == 100)              
-  {
-    millisec++;
-    count_isr = 0;
-  }
-}
-
-// *****************************************************************************************
-// Function: Timer_Start
-// Description: 
-// This function initializes and starts the timer by resetting the timer counter register 
-// and enabling timer interrupts. It ensures compatibility across multiple microcontrollers.
-//
-// Supported Microcontrollers:
-// - ATmega328/168
-// - ATmega32U4/16U4
-// - ATtiny85/45/25
-//
-// Functionality:
-// - Clears the timer counter to ensure a fresh start.
-// - Enables the timer interrupt to allow periodic execution of ISR routines.
-// - If BIOS_PATCH is defined, it also clears the timer interrupt flag to prevent 
-//   unwanted immediate interrupts.
-//
-// Notes:
-// - The actual timer configuration is handled in MCU.h.
-// - This function ensures that all supported MCUs behave consistently.
-//
-// *****************************************************************************************
-void Timer_Start() {
-#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
-  TIMER_TCNT_CLEAR;
-  TIMER_INTERRUPT_ENABLE;
-  #if defined(BIOS_PATCH)
-    TIMER_TIFR_CLEAR;
-  #endif
-#endif
-}
-
-// *****************************************************************************************
-// Function: Timer_Stop
-// Description: 
-// Stops the timer by disabling interrupts and resetting the timer counter. 
-// It also clears the time tracking variables (count_isr, microsec, millisec) 
-// to ensure a fresh start when the timer is restarted.
-//
-// Supported Microcontrollers:
-// - ATmega328/168
-// - ATmega32U4/16U4
-// - ATtiny85/45/25
-//
-// *****************************************************************************************
-void Timer_Stop() {
-  
-  #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
-    TIMER_INTERRUPT_DISABLE;  // Disable timer interrupts to stop counting
-    TIMER_TCNT_CLEAR;         // Reset the timer counter to ensure proper timing when restarted
-  #endif
-  // Reset time tracking variables
-  count_isr = 0;
-  microsec = 0;
-  millisec = 0;
-}
 
 // *****************************************************************************************
 // Function: readBit
@@ -293,7 +199,10 @@ void inject_SCEX(const char region) {
     0b00000010
   };
 
-  // Iterate through 44 bits of SCEX data
+  //Initializing values ​​for region code injection timing
+#define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
+#define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
+
   for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) {
     // Check if the current bit is 0
     if (readBit(bit_counter, region == 'e' ? SCEEData : region == 'a' ? SCEAData : SCEIData) == 0) {
@@ -306,19 +215,29 @@ void inject_SCEX(const char region) {
       if (wfck_mode)  // WFCK mode (pu22mode enabled): synchronize PIN_DATA with WFCK clock signal
       {
         PIN_DATA_OUTPUT;
-        Timer_Start();
-        do {
-          // Read the WFCK pin and set or clear DATA accordingly
-          if (PIN_WFCK_READ) {
-            PIN_DATA_SET; 
-          }
+        uint8_t count = 30;  
+        uint8_t last_wfck = PIN_WFCK_READ;
 
-          else {
+         while (count > 0) {
+           uint8_t current_wfck = PIN_WFCK_READ;
+
+           if (current_wfck) {
+            _delay_us(5);
+            PIN_DATA_SET; 
+            _delay_us(55);
+            PIN_DATA_CLEAR;
+            _delay_us(10);
+           } else {
             PIN_DATA_CLEAR;  
-          }
-        }
-        while (microsec < DELAY_BETWEEN_BITS);
-        Timer_Stop();  // Stop the timer after the delay
+           }
+
+           if (current_wfck && !last_wfck) {
+            count--;
+            }
+        
+        last_wfck = current_wfck;
+       }
+
       }
       // PU-18 or lower mode: simply set PIN_DATA as input with a delay
       else {
@@ -335,21 +254,14 @@ void inject_SCEX(const char region) {
 
 void Init() {
 #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
-  TIMER_TCNT_CLEAR;
-  SET_OCROA_DIV;
-  SET_TIMER_TCCROA;
-  SET_TIMER_TCCROB;
+  A;
+  B;
+  D;
+  E;
+  F;
+  G;
 #endif
 
-#if defined(ATmega328_168)
-  // Power saving
-  // Disable the ADC by setting the ADEN bit (bit 7)  of the ADCSRA register to zero.
-  ADCSRA = ADCSRA & B01111111;
-  // Disable the analog comparator by setting the ACD bit (bit 7) of the ACSR register to one.
-  ACSR = B10000000;
-  // Disable digital input buffers on all analog input pins by setting bits 0-5 of the DIDR0 register to one.
-  DIDR0 = DIDR0 | B00111111;
-#endif
 
 #if defined(PATCH_SWITCH) && defined(BIOS_PATCH)
   PIN_SWITCH_INPUT;
@@ -384,6 +296,8 @@ int main() {
   uint8_t  bitpos = 0;
   uint8_t  scpos = 0;                     // scbuf position
   uint16_t lows = 0;  
+  uint8_t  preset = 0;
+  uint32_t totalSamples = 400000;
 
   Init();
 
@@ -394,11 +308,7 @@ int main() {
 #endif
 
   if (Flag_Switch == 0) {
-    #ifdef SCPH_102_legacy
-      Bios_Patching_SCPH_102_legacy();
-    #else
-      Bios_Patching();
-    #endif
+    Bios_Patching();
   }
 
 #ifdef LED_RUN
@@ -407,7 +317,7 @@ int main() {
 
 #endif
 
-  Timer_Start();
+  //Timer_Start();
   /*----------------------------------------------------------------------
    Board detection
   
@@ -415,18 +325,21 @@ int main() {
   
         __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
   
-   typical readouts PU-22: highs: 2449 lows: 2377
   
   -----------------------------------------------------------------------*/
-  do {
-    if (PIN_WFCK_READ == 0) lows++;             // good for ~5000 reads in 1s
-    _delay_us(200);
-  } 
-  while (millisec < 1000);                     // sample 1s
 
-  Timer_Stop();
 
-  if (lows > 100) {
+  while (totalSamples > 0 && lows < 500){
+    if (PIN_WFCK_READ != preset){
+      preset = PIN_WFCK_READ;
+      if (preset == 0){
+        lows++;
+      }
+    }
+    totalSamples--;
+  }
+
+  if (lows > 499) {
     wfck_mode = 1;                             //flag pu22mode
   }
 
