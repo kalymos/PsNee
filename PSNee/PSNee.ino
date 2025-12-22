@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-//#define ATmega328_168    //  Nano, Pro Mini, Uno
+#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -22,7 +22,7 @@
 //#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
-//#define SCPH_xxxx  //              | All mode works the same as V7, but that's not what I recommend the most.
+
 
 
 // Models that require a BIOS patch.
@@ -47,7 +47,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 //#define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
 //#define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
 //#define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
-//#define SCPH_5500       // DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
+#define SCPH_5500       // DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
 //#define SCPH_3500_5000  // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
 //#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
 //#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
@@ -157,10 +157,10 @@ void board_detection(){
 
   uint16_t pulses = 0;                      // Counter for detected falling edges (transitions to 0)      
   uint8_t  last_state = 0;                  // Stores the previous state to detect logic level changes
-  uint32_t totalSamples = 500000;           // Timeout/Sampling window to limit detection duration
+  uint32_t totalSamples = 600000;           // Timeout/Sampling window to limit detection duration
 
- // Runs until 600,000 cycles pass OR 1,001 low transitions are found
-  while (totalSamples > 0 && pulses < 1001){
+ // Runs until 600,000 cycles pass OR 600 pulses transitions are found
+  while (totalSamples > 0 && pulses < 600){
 
     // Check if the current pin state differs from the last recorded state
     if (PIN_WFCK_READ != last_state){
@@ -174,8 +174,8 @@ void board_detection(){
     totalSamples--;                        // Decrement the loop counter (timeout mechanism)
   }
 
-  // High count (> 1000)  oscillating signal (Newer boards)
-  if (pulses > 1000) {
+  // High count (> 500)  oscillating signal (Newer boards)
+  if (pulses > 500) {
     wfck_mode = 1;                         // Target: PU-22 or newer
   }
 
@@ -184,33 +184,6 @@ void board_detection(){
     wfck_mode = 0;                         // Target: PU-7 to PU-20
   }
 }
-
-// *****************************************************************************************
-// Function: readBit
-// Description: 
-// Reads a specific bit from an array of bytes.
-// This function helps retrieve SCEX data efficiently while working within 
-// the constraints of Harvard architecture.
-//
-// Parameters:
-// - index: The bit position to read within the byte array.
-// - ByteSet: A pointer to the byte array containing the data.
-//
-// Return:
-// - Returns 1 if the specified bit at the given index is set (1).
-// - Returns 0 if the specified bit is cleared (0).
-//
-// Explanation:
-// - The function determines which byte contains the requested bit using (index / 8).
-// - It then calculates the bit position within that byte using (index % 8).
-// - A bitwise AND operation extracts the bit's value, and the double NOT (!!) operator 
-//   ensures a clean boolean return value (1 or 0).
-//
-// *****************************************************************************************
-// uint8_t readBit(uint8_t index, const uint8_t* ByteSet) {
-//   return !!(ByteSet[index / 8] & (1 << (index % 8)));  // Return true if the specified bit is set in ByteSet[index]
-// }
-
 
 /*****************************************************************************************
   Function: inject_SCEX
@@ -269,9 +242,7 @@ void inject_SCEX(const char region) {
   // Iterate through the 44 bits of the SCEX sequence
   for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) { 
 
-
-
-// Extraction of the current bit (Inlined readBit logic)
+  // Extraction of the current bit (Inlined readBit logic)
     bool currentBit = (ByteSet[bit_counter / 8] & (1 << (bit_counter % 8)));
 
     // -------------------------------------------------------------------------
@@ -310,11 +281,8 @@ void inject_SCEX(const char region) {
         while (count > 0) {
           uint8_t current_wfck = PIN_WFCK_READ;
           if (current_wfck) {
-            //_delay_us(5);
+
             PIN_DATA_SET; 
-            //_delay_us(55);
-            //PIN_DATA_CLEAR;
-            //_delay_us(10);
           } else {
             PIN_DATA_CLEAR;  
           }
@@ -326,51 +294,6 @@ void inject_SCEX(const char region) {
         }
       }
     }
-
-    // // Access the correct byte using [index / 8] and isolate the target bit using [index % 8].
-    // // The bitwise AND (&) with the left-shifted mask (1 << bit_pos) extracts the bit value.
-    // // We check if the result is 0 to handle the low-bit logic first.
-    // if ( !(ByteSet[bit_counter / 8] & (1 << (bit_counter % 8))) ) {
-    //   // Logic for BIT 0: Set pin as output and pull it LOW for the duration of one bit period.
-    //   PIN_DATA_OUTPUT;         
-    //   PIN_DATA_CLEAR;   
-    //   _delay_us(DELAY_BETWEEN_BITS);  // Wait for specified delay between bits
-    // }
-    // else {
-    //   // modulate DATA pin based on WFCK_READ
-    //   if (wfck_mode)  // WFCK mode (pu22mode enabled): synchronize PIN_DATA with WFCK clock signal
-    //   {
-    //     PIN_DATA_OUTPUT;
-    //     uint8_t count = 30;  
-    //     uint8_t last_wfck = PIN_WFCK_READ;
-
-    //      while (count > 0) {
-    //        uint8_t current_wfck = PIN_WFCK_READ;
-
-    //        if (current_wfck) {
-    //         _delay_us(5);
-    //         PIN_DATA_SET; 
-    //         _delay_us(55);
-    //         PIN_DATA_CLEAR;
-    //         _delay_us(10);
-    //        } else {
-    //         PIN_DATA_CLEAR;  
-    //        }
-
-    //        if (current_wfck && !last_wfck) {
-    //         count--;
-    //         }
-        
-    //     last_wfck = current_wfck;
-    //    }
-
-    //   }
-    //   // PU-18 or lower mode: simply set PIN_DATA as input with a delay
-    //   else {
-    //     PIN_DATA_INPUT;
-    //     _delay_us(DELAY_BETWEEN_BITS);
-    //   }
-    // }
   }
   // After injecting SCEX data, set DATA pin as output and clear (low)
   PIN_DATA_OUTPUT;
@@ -443,35 +366,6 @@ int main() {
 
 #endif
 
-  //Timer_Start();
-  /*----------------------------------------------------------------------
-   Board detection
-  
-   WFCK: __-----------------------  // this is a PU-7 .. PU-20 board!
-  
-        __-_-_-_-_-_-_-_-_-_-_-_-  // this is a PU-22 or newer board!
-  
-  
-  -----------------------------------------------------------------------*/
-
-
-  // while (totalSamples > 0 && lows < 501){
-  //   if (PIN_WFCK_READ != preset){
-  //     preset = PIN_WFCK_READ;
-  //     if (preset == 0){
-  //       lows++;
-  //     }
-  //   }
-  //   totalSamples--;
-  // }
-
-  // if (lows > 500) {
-  //   wfck_mode = 1;                             //flag pu22mode
-  // }
-
-  // else {
-  //   wfck_mode = 0;                             //flag oldmod
-  // }
   board_detection();
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)

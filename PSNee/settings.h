@@ -71,8 +71,8 @@
 #define INTERRUPT_FALLING
 #define CHECKPOINT 76.13
 #define TRIGGER 21
-#define HOLD 2.85
-#define PATCHING 0.1
+#define HOLD 2.8
+#define PATCHING 0.15
 #endif
 
 #ifdef  SCPH_3500_5000
@@ -128,9 +128,6 @@ const char region[3] = {'e', 'e', 'e'};
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
-#if defined(SCPH_xxxx)                           //              | All
-const char region[3] = {'a', 'e', 'i'}; 
-#endif
 
 
 /*------------------------------------------------------------------------------------------------
@@ -195,7 +192,7 @@ void Debug_Inject(){       // Confirmation of region code injection
 #if !defined(SCPH_xxx3) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7500_9000) && \
     !defined(SCPH_7000) && !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx)  && \
+    !defined(SCPH_1000) &&  \
     !defined(SCPH_xxx1) && !defined(SCPH_xxx2)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !defined(SCPH_xxx3) ^ \
