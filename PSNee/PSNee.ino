@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-#define ATmega328_168    //  Nano, Pro Mini, Uno
+//#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -132,6 +132,59 @@ volatile bool Flag_Switch = 0;
                          Code section
 ------------------------------------------------------------------------------------------------*/
 
+
+/*----------------------------------------------------------------------
+  Function: board_detection
+
+  This function distinguishes motherboard generations by detecting 
+  the nature of the WFCK signal:
+
+  WFCK: __-----------------------  // CONTINUOUS (PU-7 .. PU-20)(GATE)
+
+  WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // FREQUENCY  (PU-22 or newer)
+
+  Traditionally, the WFCK signal was called GATE. This is because, on early models, 
+  modchips acted like a gate that would open to pull the signal down
+   at the exact moment the region code was being passed (which is still the case today).
+
+  During the initialization and region protection zone reading phases, 
+  the WFCK clock frequency is approximately 7.3 kHz.
+  During normal data reading, the frequency shifts to 14.6 kHz.
+
+-----------------------------------------------------------------------*/
+
+void board_detection(){
+
+  uint16_t pulses = 0;                      // Counter for detected falling edges (transitions to 0)      
+  uint8_t  last_state = 0;                  // Stores the previous state to detect logic level changes
+  uint32_t totalSamples = 500000;           // Timeout/Sampling window to limit detection duration
+
+ // Runs until 600,000 cycles pass OR 1,001 low transitions are found
+  while (totalSamples > 0 && pulses < 1001){
+
+    // Check if the current pin state differs from the last recorded state
+    if (PIN_WFCK_READ != last_state){
+      last_state = PIN_WFCK_READ;              // Update state history
+ 
+      // If the new state is LOW (0), a falling edge has occurred
+      if (last_state == 0){
+        pulses++;
+      }
+    }
+    totalSamples--;                        // Decrement the loop counter (timeout mechanism)
+  }
+
+  // High count (> 1000)  oscillating signal (Newer boards)
+  if (pulses > 1000) {
+    wfck_mode = 1;                         // Target: PU-22 or newer
+  }
+
+  // Low count implies a static signal (Older boards)
+  else {
+    wfck_mode = 0;                         // Target: PU-7 to PU-20
+  }
+}
+
 // *****************************************************************************************
 // Function: readBit
 // Description: 
@@ -154,24 +207,26 @@ volatile bool Flag_Switch = 0;
 //   ensures a clean boolean return value (1 or 0).
 //
 // *****************************************************************************************
-uint8_t readBit(uint8_t index, const uint8_t* ByteSet) {
-  return !!(ByteSet[index / 8] & (1 << (index % 8)));  // Return true if the specified bit is set in ByteSet[index]
-}
+// uint8_t readBit(uint8_t index, const uint8_t* ByteSet) {
+//   return !!(ByteSet[index / 8] & (1 << (index % 8)));  // Return true if the specified bit is set in ByteSet[index]
+// }
 
 
-// *****************************************************************************************
-// Function: inject_SCEX
-// Description: 
-// Injects SCEX data corresponding to a given region ('e' for Europe, 'a' for America, 
-// 'i' for Japan). This function is used for modulating the SCEX signal to bypass 
-// region-locking mechanisms.
-//
-// Parameters:
-// - region: A character ('e', 'a', or 'i') representing the target region.
-//
-// *****************************************************************************************
+/*****************************************************************************************
+  Function: inject_SCEX
+
+  Injects SCEX data corresponding to a given region ('e' for Europe, 'a' for America, 
+  'i' for Japan). This function is used for modulating the SCEX signal to bypass 
+  region-locking mechanisms.
+
+  Parameters:
+  - region: A character ('e', 'a', or 'i') representing the target region.
+
+*****************************************************************************************/
 void inject_SCEX(const char region) {
-  // SCEX data patterns for different regions (SCEE, SCEA, SCEI)
+
+  // SCEX data patterns for different regions (SCEE: Europe, SCEA: America, SCEI: Japan)
+  // Each array contains the specific bit sequence required to bypass region locking.
   static const uint8_t SCEEData[] = {
     0b01011001,
     0b11001001,
@@ -199,52 +254,123 @@ void inject_SCEX(const char region) {
     0b00000010
   };
 
+  // Select the appropriate data pointer based on the region character to avoid 
+  // repetitive conditional checks inside the high-timing-sensitive loop.
+  const uint8_t* ByteSet = (region == 'e') ? SCEEData : (region == 'a') ? SCEAData : SCEIData;
+
   //Initializing values ​​for region code injection timing
 #define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
 #define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
 
-  for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) {
-    // Check if the current bit is 0
-    if (readBit(bit_counter, region == 'e' ? SCEEData : region == 'a' ? SCEAData : SCEIData) == 0) {
-      PIN_DATA_OUTPUT;         
-      PIN_DATA_CLEAR;   
-      _delay_us(DELAY_BETWEEN_BITS);  // Wait for specified delay between bits
-    }
-    else {
-      // modulate DATA pin based on WFCK_READ
-      if (wfck_mode)  // WFCK mode (pu22mode enabled): synchronize PIN_DATA with WFCK clock signal
-      {
-        PIN_DATA_OUTPUT;
-        uint8_t count = 30;  
-        uint8_t last_wfck = PIN_WFCK_READ;
+  // for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) {
+  //   // Check if the current bit is 0
+  //   if (readBit(bit_counter, region == 'e' ? SCEEData : region == 'a' ? SCEAData : SCEIData) == 0) {
+   
+  // Iterate through the 44 bits of the SCEX sequence
+  for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) { 
 
-         while (count > 0) {
-           uint8_t current_wfck = PIN_WFCK_READ;
 
-           if (current_wfck) {
-            _delay_us(5);
-            PIN_DATA_SET; 
-            _delay_us(55);
-            PIN_DATA_CLEAR;
-            _delay_us(10);
-           } else {
-            PIN_DATA_CLEAR;  
-           }
 
-           if (current_wfck && !last_wfck) {
-            count--;
-            }
-        
-        last_wfck = current_wfck;
-       }
+// Extraction of the current bit (Inlined readBit logic)
+    bool currentBit = (ByteSet[bit_counter / 8] & (1 << (bit_counter % 8)));
 
-      }
-      // PU-18 or lower mode: simply set PIN_DATA as input with a delay
+    // -------------------------------------------------------------------------
+    // MODE: OLDER BOARDS (PU-7 to PU-20) - Standard Gate Logic
+    // -------------------------------------------------------------------------
+    if (!wfck_mode) {
+      if (currentBit == 0) {
+        // For OLD boards, bit 0 is a forced LOW signal
+        PIN_DATA_OUTPUT;         
+        PIN_DATA_CLEAR;   
+        _delay_us(DELAY_BETWEEN_BITS);
+      } 
       else {
+        // For OLD boards, bit 1 is High-Z (Pin set as input)
         PIN_DATA_INPUT;
         _delay_us(DELAY_BETWEEN_BITS);
       }
     }
+
+    // -------------------------------------------------------------------------
+    // MODE: NEWER BOARDS (PU-22 or newer) - WFCK Clock Synchronization
+    // -------------------------------------------------------------------------
+    else if (wfck_mode) {
+      if (currentBit == 0) {
+        // For NEW boards, bit 0 is also a forced LOW signal
+        PIN_DATA_OUTPUT;         
+        PIN_DATA_CLEAR;   
+        _delay_us(DELAY_BETWEEN_BITS);
+      } 
+      else {
+        // For NEW boards, bit 1 must be modulated with the WFCK clock signal
+        PIN_DATA_OUTPUT;
+        uint8_t count = 30;  
+        uint8_t last_wfck = PIN_WFCK_READ;
+
+        while (count > 0) {
+          uint8_t current_wfck = PIN_WFCK_READ;
+          if (current_wfck) {
+            //_delay_us(5);
+            PIN_DATA_SET; 
+            //_delay_us(55);
+            //PIN_DATA_CLEAR;
+            //_delay_us(10);
+          } else {
+            PIN_DATA_CLEAR;  
+          }
+
+          if (current_wfck && !last_wfck) {
+            count--;
+          }
+          last_wfck = current_wfck;
+        }
+      }
+    }
+
+    // // Access the correct byte using [index / 8] and isolate the target bit using [index % 8].
+    // // The bitwise AND (&) with the left-shifted mask (1 << bit_pos) extracts the bit value.
+    // // We check if the result is 0 to handle the low-bit logic first.
+    // if ( !(ByteSet[bit_counter / 8] & (1 << (bit_counter % 8))) ) {
+    //   // Logic for BIT 0: Set pin as output and pull it LOW for the duration of one bit period.
+    //   PIN_DATA_OUTPUT;         
+    //   PIN_DATA_CLEAR;   
+    //   _delay_us(DELAY_BETWEEN_BITS);  // Wait for specified delay between bits
+    // }
+    // else {
+    //   // modulate DATA pin based on WFCK_READ
+    //   if (wfck_mode)  // WFCK mode (pu22mode enabled): synchronize PIN_DATA with WFCK clock signal
+    //   {
+    //     PIN_DATA_OUTPUT;
+    //     uint8_t count = 30;  
+    //     uint8_t last_wfck = PIN_WFCK_READ;
+
+    //      while (count > 0) {
+    //        uint8_t current_wfck = PIN_WFCK_READ;
+
+    //        if (current_wfck) {
+    //         _delay_us(5);
+    //         PIN_DATA_SET; 
+    //         _delay_us(55);
+    //         PIN_DATA_CLEAR;
+    //         _delay_us(10);
+    //        } else {
+    //         PIN_DATA_CLEAR;  
+    //        }
+
+    //        if (current_wfck && !last_wfck) {
+    //         count--;
+    //         }
+        
+    //     last_wfck = current_wfck;
+    //    }
+
+    //   }
+    //   // PU-18 or lower mode: simply set PIN_DATA as input with a delay
+    //   else {
+    //     PIN_DATA_INPUT;
+    //     _delay_us(DELAY_BETWEEN_BITS);
+    //   }
+    // }
   }
   // After injecting SCEX data, set DATA pin as output and clear (low)
   PIN_DATA_OUTPUT;
@@ -295,9 +421,9 @@ int main() {
   uint8_t  bitbuf = 0;
   uint8_t  bitpos = 0;
   uint8_t  scpos = 0;                     // scbuf position
-  uint16_t lows = 0;  
-  uint8_t  preset = 0;
-  uint32_t totalSamples = 400000;
+  // uint16_t lows = 0;  
+  // uint8_t  preset = 0;
+  // uint32_t totalSamples = 400000;
 
   Init();
 
@@ -329,23 +455,24 @@ int main() {
   -----------------------------------------------------------------------*/
 
 
-  while (totalSamples > 0 && lows < 500){
-    if (PIN_WFCK_READ != preset){
-      preset = PIN_WFCK_READ;
-      if (preset == 0){
-        lows++;
-      }
-    }
-    totalSamples--;
-  }
+  // while (totalSamples > 0 && lows < 501){
+  //   if (PIN_WFCK_READ != preset){
+  //     preset = PIN_WFCK_READ;
+  //     if (preset == 0){
+  //       lows++;
+  //     }
+  //   }
+  //   totalSamples--;
+  // }
 
-  if (lows > 499) {
-    wfck_mode = 1;                             //flag pu22mode
-  }
+  // if (lows > 500) {
+  //   wfck_mode = 1;                             //flag pu22mode
+  // }
 
-  else {
-    wfck_mode = 0;                             //flag oldmod
-  }
+  // else {
+  //   wfck_mode = 0;                             //flag oldmod
+  // }
+  board_detection();
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
  Debug_Log(lows, wfck_mode);
