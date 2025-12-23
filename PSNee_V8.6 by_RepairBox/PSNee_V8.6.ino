@@ -22,13 +22,15 @@
 //#define SCPH_3000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.1j, CRC 3539DEF6
 //#define SCPH_1000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.0j, CRC 3B601FC8
 
+//PS1 Video CD:
+#define SCPH_5903        // PU-16, SCPH-5903
 
 //------------------------------------------------------------------------------------------------
 //                         Select your chip
 //------------------------------------------------------------------------------------------------
 
 //#define ATmega328_168  
-//#define ATmega32U4_16U4
+#define ATmega32U4_16U4
 //#define ATtiny85_45_25 
 
 /*  
@@ -425,26 +427,74 @@ int main() {
     // While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
     //************************************************************************
 
-    //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
-    uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
+        //This variable initialization macro is to replace (0x41) with a mask so that
+    //only the three most significant bits are checked. 0b001xxxxx = data sector (0x41)
+    uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) &&
+                            (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
 
+#ifdef SCPH_5903
+    // ----------------------------------------------------------------------
+    // Special heuristics for SCPH-5903 (VCD):
+    // - VCD: A0/A1/A2 + scbuf[3] == 0x02
+    // - games (original + copies): A0/A1/A2 + scbuf[3] != 0x02
+    // Audio CDs are not supported because isDataSector == 0.
+    // ----------------------------------------------------------------------
+    bool isVcdLeadIn =
+        isDataSector &&
+        scbuf[1] == 0x00 &&
+        scbuf[6] == 0x00 &&
+        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2) &&
+        (scbuf[3] == 0x02);          // VCD: A0/A1/A2 are 0x02
+
+    bool isPsxLeadIn =
+        isDataSector &&
+        scbuf[1] == 0x00 &&
+        scbuf[6] == 0x00 &&
+        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2) &&
+        (scbuf[3] != 0x02);          // PAL/NTSC games: 0x05, 0x98, etc., but not 0x02
+
+    if (isPsxLeadIn) {
+     // we see the classic lead-in of the game → we increase the hysteresis
+      hysteresis++;
+    }
+    else if (hysteresis > 0 &&
+             !isVcdLeadIn &&         // VCD cannot increment the counter
+             ((scbuf[0] == 0x01 || isDataSector) &&
+              scbuf[1] == 0x00 &&
+              scbuf[6] == 0x00)) {
+      // "the disc wobbles into the CD-DA space" – the second stage is the same as in the original,
+      // but only if it's not a VCD
+      hysteresis++;
+    }
+    else if (hysteresis > 0) {
+     // noise / other sectors – the counter is slowly fading out
+      hysteresis--;
+    }
+
+#else
+    // Original heuristics for other consoles
     if (
-      (isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00) &&       // [0] = 41 means psx game disk. the other 2 checks are garbage protection
-      (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2 ||    // if [2] = A0, A1, A2 ..
-       (scbuf[2] == 0x01 && (scbuf[3] >= 0x98 || scbuf[3] <= 0x02)))  // .. or = 01 but then [3] is either > 98 or < 02
+      (isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00) &&
+      // 0x41 means psx game disk. the other 2 checks are garbage protection
+      (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2 ||
+       (scbuf[2] == 0x01 && (scbuf[3] >= 0x98 || scbuf[3] <= 0x02)))
     ) {
       hysteresis++;
     }
 
     // This CD has the wobble into CD-DA space. (started at 0x41, then went into 0x01)
-    else if (hysteresis > 0 && ((scbuf[0] == 0x01 || isDataSector) && (scbuf[1] == 0x00 /*|| scbuf[1] == 0x01*/) && scbuf[6] == 0x00)) {
-      hysteresis++;  
+    else if (hysteresis > 0 &&
+             ((scbuf[0] == 0x01 || isDataSector) &&
+              (scbuf[1] == 0x00 /*|| scbuf[1] == 0x01*/) &&
+              scbuf[6] == 0x00)) {
+      hysteresis++;
     }
 
     // None of the above. Initial detection was noise. Decrease the counter.
     else if (hysteresis > 0) {
-      hysteresis--;  
+      hysteresis--;
     }
+#endif
 
     // hysteresis value "optimized" using very worn but working drive on ATmega328 @ 16Mhz
     // should be fine on other MCUs and speeds, as the PSX dictates SUBQ rate

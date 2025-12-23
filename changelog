@@ -1,3 +1,12 @@
+
+Update: December 22, 2025
+
+-Added support for the SCPH-5903 model:
+  The mod for this model was developed by analyzing signals and adjusting the lead-in frames to accurately distinguish game discs from Video CDs (VCDs) and audio CDs. Additionally, this update fixes an issue where game discs were occasionally misidentified and read as music discs.
+By RepairBox
+
+------------------------------------------------------------
+
 Update:mars 2025
 
 -Added led support for ATtiny

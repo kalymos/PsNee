@@ -112,6 +112,10 @@
 #define TRIGGER2 71
 #endif
 
+#ifdef  SCPH_5903
+#define SCEI
+#endif
+
 #ifdef SCEA
 const char region[1] = {'a'};
 #endif
@@ -131,11 +135,12 @@ const char region[3] = {'a', 'e', 'i'};
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
     !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) && !defined(SCPH_xxxx)
+    !defined(SCPH_1000) && !defined(SCPH_xxxx) && !defined(SCPH_5903)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_103) ^ \
-      defined(SCPH_102) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
-      defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx))
+       defined(SCPH_102) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
+       defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
+       defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_5903))
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif
+
