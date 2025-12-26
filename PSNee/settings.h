@@ -124,7 +124,9 @@ const char region[3] = {'a', 'a', 'a'};
 const char region[3] = {'e', 'e', 'e'};
 #endif
 
-#if defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000) || defined(SCPH_xxx3)     //  NTSC J      | Asia.
+#if defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || \
+   defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || \
+   defined(SCPH_1000) || defined(SCPH_xxx3) || defined(SCPH_5903)   //  NTSC J      | Asia.
 const char region[3] = {'i', 'i', 'i'};
 #endif
 
@@ -192,13 +194,13 @@ void Debug_Inject(){       // Confirmation of region code injection
 #if !defined(SCPH_xxx3) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7500_9000) && \
     !defined(SCPH_7000) && !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
-    !defined(SCPH_1000) &&  \
+    !defined(SCPH_1000) && !defined(SCPH_5903) &&\
     !defined(SCPH_xxx1) && !defined(SCPH_xxx2)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !defined(SCPH_xxx3) ^ \
       defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7500_9000) ^ \
       defined(SCPH_7000) ^ defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
-      defined(SCPH_1000) ^ defined(SCPH_xxxx)  ^ \
+      defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_5903) ^ \
       defined(SCPH_xxx1) ^ defined(SCPH_xxx2)
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif
