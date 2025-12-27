@@ -114,7 +114,7 @@
   // Stop Timer 0 (Stops Arduino millis/micros)
   // Setting TCCR0B to 0 stops the clock source. Setting TIMSK0 to 0 disables interrupts.
   #define E TCCR0B = 0;
-  #define F TIMSK0 = 0;
+  //#define F TIMSK0 = 0;
 
   // Disable the Analog Comparator (Frees up resources on PD6/PD7)
   // ACD at 1 = Comparator off.
@@ -144,7 +144,7 @@
   #include <util/delay.h>
 
   // Global interrupt control settings
-  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
+  //#define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
   #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
 
   // Enable/Disable timer interrupts
@@ -246,11 +246,11 @@
 #ifdef ATmega32U4_16U4
 
   #define F_CPU 16000000L
-  #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
-  #define SET_OCROA_DIV OCR0A = 159;
-  #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
-  #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
-  #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
+  // #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
+  // #define SET_OCROA_DIV OCR0A = 159;
+  // #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
+  // #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
+  // #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -260,11 +260,11 @@
   #include <util/delay.h>
 
   // Globale interrupt seting
-  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
+  // #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
   #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)
 
-  #define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)
-  #define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)
+  // #define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)
+  // #define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)
 
   // Handling the main pins
 

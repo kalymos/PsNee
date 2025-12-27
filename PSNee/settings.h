@@ -117,17 +117,17 @@
 ------------------------------------------------------------------------------------------------*/
 
 #if defined(SCPH_xxx1)                            //  NTSC U/C    | America.
-const char region[3] = {'a', 'a', 'a'};
+#define REGION_SETTING 1
 #endif
 
 #if defined(SCPH_102)  || defined(SCPH_xxx2)    //  PAL         | Europ.
-const char region[3] = {'e', 'e', 'e'};
+#define REGION_SETTING 2
 #endif
 
 #if defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || \
    defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || \
    defined(SCPH_1000) || defined(SCPH_xxx3) || defined(SCPH_5903)   //  NTSC J      | Asia.
-const char region[3] = {'i', 'i', 'i'};
+#define REGION_SETTING 0
 #endif
 
 
