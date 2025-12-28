@@ -96,29 +96,30 @@
 
 #ifdef ATmega328_168
 
-
+static inline void optimizePeripherals(void) {
   // Configuring Port C (A0-A5) as Digital Inputs
   // DDRC at 0 = Input. Ensure that the first 6 bits are 0. 
-  #define A DDRC &= ~0x3F; 
+  DDRC &= ~0x3F; 
 
   // Disable the ADC (Analog-to-Digital Converter)
   // ADEN at 0 disables the module. PRADC at 1 disables the module's clock.
-  #define B ADCSRA &= ~(1 << ADEN);
-  #define C PRR    |= (1 << PRADC);
+  ADCSRA &= ~(1 << ADEN);
+  PRR    |= (1 << PRADC);
 
   // Configure DIDR0 (Digital Input Disable Register)
   // To read digitally via PINC, the bits of DIDR0 MUST be set to 0.
   // (0 = Digital Buffer enabled)
-  #define D DIDR0 &= ~0x3F;
+  DIDR0 &= ~0x3F;
 
   // Stop Timer 0 (Stops Arduino millis/micros)
   // Setting TCCR0B to 0 stops the clock source. Setting TIMSK0 to 0 disables interrupts.
-  #define E TCCR0B = 0;
+  TCCR0B = 0;
   //#define F TIMSK0 = 0;
 
   // Disable the Analog Comparator (Frees up resources on PD6/PD7)
   // ACD at 1 = Comparator off.
-  #define G ACSR |= (1 << ACD);
+  ACSR |= (1 << ACD);
+}
 
   // Define the clock speed for the microcontroller
   #define F_CPU 16000000L
@@ -144,7 +145,7 @@
   #include <util/delay.h>
 
   // Global interrupt control settings
-  //#define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
+  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
   #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
 
   // Enable/Disable timer interrupts
@@ -178,8 +179,8 @@
   // LED pin handling (for indication)
   #ifdef LED_RUN
     #define PIN_LED_OUTPUT DDRB |= (1 << DDB5)  // Configure PINB5 as output (for LED)
-    #define PIN_LED_ON PORTB |= (1 << PB5)      // Set PINB5 high (turn on LED)
-    #define PIN_LED_OFF PORTB &= ~(1 << PB5)    // Set PINB5 low (turn off LED)
+    #define PIN_LED_ON    PORTB |= (1 << PB5)  // Set PINB5 high (turn on LED)
+    #define PIN_LED_OFF   PORTB &= ~(1 << PB5)  // Set PINB5 low (turn off LED)
   #endif
 
   // Handling the BIOS patch

@@ -1,4 +1,4 @@
-//                           PSNee-8.7.0
+//                           PSNee-8.7.1
 
 /*------------------------------------------------------------------------------------------------
                             MCU selection
@@ -7,7 +7,7 @@
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
 //#define ATmega328_168    //  Nano, Pro Mini, Uno
-#define ATmega32U4_16U4  //  Micro, Pro Micro
+//#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
 /*------------------------------------------------------------------------------------------------
@@ -22,8 +22,8 @@
 //#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
-#define SCPH_5903  //  NTSC J      | Asia VCD:
-
+//#define SCPH_5903  //  NTSC J      | Asia VCD:
+//#define SCPH_xxxx  //  Universal
 
 // Models that require a BIOS patch.
 
@@ -124,9 +124,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
-volatile bool wfck_mode = 0;
-
-volatile bool Flag_Switch = 0;
+uint8_t wfck_mode = 0;
 
 
 // --- Prototypes (Forward declarations) ---
@@ -253,12 +251,12 @@ void captureSubQ(void) {
 **************************************************************************************/
 void logic_SCPH_5903(uint8_t isDataSector) {
     // Identify VCD Lead-In: Specific SCBUF patterns (0xA0/A1/A2) with sub-mode 0x02
-    bool isVcdLeadIn = isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00 &&
+    uint8_t isVcdLeadIn = isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00 &&
                        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2) &&
                        (scbuf[3] == 0x02);
 
     // Identify PSX Lead-In: Same SCBUF patterns but different sub-mode (!= 0x02)
-    bool isPsxLeadIn = isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00 &&
+    uint8_t isPsxLeadIn = isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00 &&
                        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2) &&
                        (scbuf[3] != 0x02);
 
@@ -303,167 +301,129 @@ void logic_Standard(uint8_t isDataSector) {
     }
 }
 
+/*********************************************************************************************
+ * Executes the SCEx signal injection sequence to bypass regional lockout.
+ * 
+ * This function handles the precise timing required to send the 44-bit security 
+ * strings. It supports both legacy "Logic Gate" mode and modern "WFCK Modulation" 
+ * for compatibility across all console revisions (PU-7 to PM-41).
+ * 
+ * injectSCEx 0:NTSC-J SCEI, 1:NTSC-U/C SCEA, 2:PAL SCEE, 3:Universal (Cycles through all).
+ *********************************************************************************************/
 
-/**
- * Executes the SCEX injection sequence once the confidence threshold (hysteresis) is met.
- * Supports both legacy boards (Gate logic) and newer boards (WFCK synchronization).
- */
-void performInjectionSequence() {
+void performInjectionSequence(uint8_t injectSCEx) {
+    // 44-bit SCEx strings for Japan Asia, USA, and Europe
+    static const uint8_t allRegionsSCEx[3][6] = {
+        { 0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11011010, 0b00000010 }, // NTSC-J    SCEI  SCPH-xxx0  SCPH-xxx3
+        { 0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11111010, 0b00000010 },  // NTSC-U/C  SCEA  SCPH-xxx1
+        { 0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11101010, 0b00000010 } // PAL       SCEE  SCPH-xxx2
+    };
 
-  // SCEX data patterns for different regions (SCEE: Europe, SCEA: America, SCEI: Japan)
-  // Each array contains the specific bit sequence required to bypass region locking.
-  #if (REGION_SETTING == 2)
-  static const uint8_t SCEData[] = { //  NTSC U/C    | America.
-    0b01011001,
-    0b11001001,
-    0b01001011,
-    0b01011101,
-    0b11101010,
-    0b00000010
-  };
-  #elif (REGION_SETTING == 1)
-  static const uint8_t SCEData[] = { //  PAL         | Europ.
-    0b01011001,
-    0b11001001,
-    0b01001011,
-    0b01011101,
-    0b11111010,
-    0b00000010
-  };
-  #else
-  static const uint8_t SCEData[] = { //  NTSC J      | Asia.
-    0b01011001,
-    0b11001001,
-    0b01001011,
-    0b01011101,
-    0b11011010,
-    0b00000010
-  };
-  #endif
-  // Use 'SCEData' directly in your loops
-  const uint8_t* ByteSet = SCEData;
-// Select the appropriate data pointer based on the region character.
-  // Using a single char variable avoids pointer-to-integer comparison errors.
-//  const uint8_t* ByteSet = (region == '1') ? SCEEData : (region == '2') ? SCEAData : SCEIData;
-// Select the bitstream based on the first character of the region string.
-// We access region[0] to avoid pointer-to-integer comparison warnings.
-//const uint8_t* ByteSet = (region[0] == 'e') ? SCEEData : (region[0] == 'a') ? SCEAData : SCEIData;
+   // if (hysteresis < HYSTERESIS_MAX) return;
+   
 
+    hysteresis = 11;
+    
+    #ifdef LED_RUN
+        PIN_LED_ON;
+    #endif
 
-  if (hysteresis >= HYSTERESIS_MAX) {
-    hysteresis = 11; // Reset to 11 for faster re-injection if head stays in TOC
-
-#ifdef LED_RUN
-    PIN_LED_ON;
-#endif
-
-    // Initialize pins for injection
+    // Pin initialization
     PIN_DATA_OUTPUT; 
     PIN_DATA_CLEAR;
-    if (!wfck_mode) { PIN_WFCK_OUTPUT; PIN_WFCK_CLEAR; }
-
+    
+    if (!wfck_mode) {  
+        PIN_WFCK_OUTPUT; 
+        PIN_WFCK_CLEAR; 
+        
+    }
     _delay_ms(DELAY_BETWEEN_INJECTIONS);
 
-    // Perform 2 injection cycles for reliability
-    for (uint8_t scei = 0; scei < 2; scei++) {
-       
-      // Iterate through the 44 bits of the SCEX sequence
-      for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) { 
+    // Injection loop (3 cycles)
+    for (uint8_t i = 0; i < 3; i++) {
+        
+        // Mode 3: cycles through all regions; Others: stay on fixed region
+        uint8_t regionIndex = (injectSCEx == 3) ? i : injectSCEx;
+        const uint8_t* ByteSet = allRegionsSCEx[regionIndex];
 
-        // Extract bit using bitwise shift
-        bool currentBit = (ByteSet[bit_counter / 8] & (1 << (bit_counter % 8)));
+        for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) {
+            // Bit-level extraction: 
+            // 1. bit_counter >> 3 identifies the byte index (integer division by 8).
+            // 2. bit_counter & 0x07 identifies the bit position within that byte (modulo 8).
+            // 3. Right-shift and mask (& 0x01) isolates the target bit for injection.
+             uint8_t currentByte = ByteSet[bit_counter >> 3];
+             uint8_t currentBit = (currentByte >> (bit_counter & 0x07)) & 0x01;
 
-        if (!wfck_mode) {
-          // MODE: OLDER BOARDS (PU-7 to PU-20) - Standard Gate Logic
-          if (currentBit == 0) {
-            // For OLD boards, bit 0 is a forced LOW signal
-            PIN_DATA_OUTPUT;         
-            PIN_DATA_CLEAR;   
-          } 
-          else {
-            // For OLD boards, bit 1 is High-Z (Pin set as input)
-            PIN_DATA_INPUT;
-          }
-          _delay_us(DELAY_BETWEEN_BITS);
-        }
-        else if (wfck_mode) {
-          // MODE: NEWER BOARDS (PU-22+) - WFCK Clock Synchronization
-          PIN_DATA_OUTPUT; 
-          
-          if (currentBit == 0) {
-            // Bit 0: Constant LOW signal
-            PIN_DATA_CLEAR;   
-            _delay_us(DELAY_BETWEEN_BITS);
-          } 
-          else {
-            // Bit 1: High-speed modulation synchronized with WFCK clock
-            uint8_t count = 30;
-            uint8_t last_wfck = PIN_WFCK_READ;
-
-            // Optimized loop: Data line only toggles on WFCK edge detection
-            while (count > 0) {
-              uint8_t current_wfck = PIN_WFCK_READ;
-              
-              if (current_wfck != last_wfck) { 
-                // Only update DATA if WFCK state changed
-                if (current_wfck) {
-                  PIN_DATA_SET;
-                } else {
-                  PIN_DATA_CLEAR;
+            if (!wfck_mode) {
+                // LOGIC GATE MODE (Old boards)
+                if (currentBit == 0) { 
+                    PIN_DATA_OUTPUT; 
+                    PIN_DATA_CLEAR; 
+                    
+                } 
+                else { 
+                    PIN_DATA_INPUT; // High Impedance = 1
+                    
+                } 
+                _delay_us(DELAY_BETWEEN_BITS);
+            } 
+            else {
+                // WFCK MODULATION (Newer boards / PU-18+)
+               // PIN_DATA_OUTPUT;
+                if (currentBit == 0) {
+                    PIN_DATA_CLEAR; 
+                    _delay_us(DELAY_BETWEEN_BITS);
                 }
-
-                // Count rising edges to track bit duration
-                if (current_wfck) {
-                  count--;
+                else {
+                    // Synchronize injection with WFCK clock edges
+                    uint8_t count = 30; 
+                    uint8_t last_wfck = PIN_WFCK_READ;
+                    while (count > 0) {
+                        uint8_t current_wfck = PIN_WFCK_READ;
+                        if (current_wfck != last_wfck) {
+                            if (current_wfck) { 
+                                PIN_DATA_SET; count--; 
+                            } 
+                            else {
+                                PIN_DATA_CLEAR; 
+                            }
+                            last_wfck = current_wfck;
+                        }
+                    }
                 }
-                last_wfck = current_wfck;
-              }
             }
-          }
         }
-      }
-      // After injecting SCEX data, set DATA pin as output and clear (low)
-      PIN_DATA_OUTPUT;
-      PIN_DATA_CLEAR;
-      _delay_ms(DELAY_BETWEEN_INJECTIONS);
+        
+        // Inter-string silence
+        PIN_DATA_OUTPUT; 
+        PIN_DATA_CLEAR;
+        _delay_ms(DELAY_BETWEEN_INJECTIONS);
     }
-    // Cleanup: Release the bus
+
+    // Cleanup: Set pins to High-Z (Safe mode)
     if (!wfck_mode) {
-      PIN_WFCK_INPUT; 
+        PIN_WFCK_INPUT;
+        PIN_DATA_INPUT;
     }
-    PIN_DATA_INPUT;
-
-#ifdef LED_RUN
-    PIN_LED_OFF;
-#endif
-
-#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-    Debug_Inject();
-#endif
-  }
+    #ifdef LED_RUN
+        PIN_LED_OFF;
+    #endif
 }
 
-
 void Init() {
+
 #if defined(ATmega328_168) 
-
-  // Optimization test in progress...
-  A;
-  B;
-  D;
-  E;
-  //F;
-  G;
+ optimizePeripherals();
 #endif
 
-#ifdef SCPH_5903
-  currentLogic = logic_SCPH_5903;
-#else
-  currentLogic = logic_Standard;
+#ifdef LED_RUN
+  PIN_LED_OUTPUT;
 #endif
 
-
-#if defined(PATCH_SWITCH) && defined(BIOS_PATCH)
+#ifdef BIOS_PATCH
+  uint8_t Flag_Switch = 0;
+  GLOBAL_INTERRUPT_ENABLE;
+#if defined(PATCH_SWITCH)
   PIN_SWITCH_INPUT;
   PIN_SWITCH_SET;
   if (PIN_SWITCH_READ == 0){
@@ -472,7 +432,17 @@ void Init() {
 #endif
 
 #ifdef LED_RUN
-  PIN_LED_OUTPUT;
+  PIN_LED_ON;
+#endif
+
+  if (Flag_Switch == 0) {
+    Bios_Patching();
+  }
+
+#ifdef LED_RUN
+  PIN_LED_OFF;
+#endif
+
 #endif
 
   GLOBAL_INTERRUPT_DISABLE;
@@ -492,22 +462,12 @@ int main() {
 
   Init();
 
-#ifdef BIOS_PATCH
 
-#ifdef LED_RUN
-  PIN_LED_ON;
+#ifdef SCPH_5903
+   currentLogic = logic_SCPH_5903;
+ #else
+   currentLogic = logic_Standard;
 #endif
-
-  if (Flag_Switch == 0) {
-    Bios_Patching();
-  }
-
-#ifdef LED_RUN
-  PIN_LED_OFF;
-#endif
-
-#endif
-
   board_detection();
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
@@ -536,19 +496,14 @@ int main() {
   //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
   uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
       
-  // 2. Execute selected logic through function pointer
+  // Execute selected logic through function pointer
   currentLogic(isDataSector);
 
-#ifdef LED_RUN
-  PIN_LED_ON;
-#endif
 
-  // 3. Check hysteresis and inject if necessary
-  performInjectionSequence();
+  if (hysteresis >= HYSTERESIS_MAX) {
+      performInjectionSequence(INJECT_SCEx);
+  }
 
-#ifdef LED_RUN
-  PIN_LED_OFF;
-#endif
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
  Debug_Inject();
