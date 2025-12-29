@@ -1,4 +1,4 @@
-//                           PSNee-8.7.1
+//                           PSNee-8.7
 
 /*------------------------------------------------------------------------------------------------
                             MCU selection
@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-//#define ATmega328_168    //  Nano, Pro Mini, Uno
+#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -48,8 +48,9 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 //#define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
 //#define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
 //#define SCPH_5500       // DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
-//#define SCPH_3500_5000  // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209
-//#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6
+//#define SCPH_5000       // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17
+#define SCPH_3500       // DX - D0  | AX - A5          | AX - A4          | 2.1j - CRC BC190209 
+//non-functional//#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
 //#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
 /*------------------------------------------------------------------------------------------------
@@ -423,7 +424,7 @@ void Init() {
 #ifdef BIOS_PATCH
   uint8_t Flag_Switch = 0;
   GLOBAL_INTERRUPT_ENABLE;
-#if defined(PATCH_SWITCH)
+#ifdef SCPH_7000
   PIN_SWITCH_INPUT;
   PIN_SWITCH_SET;
   if (PIN_SWITCH_READ == 0){

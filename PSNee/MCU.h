@@ -184,7 +184,7 @@ static inline void optimizePeripherals(void) {
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
+  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_5000) || defined(SCPH_3500) || defined(SCPH_3000) || defined(SCPH_1000)
 
     // Clear the timer interrupt flag
     //#define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
@@ -224,15 +224,17 @@ static inline void optimizePeripherals(void) {
       #define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))  // Configure INT1 for falling edge trigger
       #define PIN_AY_INTERRUPT_VECTOR INT1_vect  // Interrupt vector for INT1 (external interrupt)
     #endif
+      // Handle switch input for BIOS patch
+ #if defined(SCPH_7000)
+    #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
+    #define PIN_SWITCH_SET PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
+    #define PIN_SWITCH_READ (PIND & (1 << PIND5))  // Read the state of PIND5 (switch input)
+ #endif
 
-    // Handle switch input for BIOS patch
-    #ifdef PATCH_SWITCH
-      #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
-      #define PIN_SWITCH_SET PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
-      #define PIN_SWITCH_READ (PIND & (1 << PIND5))  // Read the state of PIND5 (switch input)
-    #endif
 
   #endif
+
+
 
   // #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
   //   #define DEBUG_PRINT(x)     Serial.print(x)

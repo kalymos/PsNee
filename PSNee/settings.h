@@ -48,32 +48,41 @@
 #define PATCHING 0.2
 #endif
 
-#ifdef  SCPH_7000
-#define BIOS_PATCH
+#ifdef  SCPH_7000         //ok V8.7
 //#define PATCH_SWITCH
+#define BIOS_PATCH
 #define INTERRUPT_RISING
-#define CHECKPOINT 74.5       //                    75.3
+#define CHECKPOINT 75.2       //                    75.3
 #define TRIGGER 16
-#define HOLD 2.85
-#define PATCHING 0.1
+#define HOLD 2.8
+#define PATCHING 0.2
 #endif
 
-#ifdef  SCPH_5500
+#ifdef  SCPH_5500          //ok V8.7
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define CHECKPOINT 76.13
+#define CHECKPOINT 76.07     //75.99 - 76.14
 #define TRIGGER 21
 #define HOLD 2.8
-#define PATCHING 0.15
+#define PATCHING 0.2
 #endif
 
-#ifdef  SCPH_3500_5000
+#ifdef  SCPH_5000        // ok V8.7
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define CHECKPOINT 75.26
+#define CHECKPOINT 75.2      //75.12 - 75.27
 #define TRIGGER 21
 #define HOLD 2.85
-#define PATCHING 0.1
+#define PATCHING 0.2
+#endif
+
+#ifdef  SCPH_3500        //ok V8.7
+#define BIOS_PATCH
+#define INTERRUPT_FALLING
+#define CHECKPOINT 75.2      //
+#define TRIGGER 21
+#define HOLD 2.8
+#define PATCHING 0.2
 #endif
 
 #ifdef  SCPH_3000
@@ -92,12 +101,12 @@
 
 #ifdef  SCPH_1000
 #define BIOS_PATCH
-#define INTERRUPT_RISING_HIGH_PATCH
 #define CHECKPOINT 83
 #define TRIGGER 92
 #define HOLD 2.7
 #define PATCHING 0.1
 #define HIGH_PATCH
+#define INTERRUPT_RISING_HIGH_PATCH
 #define CHECKPOINT2 27.28
 #define TRIGGER2 71
 #define HOLD2 2.88
@@ -108,21 +117,8 @@
                   Region Settings Section
 ------------------------------------------------------------------------------------------------*/
 
-// #if defined(SCPH_xxx1)                            //  NTSC U/C    | America.
-// #define REGION_SETTING 1
-// #endif
-
-// #if defined(SCPH_102)  || defined(SCPH_xxx2)    //  PAL         | Europ.
-// #define REGION_SETTING 2
-// #endif
-
-// #if defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || \
-//    defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || \
-//    defined(SCPH_1000) || defined(SCPH_xxx3) || defined(SCPH_5903)   //  NTSC J      | Asia.
-// #define REGION_SETTING 0
-// #endif
 #if defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || \
-    defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || \
+    defined(SCPH_5500) || defined(SCPH_5000) ||defined(SCPH_3500) || defined(SCPH_3000) || \
     defined(SCPH_1000) || defined(SCPH_xxx3) || defined(SCPH_5903)
     #define INJECT_SCEx 0   // NTSC-J
 #endif
@@ -202,13 +198,13 @@ void Debug_Inject(){       // Confirmation of region code injection
 
 #if !defined(SCPH_xxx3) && \
     !defined(SCPH_102) && !defined(SCPH_101) && !defined(SCPH_100) && !defined(SCPH_7500_9000) && \
-    !defined(SCPH_7000) && !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
+    !defined(SCPH_7000) && !defined(SCPH_5500) && !defined(SCPH_5000) && !defined(SCPH_3500) && !defined(SCPH_3000) && \
     !defined(SCPH_1000) && !defined(SCPH_5903) &&\
     !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_xxxx)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !defined(SCPH_xxx3) ^ \
       defined(SCPH_102) ^ defined(SCPH_101) ^ defined(SCPH_100) ^ defined(SCPH_7500_9000) ^ \
-      defined(SCPH_7000) ^ defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
+      defined(SCPH_7000) ^ defined(SCPH_5500) ^ defined(SCPH_5000) ^ defined(SCPH_3500) ^ defined(SCPH_3000) ^ \
       defined(SCPH_1000) ^ defined(SCPH_xxxx) ^ defined(SCPH_5903) ^ \
       defined(SCPH_xxx1) ^ defined(SCPH_xxx2)
  #error "May be selected only one console! Please check #define with SCPH model number."
