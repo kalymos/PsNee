@@ -72,16 +72,16 @@
 #define INTERRUPT_FALLING
 #define CHECKPOINT 75.2      //75.12 - 75.27
 #define TRIGGER 21
-#define HOLD 2.85
-#define PATCHING 0.2
+#define HOLD 2.8             //2.7 - 2.85
+#define PATCHING 0.1
 #endif
 
 #ifdef  SCPH_3500        //ok V8.7
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define CHECKPOINT 75.2      //
+#define CHECKPOINT 75.2      //75.12 - 75.27
 #define TRIGGER 21
-#define HOLD 2.8
+#define HOLD 2.75           //2.65  - 2.85
 #define PATCHING 0.2
 #endif
 
