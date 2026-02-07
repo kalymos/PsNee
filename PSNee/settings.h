@@ -86,28 +86,28 @@
 #endif
 
 #ifdef  SCPH_3000
-#define BIOS_PATCH
-#define INTERRUPT_RISING_HIGH_PATCH     
+#define BIOS_PATCH    
 #define CHECKPOINT 83   
 #define TRIGGER 60                                               
 #define HOLD 2.75
 #define PATCHING 0.1                                               
 #define HIGH_PATCH
-#define CHECKPOINT2 253300
+#define INTERRUPT_RISING_HIGH_PATCH 
+#define CHECKPOINT2 253.3
 #define TRIGGER2 43  
 #define HOLD2 2.88
 #define PATCHING2 0.15
 #endif
 
-#ifdef  SCPH_1000
+#ifdef  SCPH_1000              // ok V8.7
 #define BIOS_PATCH
-#define CHECKPOINT 83
+#define CHECKPOINT 82.9       // 82.63 - 83.26
 #define TRIGGER 92
-#define HOLD 2.7
-#define PATCHING 0.1
+#define HOLD 2.65              // 2.58 - 2.75
+#define PATCHING 0.15
 #define HIGH_PATCH
 #define INTERRUPT_RISING_HIGH_PATCH
-#define CHECKPOINT2 27.28
+#define CHECKPOINT2 272.8      
 #define TRIGGER2 71
 #define HOLD2 2.88
 #define PATCHING2 0.15
