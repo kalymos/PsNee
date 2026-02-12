@@ -6,6 +6,71 @@
   volatile uint8_t pulse_counter = 0;
   volatile uint8_t patch_done = 0;
 
+  #ifdef TEST_BIOS
+
+    void Bios_Patching() {
+      PIN_DX_INPUT;
+      PIN_DX_LOW;
+    
+    /* 
+     * PHASE 1: Signal Stabilization & Alignment
+     * Synchronizes the MCU with the PS1 startup state (Cold Boot vs Reset).
+     */
+    if (PIN_AX_READ != 0) {
+        while (PIN_AX_READ != 0);           // Wait for falling edge
+        while (PIN_AX_READ == 0);           // Sync on first clean rising edge
+    } else {
+        while (PIN_AX_READ == 0);           // Wait for rising edge
+    }
+
+    /* 
+     * PHASE 2: Address Bus Window Alignment
+     * Bypassing initial boot routines to reach the target memory-access cycle.
+     */
+    _delay_ms(BOOT_OFFSET);         
+
+    /* 
+     * PHASE 3: Zero-Latency Software Pulse Counting
+     * Using manual polling to eliminate the jitter (0.5us) caused by ISR overhead.
+     * cli() locks the CPU for cycle-accurate timing.
+     */
+    uint8_t current_pulses = 0;
+    cli();                                  // Disable interrupts for timing integrity
+
+    while (current_pulses < PULSE_COUNT) {
+        // Wait for AX line to go HIGH (Target Rising Edge)
+        while (PIN_AX_READ == 0); 
+        current_pulses++;
+        
+        // If not the final pulse, wait for the line to go LOW before next loop
+        if (current_pulses < PULSE_COUNT) {
+            while (PIN_AX_READ != 0); 
+        }
+        // At the 48th pulse, we exit immediately to Phase 4
+    }
+
+    /* 
+     * PHASE 4: Precision Bit Alignment
+     * Strategic delay to shift from AX address edge to the DX data bit.
+     */
+    _delay_us(BIT_OFFSET);                            
+
+    /* 
+     * PHASE 5: Data Bus Overdrive (The Patch)
+     * Overwriting the 0.2us pulse on the DX line.
+     * Direct register access (Psnee v8.7 macros) ensures instantaneous execution.
+     */
+    PIN_DX_OUTPUT;                          // Force line (Low/High-Z override)
+    _delay_us(OVERRIDE);                       
+    PIN_DX_INPUT;                           // Release bus immediately
+
+    sei();                                  // Restore global interrupts
+    patch_done = 1; 
+  }
+
+  #endif
+
+
   #ifdef INTERRUPT_RISING
 
     ISR(PIN_AX_INTERRUPT_VECTOR) {
@@ -59,12 +124,15 @@
       }
       
      /* 
-      * PHASE 2: Reaching the Target Memory Window
-      * We introduce a strategic delay (BOOT_OFFSET) to skip initial noise.
-      * This points the execution to a known idle gap in the 
-      * address range calls before the critical data appears.
-      * DELAY: |---//-----|
-      * AX:    -_-_//-_-_________-_-_-_ 
+      * PHASE 2: Address Bus Window Alignment
+      * Introduces a BOOT_OFFSET delay to skip initial noise.
+      * This aligns the execution window with a
+      * known "idle gap" in the address bus activity, positioned 
+      * immediately before the target memory-access cycle.
+      *
+      * BOOT_OFFSET:   |---------//---------|
+      * AX LINE:        -_-_-_-//-_-_-_-__________-_-_-_
+      * BUS IDLE:                       |--------|
       */
       _delay_ms(BOOT_OFFSET);         
       

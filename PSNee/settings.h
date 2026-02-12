@@ -42,6 +42,16 @@
 #define OVERRIDE 0.2
 #endif
 
+
+// #ifdef  SCPH_100        
+// #define BIOS_PATCH
+// #define TEST_BIOS
+// #define BOOT_OFFSET     83.9    // Stabilization window (ms)
+// #define PULSE_COUNT     48      // Targeted AX address cycles
+// #define BIT_OFFSET      3.15    // Precision data alignment (us)
+// #define OVERRIDE        0.2     // DX injection width (us)
+// #endif
+
 #ifdef  SCPH_7500_9000    
 #define BIOS_PATCH
 #define INTERRUPT_RISING
