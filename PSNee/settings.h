@@ -11,8 +11,8 @@
     1 clock cycle = 1 / 16,000,000 s ≈ 62.5 ns
     1 µs ≈ 16 clock cycles
 
-   HOLD _delay_us(2.75)    = 44  clock cycles
-   PATCHING _delay_us(0.2) = 3,2 clock cycles
+   BIT_OFFSET _delay_us(2.75)    = 44  clock cycles
+   OVERRIDE _delay_us(0.2) = 3,2 clock cycles
 
 */
 
@@ -27,93 +27,93 @@
 #ifdef  SCPH_102      
 #define BIOS_PATCH
 #define INTERRUPT_RISING
-#define CHECKPOINT 83.9
-#define TRIGGER 48
-#define HOLD 2.75
-#define PATCHING 0.2
+#define BOOT_OFFSET 83.9
+#define PULSE_COUNT 48
+#define BIT_OFFSET 2.75
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_100        
 #define BIOS_PATCH
 #define INTERRUPT_RISING
-#define CHECKPOINT 83.9              //83.72 - 84.15
-#define TRIGGER 48
-#define HOLD 2.75                     //2.63 - 2.87
-#define PATCHING 0.2
+#define BOOT_OFFSET 83.9              //83.72 - 84.15
+#define PULSE_COUNT 48
+#define BIT_OFFSET 2.75                     //2.63 - 2.87
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_7500_9000    
 #define BIOS_PATCH
 #define INTERRUPT_RISING
-#define CHECKPOINT 75.2              //74.95 - 75.55
-#define TRIGGER 16
-#define HOLD 2.8
-#define PATCHING 0.2
+#define BOOT_OFFSET 75.2              //74.95 - 75.55
+#define PULSE_COUNT 16
+#define BIT_OFFSET 2.8
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_7000         
 //#define PATCH_SWITCH
 #define BIOS_PATCH
 #define INTERRUPT_RISING
-#define CHECKPOINT 75.2              //75.3
-#define TRIGGER 16
-#define HOLD 2.8
-#define PATCHING 0.2
+#define BOOT_OFFSET 75.2              //75.3
+#define PULSE_COUNT 16
+#define BIT_OFFSET 2.8
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_5500         
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define CHECKPOINT 76.07             //75.99 - 76.14
-#define TRIGGER 21
-#define HOLD 2.8
-#define PATCHING 0.2
+#define BOOT_OFFSET 76.07             //75.99 - 76.14
+#define PULSE_COUNT 21
+#define BIT_OFFSET 2.8
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_5000        
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define CHECKPOINT 75.2               //75.12 - 75.27
-#define TRIGGER 21
-#define HOLD 2.8                      //2.7 - 2.85
-#define PATCHING 0.1
+#define BOOT_OFFSET 75.2               //75.12 - 75.27
+#define PULSE_COUNT 21
+#define BIT_OFFSET 2.8                      //2.7 - 2.85
+#define OVERRIDE 0.1
 #endif
 
 #ifdef  SCPH_3500        
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define CHECKPOINT 75.2               //75.12 - 75.27
-#define TRIGGER 21
-#define HOLD 2.75                     //2.65  - 2.85
-#define PATCHING 0.2
+#define BOOT_OFFSET 75.2               //75.12 - 75.27
+#define PULSE_COUNT 21
+#define BIT_OFFSET 2.75                     //2.65  - 2.85
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_3000
 #define BIOS_PATCH    
-#define CHECKPOINT 82.9              //82.65 - 83.26
-#define TRIGGER 60                                               
-#define HOLD 2.7                     //2.58 - 2.8
-#define PATCHING 0.15                                               
-#define HIGH_PATCH
 #define INTERRUPT_RISING_HIGH_PATCH 
-#define CHECKPOINT2 253.3
-#define TRIGGER2 43  
-#define HOLD2 2.88
-#define PATCHING2 0.15
+#define BOOT_OFFSET 82.9              //82.65 - 83.26
+#define PULSE_COUNT 60                                               
+#define BIT_OFFSET 2.7                     //2.58 - 2.8
+#define OVERRIDE 0.15                                               
+#define HIGH_PATCH
+#define FOLLOWUP_OFFSET 253.3
+#define PULSE_COUNT_2 43  
+#define BIT_OFFSET_2 2.88
+#define OVERRIDE_2 0.15
 #endif
 
 #ifdef  SCPH_1000              
 #define BIOS_PATCH
-#define CHECKPOINT 82.9              // 82.63 - 83.26
-#define TRIGGER 92
-#define HOLD 2.65                    // 2.58 - 2.75
-#define PATCHING 0.15 
-#define HIGH_PATCH
 #define INTERRUPT_RISING_HIGH_PATCH
-#define CHECKPOINT2 272.8      
-#define TRIGGER2 71
-#define HOLD2 2.88
-#define PATCHING2 0.15
+#define BOOT_OFFSET 82.9              // 82.63 - 83.26
+#define PULSE_COUNT 92
+#define BIT_OFFSET 2.65                    // 2.58 - 2.75
+#define OVERRIDE 0.15 
+#define HIGH_PATCH
+#define FOLLOWUP_OFFSET 272.8      
+#define PULSE_COUNT_2 71
+#define BIT_OFFSET_2 2.88
+#define OVERRIDE_2 0.15
 #endif
 
 /*------------------------------------------------------------------------------------------------
