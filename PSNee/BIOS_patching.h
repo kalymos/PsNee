@@ -33,22 +33,22 @@
     _delay_ms(BOOT_OFFSET);    
     PIN_LED_ON;     
 
-    /* 
-     * PHASE 3: Zero-Latency Software Pulse Counting
-     * Using manual polling to eliminate the jitter (0.5us) caused by ISR overhead.
-     * cli() locks the CPU for cycle-accurate timing.
+        /* 
+     * PHASE 3: Zero-Jitter Pulse Counting (Falling Edge Trigger)
+     * Optimized to capture the exact moment AX returns to LOW on the 48th pulse.
      */
 
     while (current_pulses < PULSE_COUNT) {
-        // Wait for AX line to go HIGH (Target Rising Edge)
-        while (PIN_AX_READ == 0); 
-        current_pulses++;
+        // 1. Ultra-fast Rising Edge detection
+        while (!(PIND & (1 << 2))); 
         
-        // If not the final pulse, wait for the line to go LOW before next loop
-        if (current_pulses < PULSE_COUNT) {
-            while (PIN_AX_READ != 0); 
-        }
-        // At the 47th pulse, we exit immediately to Phase 4
+        current_pulses++;
+
+        // 2. Falling Edge detection
+        // This line is critical: the CPU remains "locked" here as long as the pulse is HIGH.
+        while (PIND & (1 << 2)); 
+
+        // On the PULSE_COUNT iteration, the loop exits IMMEDIATELY after the signal falls.
     }
 
     /* 
