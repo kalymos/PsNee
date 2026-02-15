@@ -2,7 +2,7 @@
 #pragma once
 
 #ifdef BIOS_PATCH
-
+  uint8_t current_pulses = 0;
   volatile uint8_t pulse_counter = 0;
   volatile uint8_t patch_done = 0;
 
@@ -10,7 +10,10 @@
 
     void Bios_Patching() {
       PIN_DX_INPUT;
-      PIN_DX_LOW;
+      //PIN_DX_LOW;
+
+          
+    cli();                                  // Disable interrupts for timing integrity
     
     /* 
      * PHASE 1: Signal Stabilization & Alignment
@@ -27,15 +30,14 @@
      * PHASE 2: Address Bus Window Alignment
      * Bypassing initial boot routines to reach the target memory-access cycle.
      */
-    _delay_ms(BOOT_OFFSET);         
+    _delay_ms(BOOT_OFFSET);    
+    PIN_LED_ON;     
 
     /* 
      * PHASE 3: Zero-Latency Software Pulse Counting
      * Using manual polling to eliminate the jitter (0.5us) caused by ISR overhead.
      * cli() locks the CPU for cycle-accurate timing.
      */
-    uint8_t current_pulses = 0;
-    cli();                                  // Disable interrupts for timing integrity
 
     while (current_pulses < PULSE_COUNT) {
         // Wait for AX line to go HIGH (Target Rising Edge)
@@ -46,7 +48,7 @@
         if (current_pulses < PULSE_COUNT) {
             while (PIN_AX_READ != 0); 
         }
-        // At the 48th pulse, we exit immediately to Phase 4
+        // At the 47th pulse, we exit immediately to Phase 4
     }
 
     /* 
@@ -63,8 +65,10 @@
     PIN_DX_OUTPUT;                          // Force line (Low/High-Z override)
     _delay_us(OVERRIDE);                       
     PIN_DX_INPUT;                           // Release bus immediately
-
+    PIN_LED_OFF;
     sei();                                  // Restore global interrupts
+
+          
     patch_done = 1; 
   }
 
@@ -103,6 +107,8 @@
         pulse_counter = 0;                    
         patch_done = 1;                       // patch_done is set to 1, indicating that the first patch is completed.
       }
+      PIN_LED_ON;
+      PIN_LED_OFF;
     }
 
     void Bios_Patching(){
@@ -136,7 +142,8 @@
       */
       _delay_ms(BOOT_OFFSET);         
       
-       // Armed for hardware detection
+       // Armed for hardware detectio
+       EIFR |=(1 << INTF0);
       PIN_AX_INTERRUPT_RISING;
       PIN_AX_INTERRUPT_ENABLE;              
       
