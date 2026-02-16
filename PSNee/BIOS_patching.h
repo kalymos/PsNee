@@ -19,49 +19,46 @@
      * PHASE 1: Signal Stabilization & Alignment
      * Synchronizes the MCU with the PS1 startup state (Cold Boot vs Reset).
      */
-    if (PIN_AX_READ != 0) {
+    if (PIN_AX_READ != 0) {                 // Case: Power-on / Line high (---__-_-_)
         while (PIN_AX_READ != 0);           // Wait for falling edge
         while (PIN_AX_READ == 0);           // Sync on first clean rising edge
-    } else {
+    } else {                                // Case: Reset / Line low (_____-_-_)
         while (PIN_AX_READ == 0);           // Wait for rising edge
     }
 
     /* 
      * PHASE 2: Address Bus Window Alignment
-     * Bypassing initial boot routines to reach the target memory-access cycle.
+     * Bypassing initial boot routines to reach one window with a
+     * known "idle gap" in the address bus activity, positioned 
+     * immediately before the target memory-access cycle.
+     * BOOT_OFFSET:  |----//----------|
+     * AX:        ___-_-_//-_-_-________________-_-_
      */
     _delay_ms(BOOT_OFFSET);    
     PIN_LED_ON;     
 
         /* 
-     * PHASE 3: Zero-Jitter Pulse Counting (Falling Edge Trigger)
-     * Optimized to capture the exact moment AX returns to LOW on the 48th pulse.
+     * PHASE 3:  Edge Trigger
+     * Capture the moment AX go HIGH.
+     * Edge Triger:                  |
+     * AX: _-_-_-_-_-________________-_-_-_-_-_-__
      */
-
-    while (current_pulses < PULSE_COUNT) {
-        // 1. Ultra-fast Rising Edge detection
-        while (!(PIND & (1 << 2))); 
-        
-        current_pulses++;
-
-        // 2. Falling Edge detection
-        // This line is critical: the CPU remains "locked" here as long as the pulse is HIGH.
-        while (PIND & (1 << 2)); 
-
-        // On the PULSE_COUNT iteration, the loop exits IMMEDIATELY after the signal falls.
-    }
+    while (! PIN_AX_READ);
 
     /* 
      * PHASE 4: Precision Bit Alignment
-     * Strategic delay to shift from AX address edge to the DX data bit.
+     * Delay to shift from AX address edge to the DX data bit.
+     * BIT_OFFSET:                   |-------//-----|
+     * AX: _-_-_-_-_-________________-_-_-_-_//_-_-_-_
      */
     _delay_us(BIT_OFFSET);                            
 
     /* 
-     * PHASE 5: Data Bus Overdrive (The Patch)
-     * Overwriting the 0.2us pulse on the DX line.
-     * Direct register access (Psnee v8.7 macros) ensures instantaneous execution.
-     */
+    * PHASE 5: Data Bus Overdrive (The Patch)
+    * Briefly forcing PIN_DX to OUTPUT to pull the line and "nullify" the target bit.
+    * This effectively overwrites the BIOS data on-the-fly 
+    * before reverting the pin to INPUT to release the bus.
+    */
     PIN_DX_OUTPUT;                          // Force line (Low/High-Z override)
     _delay_us(OVERRIDE);                       
     PIN_DX_INPUT;                           // Release bus immediately

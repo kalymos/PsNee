@@ -24,14 +24,14 @@
                                     // tested with  an Atmega328P
 
 
-#ifdef  SCPH_102      
-#define BIOS_PATCH
-#define INTERRUPT_RISING
-#define BOOT_OFFSET 83.9
-#define PULSE_COUNT 48
-#define BIT_OFFSET 2.75
-#define OVERRIDE 0.2
-#endif
+// #ifdef  SCPH_102      
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING
+// #define BOOT_OFFSET 83.9
+// #define PULSE_COUNT 48              !!! -1
+// #define BIT_OFFSET 2.75
+// #define OVERRIDE 0.2
+// #endif
 
 // #ifdef  SCPH_100        
 // #define BIOS_PATCH
@@ -42,14 +42,20 @@
 // #define OVERRIDE 0.2
 // #endif
 
+#ifdef  SCPH_102        
+#define BIOS_PATCH
+#define TEST_BIOS
+#define BOOT_OFFSET     83.9    // Stabilization window (ms)
+#define BIT_OFFSET      225.6   // Precision data alignment (us)
+#define OVERRIDE        0.2     // DX injection width (us)
+#endif
 
 #ifdef  SCPH_100        
 #define BIOS_PATCH
 #define TEST_BIOS
 #define BOOT_OFFSET     83.9    // Stabilization window (ms)
-#define PULSE_COUNT     47      // Targeted AX address cycles
-#define BIT_OFFSET      3.6    // Precision data alignment (us) 3.9 - 3.98
-#define OVERRIDE        0.25     // DX injection width (us)
+#define BIT_OFFSET      225.6   // Precision data alignment (us)
+#define OVERRIDE        0.2     // DX injection width (us)
 #endif
 
 #ifdef  SCPH_7500_9000    
