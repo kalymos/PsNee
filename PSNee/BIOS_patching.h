@@ -43,7 +43,11 @@
      * Edge Triger:                  |
      * AX: _-_-_-_-_-________________-_-_-_-_-_-__
      */
+    #ifdef LOW_TRIGGER
+    while (PIN_AX_READ);
+    #else
     while (! PIN_AX_READ);
+    #endif
 
     /* 
      * PHASE 4: Precision Bit Alignment
