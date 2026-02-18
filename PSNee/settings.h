@@ -85,21 +85,34 @@
 
 #ifdef  SCPH_5000        
 #define BIOS_PATCH
-#define INTERRUPT_FALLING
+#define TEST_BIOS
+#define LOW_TRIGGER
 #define BOOT_OFFSET 75.2               //75.12 - 75.27
-#define PULSE_COUNT 21
-#define BIT_OFFSET 2.8                      //2.7 - 2.85
-#define OVERRIDE 0.1
+#define BIT_OFFSET 95.65                   
+#define OVERRIDE 0.2
 #endif
 
 #ifdef  SCPH_3500        
 #define BIOS_PATCH
-#define INTERRUPT_FALLING
+#define TEST_BIOS
+#define LOW_TRIGGER
 #define BOOT_OFFSET 75.2               //75.12 - 75.27
-#define PULSE_COUNT 21
-#define BIT_OFFSET 2.75                     //2.65  - 2.85
+#define BIT_OFFSET 95.4
 #define OVERRIDE 0.2
 #endif
+
+// #ifdef  SCPH_3000
+// #define BIOS_PATCH    
+// #define HIGH_PATCH_A
+// #define BOOT_OFFSET 82.9              //82.65 - 83.26                                            
+// #define BIT_OFFSET 278.65                   
+// #define OVERRIDE 0.15                                               
+// #define HIGH_PATCH
+// #define FOLLOWUP_OFFSET 253.3
+// #define PULSE_COUNT_2 43  
+// #define BIT_OFFSET_2 2.88
+// #define OVERRIDE_2 0.15
+// #endif
 
 #ifdef  SCPH_3000
 #define BIOS_PATCH    

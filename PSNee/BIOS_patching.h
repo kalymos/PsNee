@@ -75,122 +75,64 @@
 
   #endif
 
+  #ifdef HIGH_PATCH_A
 
-  #ifdef INTERRUPT_RISING
 
-    ISR(PIN_AX_INTERRUPT_VECTOR) {
-     /* 
-      * PHASE 3: Pulse Counting (Inside ISR)
-      * The hardware Interrupt Service Routine (ISR) now takes over.
-      * It counts the exact number of incoming pulses on PIN_AX until it 
-      * matches the PULSE_COUNT value.
-      */
+    ISR(PIN_AY_INTERRUPT_VECTOR){
+
       pulse_counter++;                         
-      if (pulse_counter == PULSE_COUNT){           // If pulse_counter reaches the value defined by PULSE_COUNT
-       /* 
-        * PHASE 4: Precision Bit Alignment
-        * Once the PULSE_COUNT is reached, a micro-delay (BIT_OFFSET) is applied.
-        * This shifts the timing from the clock edge to the exact bit position 
-        * within the data stream that needs modification.
-        */
-        _delay_us(BIT_OFFSET);                            
-       /* 
-        * PHASE 5: Data Bus Overdrive (The Patch)
-        * Briefly forcing PIN_DX to OUTPUT to pull the line and "nullify" the target bit.
-        * This effectively overwrites the BIOS data on-the-fly 
-        * before reverting the pin to INPUT to release the bus.
-        */
-        PIN_DX_OUTPUT;
-        _delay_us (OVERRIDE);                       
-        PIN_DX_INPUT;                      
-        PIN_AX_INTERRUPT_DISABLE;          
-
-        pulse_counter = 0;                    
-        patch_done = 1;                       // patch_done is set to 1, indicating that the first patch is completed.
-      }
-      PIN_LED_ON;
-      PIN_LED_OFF;
-    }
-
-    void Bios_Patching(){
-     /* 
-      * PHASE 1: Signal Stabilization & Alignment
-      * Detects the startup state (Cold Boot vs. Reset). 
-      * If the line is already HIGH (Cold Boot), we wait for a full LOW-to-HIGH transition 
-      * to ensure we are aligned with the start of a clean clock cycle.
-      */
-
-      if (PIN_AX_READ != 0)                 // Case: Power-on / Line high (---__-_-_)
+      if (pulse_counter == PULSE_COUNT_2)           
       {
-        while (PIN_AX_READ != 0);           // Wait for falling edge
-        while (PIN_AX_READ == 0);           // Wait for next rising edge to sync
-      }
-      else                                  // Case: Reset / Line low (_____-_-_)
-      {
-        while (PIN_AX_READ == 0);           // Wait for the very first rising edge
-      }
-      
-     /* 
-      * PHASE 2: Address Bus Window Alignment
-      * Introduces a BOOT_OFFSET delay to skip initial noise.
-      * This aligns the execution window with a
-      * known "idle gap" in the address bus activity, positioned 
-      * immediately before the target memory-access cycle.
-      *
-      * BOOT_OFFSET:   |---------//---------|
-      * AX LINE:        -_-_-_-//-_-_-_-__________-_-_-_
-      * BUS IDLE:                       |--------|
-      */
-      _delay_ms(BOOT_OFFSET);         
-      
-       // Armed for hardware detectio
-       EIFR |=(1 << INTF0);
-      PIN_AX_INTERRUPT_RISING;
-      PIN_AX_INTERRUPT_ENABLE;              
-      
-      while (patch_done != 1);                   // Wait for the first stage of the patch to complete:
+        _delay_us (BIT_OFFSET_2);                           
+        PIN_DX_OUTPUT;                  
+        _delay_us (OVERRIDE_2);                      
+        PIN_DX_INPUT;                        
+        PIN_AY_INTERRUPT_DISABLE;           
 
-    }
-
-  #endif
-
-  #ifdef INTERRUPT_FALLING
-
-    ISR(PIN_AX_INTERRUPT_VECTOR) {
-      pulse_counter++;                         
-      if (pulse_counter == PULSE_COUNT){          
-        _delay_us (BIT_OFFSET);                          
-        PIN_DX_OUTPUT;                   
-        _delay_us (OVERRIDE);                       
-        PIN_DX_INPUT;                      
-        PIN_AX_INTERRUPT_DISABLE;          
-
-        pulse_counter = 0;                    
-        patch_done = 1;                       
+        patch_done = 2;                      
       }
     }
 
     void Bios_Patching(){
-      
-      if (PIN_AX_READ != 0)                 
+          PIN_DX_INPUT;
+          cli();                                  // Disable interrupts for timing integrity
+
+      if (PIN_AX_READ != 0)                
       {
         while (PIN_AX_READ != 0);           
-        while (PIN_AX_READ == 0);           
+        while (PIN_AX_READ == 0);          
       }
       else                                  
       {
         while (PIN_AX_READ == 0);          
       }
-      
-      _delay_ms(BOOT_OFFSET);        /
+
                   
-      PIN_AX_INTERRUPT_FALLING;     
-      PIN_AX_INTERRUPT_ENABLE;              
+      _delay_ms(BOOT_OFFSET);
+      PIN_LED_ON; 
+       _delay_us(BIT_OFFSET);     
+
+    PIN_DX_OUTPUT;                          // Force line (Low/High-Z override)
+    _delay_us(OVERRIDE);                       
+    PIN_DX_INPUT;                           // Release bus immediately
+    PIN_LED_OFF;
+    sei();                                  // Restore global interrupts 
+
       
-      while (patch_done != 1);                   
+      while (patch_done != 1);                  
+      PIN_LED_OFF;
+      while (PIN_AY_READ != 0);             
+
+      _delay_ms(FOLLOWUP_OFFSET);  
+
+      PIN_AY_INTERRUPT_RISING;                    
+      PIN_AY_INTERRUPT_ENABLE;            
+      while (patch_done != 2);                 
+
     }
 
   #endif
+ 
 
   #ifdef INTERRUPT_RISING_HIGH_PATCH
 
@@ -236,14 +178,17 @@
       {
         while (PIN_AX_READ == 0);          
       }
-                          
-      _delay_ms(BOOT_OFFSET);
 
+                  
+      _delay_ms(BOOT_OFFSET);
+      PIN_LED_ON; 
       PIN_AX_INTERRUPT_RISING;                     
       PIN_AX_INTERRUPT_ENABLE;              
       
-      while (patch_done != 1);                  
 
+      
+      while (patch_done != 1);                  
+      PIN_LED_OFF;
       while (PIN_AY_READ != 0);             
 
       _delay_ms(FOLLOWUP_OFFSET);  
