@@ -50,8 +50,8 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 //#define SCPH_5500       // DX - D0  | AX - A5          |                  | 3.0j - CRC FF3EEB8C
 //#define SCPH_5000       // DX - D0  | AX - A5          | AX - A4          | 2.2j - CRC 24FC7E17
 //#define SCPH_3500       // DX - D0  | AX - A5          | AX - A4          | 2.1j - CRC BC190209 
-#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
-//#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
+//#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
+#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
 /*------------------------------------------------------------------------------------------------
                            Options

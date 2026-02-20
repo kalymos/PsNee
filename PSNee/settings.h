@@ -105,7 +105,7 @@
 // #define BIOS_PATCH    
 // #define HIGH_PATCH_A
 // #define BOOT_OFFSET 82.9              //82.65 - 83.26                                            
-// #define BIT_OFFSET 278.65                   
+// #define BIT_OFFSET 283.25                   
 // #define OVERRIDE 0.15                                               
 // #define HIGH_PATCH
 // #define FOLLOWUP_OFFSET 253.3
@@ -116,29 +116,66 @@
 
 #ifdef  SCPH_3000
 #define BIOS_PATCH    
-#define INTERRUPT_RISING_HIGH_PATCH 
-#define BOOT_OFFSET 82.9              //82.65 - 83.26
-#define PULSE_COUNT 60                                               
-#define BIT_OFFSET 2.7                     //2.58 - 2.8
+#define HIGH_PATCH_B
+#define BOOT_OFFSET 82.9              //82.65 - 83.26                                            
+#define BIT_OFFSET 283.25                   
 #define OVERRIDE 0.15                                               
 #define HIGH_PATCH
-#define FOLLOWUP_OFFSET 253.3
-#define PULSE_COUNT_2 43  
-#define BIT_OFFSET_2 2.88
+#define FOLLOWUP_OFFSET 253.3 
+#define BIT_OFFSET_2 201.8
 #define OVERRIDE_2 0.15
 #endif
 
+// #ifdef  SCPH_3000
+// #define BIOS_PATCH    
+// #define INTERRUPT_RISING_HIGH_PATCH 
+// #define BOOT_OFFSET 82.9              //82.65 - 83.26
+// #define PULSE_COUNT 60                                               
+// #define BIT_OFFSET 2.7                     //2.58 - 2.8
+// #define OVERRIDE 0.15                                               
+// #define HIGH_PATCH
+// #define FOLLOWUP_OFFSET 253.3
+// #define PULSE_COUNT_2 43  
+// #define BIT_OFFSET_2 2.88
+// #define OVERRIDE_2 0.15
+// #endif
+
+// #ifdef  SCPH_1000              
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING_HIGH_PATCH
+// #define BOOT_OFFSET 82.9              // 82.63 - 83.26
+// #define PULSE_COUNT 92
+// #define BIT_OFFSET 2.65                    // 2.58 - 2.75
+// #define OVERRIDE 0.15 
+// #define HIGH_PATCH
+// #define FOLLOWUP_OFFSET 272.8      
+// #define PULSE_COUNT_2 71
+// #define BIT_OFFSET_2 2.88
+// #define OVERRIDE_2 0.15
+// #endif
+
+// #ifdef  SCPH_1000              
+// #define BIOS_PATCH
+// #define HIGH_PATCH_A
+// #define BOOT_OFFSET 82.9              // 82.63 - 83.26
+// #define BIT_OFFSET 437.1                    // 2.58 - 2.75
+// #define OVERRIDE 0.15 
+// #define HIGH_PATCH
+// #define FOLLOWUP_OFFSET 272.8      
+// #define PULSE_COUNT_2 71
+// #define BIT_OFFSET_2 2.88
+// #define OVERRIDE_2 0.15
+// #endif
+
 #ifdef  SCPH_1000              
 #define BIOS_PATCH
-#define INTERRUPT_RISING_HIGH_PATCH
+#define HIGH_PATCH_B
 #define BOOT_OFFSET 82.9              // 82.63 - 83.26
-#define PULSE_COUNT 92
-#define BIT_OFFSET 2.65                    // 2.58 - 2.75
+#define BIT_OFFSET 437.1                    // 2.58 - 2.75
 #define OVERRIDE 0.15 
 #define HIGH_PATCH
 #define FOLLOWUP_OFFSET 272.8      
-#define PULSE_COUNT_2 71
-#define BIT_OFFSET_2 2.88
+#define BIT_OFFSET_2 336.05
 #define OVERRIDE_2 0.15
 #endif
 

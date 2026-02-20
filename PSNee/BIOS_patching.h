@@ -110,18 +110,20 @@
                   
       _delay_ms(BOOT_OFFSET);
       PIN_LED_ON; 
+      while (! PIN_AX_READ);
        _delay_us(BIT_OFFSET);     
-
+    PIN_DX_SET;
     PIN_DX_OUTPUT;                          // Force line (Low/High-Z override)
-    _delay_us(OVERRIDE);                       
+    _delay_us(OVERRIDE);
+    PIN_DX_CLEAR;                       
     PIN_DX_INPUT;                           // Release bus immediately
     PIN_LED_OFF;
     sei();                                  // Restore global interrupts 
 
       
-      while (patch_done != 1);                  
+                    
       PIN_LED_OFF;
-      while (PIN_AY_READ != 0);             
+                  
 
       _delay_ms(FOLLOWUP_OFFSET);  
 
@@ -132,7 +134,56 @@
     }
 
   #endif
- 
+
+#ifdef HIGH_PATCH_B
+
+
+
+
+    void Bios_Patching(){
+          PIN_DX_INPUT;
+          cli();                                  // Disable interrupts for timing integrity
+
+      if (PIN_AX_READ != 0)                
+      {
+        while (PIN_AX_READ != 0);           
+        while (PIN_AX_READ == 0);          
+      }
+      else                                  
+      {
+        while (PIN_AX_READ == 0);          
+      }
+
+                  
+      _delay_ms(BOOT_OFFSET);
+      //PIN_LED_ON;
+      while (! PIN_AX_READ);
+       _delay_us(BIT_OFFSET);     
+    PIN_DX_SET;
+    PIN_DX_OUTPUT;                          // Force line (Low/High-Z override)
+    _delay_us(OVERRIDE);
+    PIN_DX_CLEAR;                       
+    PIN_DX_INPUT;                           // Release bus immediately
+    PIN_LED_OFF;
+    sei();                                  // Restore global interrupts 
+
+      
+                    
+      //PIN_LED_OFF;
+           PIN_LED_ON;        
+      while (PIN_AY_READ != 0);
+      _delay_ms(FOLLOWUP_OFFSET);  
+
+      while (PIN_AY_READ);
+      _delay_us (BIT_OFFSET_2);                           
+        PIN_DX_OUTPUT;                  
+        _delay_us (OVERRIDE_2);                      
+        PIN_DX_INPUT;
+            PIN_LED_OFF;
+
+    }
+
+  #endif 
 
   #ifdef INTERRUPT_RISING_HIGH_PATCH
 
@@ -181,22 +232,24 @@
 
                   
       _delay_ms(BOOT_OFFSET);
-      PIN_LED_ON; 
+
       PIN_AX_INTERRUPT_RISING;                     
       PIN_AX_INTERRUPT_ENABLE;              
-      
+   
 
       
       while (patch_done != 1);                  
-      PIN_LED_OFF;
-      while (PIN_AY_READ != 0);             
+  
+      while (PIN_AY_READ != 0);
+                   
 
       _delay_ms(FOLLOWUP_OFFSET);  
-
+          PIN_LED_ON; 
       PIN_AY_INTERRUPT_RISING;                    
-      PIN_AY_INTERRUPT_ENABLE;            
+      PIN_AY_INTERRUPT_ENABLE; 
+                 
       while (patch_done != 2);                 
-
+PIN_LED_OFF;
     }
 
   #endif
