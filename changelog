@@ -1,7 +1,18 @@
+
+Update:February 2026.
+
+- Code refactoring
+- Added support for SCPH-5903
+- Optimized BIOS patch timer
+
+-------------------------------------------------------------
+
 Update:mars 2025
 
 -Added led support for ATtiny
 -Added card support to simplify fuse management
+
+-------------------------------------------------------------
 
 Update:july 2024
 
