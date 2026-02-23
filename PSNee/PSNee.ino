@@ -19,12 +19,11 @@
 
    SCPH model number //  region code | region
 -------------------------------------------------------------------------------------------------*/
+//#define SCPH_xxxx  //              | Universal.
 //#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
-//#define SCPH_xxxx  //  Universal
-
-//#define SCPH_5903  //  NTSC J      | Asia VCD:
+//#define SCPH_5903  //  NTSC J      | Asia VCD.
 
 // Models that require a BIOS patch.
 
@@ -242,28 +241,6 @@ void captureSubQ(void) {
  *  isDataSector Boolean flag indicating if the current sector contains data.
  
 **************************************************************************************/
-// void logic_SCPH_5903(uint8_t isDataSector) {
-//     // Identify VCD Lead-In: Specific SCBUF patterns (0xA0/A1/A2) with sub-mode 0x02
-//     uint8_t isVcdLeadIn = isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00 &&
-//                        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2) &&
-//                        (scbuf[3] == 0x02);
-
-//     // Identify PSX Lead-In: Same SCBUF patterns but different sub-mode (!= 0x02)
-//     uint8_t isPsxLeadIn = isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00 &&
-//                        (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2) &&
-//                        (scbuf[3] != 0x02);
-
-//     if (isPsxLeadIn) {
-//         hysteresis++;
-//     }
-//     else if (hysteresis > 0 && !isVcdLeadIn && 
-//              ((scbuf[0] == 0x01 || isDataSector) && scbuf[1] == 0x00 && scbuf[6] == 0x00)) {
-//         hysteresis++;   // Maintain/Increase confidence for valid non-VCD sectors
-//     }
-//     else if (hysteresis > 0) {
-//         hysteresis--;    // Patterns stop matching
-//     }
-// }
 
 void logic_SCPH_5903(uint8_t isDataSector) {
     // Optimization: Pre-check common markers (1 and 6) to save CPU cycles
@@ -302,23 +279,6 @@ void logic_SCPH_5903(uint8_t isDataSector) {
  *  isDataSector Boolean flag: true if the current sector is a data sector.
 
 ******************************************************************************************/
-
-// void logic_Standard(uint8_t isDataSector) {
-//     // Detect specific Lead-In patterns 
-//     if ((isDataSector && scbuf[1] == 0x00 && scbuf[6] == 0x00) &&
-//         (scbuf[2] == 0xA0 || scbuf[2] == 0xA1 || scbuf[2] == 0xA2 ||
-//         (scbuf[2] == 0x01 && (scbuf[3] >= 0x98 || scbuf[3] <= 0x02)))) {
-//         hysteresis++;
-//     }
-//     // Maintain confidence if general valid sector markers are found
-//     else if (hysteresis > 0 && 
-//              ((scbuf[0] == 0x01 || isDataSector) && scbuf[1] == 0x00 && scbuf[6] == 0x00)) {
-//         hysteresis++;
-//     }
-//     else if (hysteresis > 0) {
-//         hysteresis--;
-//     }
-// }
 
 void logic_Standard(uint8_t isDataSector) {
     // Optimization: Check common markers once (scbuf[1] and scbuf[6])
@@ -441,111 +401,10 @@ void performInjectionSequence(uint8_t injectSCEx) {
   #endif
 }
 
-
-
-// void performInjectionSequence(uint8_t injectSCEx) {
-//     // 44-bit SCEx strings for Japan Asia, USA, and Europe
-//     static const uint8_t allRegionsSCEx[3][6] = {
-//         { 0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11011010, 0b00000010 }, // NTSC-J    SCEI  SCPH-xxx0  SCPH-xxx3
-//         { 0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11111010, 0b00000010 },  // NTSC-U/C  SCEA  SCPH-xxx1
-//         { 0b01011001, 0b11001001, 0b01001011, 0b01011101, 0b11101010, 0b00000010 } // PAL       SCEE  SCPH-xxx2
-//     };
-
-//    // if (hysteresis < HYSTERESIS_MAX) return;
-   
-
-//     hysteresis = 11;
-    
-//     #ifdef LED_RUN
-//         PIN_LED_ON;
-//     #endif
-
-//     // Pin initialization
-//     PIN_DATA_OUTPUT; 
-//     PIN_DATA_CLEAR;
-    
-//     if (!wfck_mode) {  
-//         PIN_WFCK_OUTPUT; 
-//         PIN_WFCK_CLEAR; 
-        
-//     }
-//     _delay_ms(DELAY_BETWEEN_INJECTIONS);
-
-//     // Injection loop (3 cycles)
-//     for (uint8_t i = 0; i < 3; i++) {
-        
-//         // Mode 3: cycles through all regions; Others: stay on fixed region
-//         uint8_t regionIndex = (injectSCEx == 3) ? i : injectSCEx;
-//         const uint8_t* ByteSet = allRegionsSCEx[regionIndex];
-
-//         for (uint8_t bit_counter = 0; bit_counter < 44; bit_counter++) {
-//             // Bit-level extraction: 
-//             // 1. bit_counter >> 3 identifies the byte index (integer division by 8).
-//             // 2. bit_counter & 0x07 identifies the bit position within that byte (modulo 8).
-//             // 3. Right-shift and mask (& 0x01) isolates the target bit for injection.
-//              uint8_t currentByte = ByteSet[bit_counter >> 3];
-//              uint8_t currentBit = (currentByte >> (bit_counter & 0x07)) & 0x01;
-
-//             if (!wfck_mode) {
-//                 // LOGIC GATE MODE (Old boards)
-//                 if (currentBit == 0) { 
-//                     PIN_DATA_OUTPUT; 
-//                     PIN_DATA_CLEAR; 
-                    
-//                 } 
-//                 else { 
-//                     PIN_DATA_INPUT; // High Impedance = 1
-                    
-//                 } 
-//                 _delay_us(DELAY_BETWEEN_BITS);
-//             } 
-//             else {
-//                 // WFCK MODULATION (Newer boards / PU-18+)
-//                // PIN_DATA_OUTPUT;
-//                 if (currentBit == 0) {
-//                     PIN_DATA_CLEAR; 
-//                     _delay_us(DELAY_BETWEEN_BITS);
-//                 }
-//                 else {
-//                     // Synchronize injection with WFCK clock edges
-//                     uint8_t count = 30; 
-//                     uint8_t last_wfck = PIN_WFCK_READ;
-//                     while (count > 0) {
-//                         uint8_t current_wfck = PIN_WFCK_READ;
-//                         if (current_wfck != last_wfck) {
-//                             if (current_wfck) { 
-//                                 PIN_DATA_SET; count--; 
-//                             } 
-//                             else {
-//                                 PIN_DATA_CLEAR; 
-//                             }
-//                             last_wfck = current_wfck;
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-        
-//         // Inter-string silence
-//         PIN_DATA_OUTPUT; 
-//         PIN_DATA_CLEAR;
-//         _delay_ms(DELAY_BETWEEN_INJECTIONS);
-//     }
-
-//     // Cleanup: Set pins to High-Z (Safe mode)
-//     if (!wfck_mode) {
-//         PIN_WFCK_INPUT;
-//         PIN_DATA_INPUT;
-//     }
-//     #ifdef LED_RUN
-//         PIN_LED_OFF;
-//     #endif
-// }
-
 void Init() {
 
 #if defined(ATmega328_168) 
- optimizePeripherals();
+  optimizePeripherals();
 #endif
 
 #ifdef LED_RUN
@@ -564,7 +423,7 @@ void Init() {
 #endif
 
 #ifdef LED_RUN
-  //PIN_LED_ON;
+  PIN_LED_ON;
 #endif
 
   if (Flag_Switch == 0) {
@@ -572,7 +431,7 @@ void Init() {
   }
 
 #ifdef LED_RUN
-  //PIN_LED_OFF;
+  PIN_LED_OFF;
 #endif
 
 #endif
@@ -596,14 +455,14 @@ int main() {
 
 
 #ifdef SCPH_5903
-   currentLogic = logic_SCPH_5903;
- #else
-   currentLogic = logic_Standard;
+  currentLogic = logic_SCPH_5903;
+#else
+  currentLogic = logic_Standard;
 #endif
   board_detection();
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
- Debug_Log(lows, wfck_mode);
+  Debug_Log(lows, wfck_mode);
 #endif
 
   while (1) {
@@ -631,11 +490,9 @@ int main() {
   // Execute selected logic through function pointer
   currentLogic(isDataSector);
 
-
   if (hysteresis >= HYSTERESIS_MAX) {
       performInjectionSequence(INJECT_SCEx);
   }
-
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
  Debug_Inject();

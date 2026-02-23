@@ -124,19 +124,6 @@ static inline void optimizePeripherals(void) {
   // Define the clock speed for the microcontroller
   #define F_CPU 16000000L
 
-  // Clear the timer count register (TCNT0)
-  //#define TIMER_TCNT_CLEAR TCNT0 = 0x00  // TCNT0 - Timer/Counter Register, clears the timer count
-
-  // Set OCR0A to achieve a 100KHz clock frequency
-  //#define SET_OCROA_DIV OCR0A = 159;  // OCR0A – Output Compare Register A, 100KHz clock generation, 0x10011111
-
-  // Configure Timer/Counter 0 for CTC mode and enable the clock source
-  //#define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);  // TCCR0A – Timer/Counter Control Register A, enable CTC mode (WGM01)
-  //#define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);   // TCCR0B – Timer/Counter Control Register B, set clock source to I/O clock
-                                                    //Waveform Generation Mode, Mode 2 CTC
-  // Interrupt vector for timer compare match event
-  //#define CTC_TIMER_VECTOR TIMER0_COMPA_vect  //interrupt vector for match event, OCR0A comparison and Timer/Counter 0
-
   #include <stdint.h>
   #include <stdbool.h>
   #include <avr/io.h>
@@ -147,10 +134,6 @@ static inline void optimizePeripherals(void) {
   // Global interrupt control settings
   #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
   #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
-
-  // Enable/Disable timer interrupts
-  //#define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)    // Enable interrupt on Timer0 Compare Match A
-  //#define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)  // Disable interrupt on Timer0 Compare Match A
 
   // Main pin configuration for input and output
 
@@ -249,11 +232,7 @@ static inline void optimizePeripherals(void) {
 #ifdef ATmega32U4_16U4
 
   #define F_CPU 16000000L
-  // #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
-  // #define SET_OCROA_DIV OCR0A = 159;
-  // #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
-  // #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
-  // #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
+
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -263,11 +242,10 @@ static inline void optimizePeripherals(void) {
   #include <util/delay.h>
 
   // Globale interrupt seting
-  // #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
+  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
   #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)
 
-  // #define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)
-  // #define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)
+
 
   // Handling the main pins
 
