@@ -82,10 +82,12 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 /*  
   Fuses  
-  MCU    | High | Low | Extended
+  MCU             | High | Low | Extended
   --------------------------------------------------
-  ATmega | DF   | EE  | FF 
-  ATtiny | DF   | E2  | FF
+  ATmega 328/168  | DF   | EE  | FD 
+  ATmega32U4_16U4 | DF   | EE  | FB
+  ATtiny          | DF   | E2  | FF
+  ATmega 328PB    | DF   | EE  | F5
 
   Pinout
   Arduino   | PSNee     |
@@ -130,8 +132,12 @@ uint8_t wfck_mode = 0;
 
 // --- Prototypes (Forward declarations) ---
 // These tell the compiler that the functions exist later in the code.
-void logic_Standard(uint8_t isDataSector);
+
+//#ifdef SCPH_5903
 void logic_SCPH_5903(uint8_t isDataSector);
+//#else
+void logic_Standard(uint8_t isDataSector);
+//#endif
 
 // Function pointer type definition for the console detection logic.
 // This allows switching between 'Standard' and 'SCPH-5903' heuristics dynamically.
@@ -167,7 +173,7 @@ uint8_t hysteresis = 0;
 
   Traditionally, the WFCK signal was called GATE. This is because, on early models, 
   modchips acted like a gate that would open to pull the signal down
-   at the exact moment the region code was being passed (which is still the case today).
+  at the exact moment the region code was being passed (which is still the case today).
 
   During the initialization and region protection zone reading phases, 
   the WFCK clock frequency is approximately 7.3 kHz.
