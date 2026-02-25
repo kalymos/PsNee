@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-#define ATmega328_168    //  Nano, Pro Mini, Uno
+//#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -23,7 +23,7 @@
 //#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
-#define SCPH_5903  //  NTSC J      | Asia VCD.
+//#define SCPH_5903  //  NTSC J      | Asia VCD.
 
 // Models that require a BIOS patch.
 
@@ -470,7 +470,6 @@ void Init() {
   Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
 #endif
 
-
   board_detection();
 }
 
@@ -499,11 +498,6 @@ int main() {
      Hysteresis is used because older drives exhibit more variation in read head positioning.
      While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
     -------------------------------------------------------------------------------*/
-
-    //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
-    //uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && 
-           //                   (((scbuf[0] & 0x10) == 0) && 
-             //                  ((scbuf[0] & 0x80) == 0)));
 
     // Optimized Sector Filtering:
     // Masking bits 7, 6, and 4 simultaneously using 0xD0 (binary 11010000).
