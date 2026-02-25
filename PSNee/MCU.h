@@ -227,28 +227,26 @@
 #ifdef ATmega328_168
 
   static inline void optimizePeripherals(void) {
-    // Configuring Port C (A0-A5) as Digital Inputs
-    // DDRC at 0 = Input. Ensure that the first 6 bits are 0. 
-    DDRC &= ~0x3F; 
+    // --- Port C & Digital Input Configuration (A0-A5) ---
+    // 1. Set Port C as inputs (DDRC bits 0-5 to 0)
+    DDRC  &= ~((1<<DDC5)|(1<<DDC4)|(1<<DDC3)|(1<<DDC2)|(1<<DDC1)|(1<<DDC0));
+    // 2. Enable Digital Input Buffers by clearing DIDR0 (Required for digital PINC reads)
+    DIDR0 &= ~((1<<ADC5D)|(1<<ADC4D)|(1<<ADC3D)|(1<<ADC2D)|(1<<ADC1D)|(1<<ADC0D));
 
-    // Disable the ADC (Analog-to-Digital Converter)
-    // ADEN at 0 disables the module. PRADC at 1 disables the module's clock.
+    // --- Analog Modules Shutdown (Power Saving & Noise Reduction) ---
+    // 1. Disable the ADC module (ADEN = 0)
     ADCSRA &= ~(1 << ADEN);
-    PRR    |= (1 << PRADC) | (1 << PRTIM2);
+    // 2. Disable the Analog Comparator (ACD = 1) to free resources on PD6/PD7
+    ACSR   |= (1 << ACD);
 
-    // Configure DIDR0 (Digital Input Disable Register)
-    // To read digitally via PINC, the bits of DIDR0 MUST be set to 0.
-    // (0 = Digital Buffer enabled)
-    DIDR0 &= ~0x3F;
+    // --- Power Reduction Register (Hard Clock Shut Off) ---
+    // Stops the clock to internal modules: ADC, Timer 0 (millis), and Timer 2
+    PRR |= (1 << PRADC) | (1 << PRTIM0) | (1 << PRTIM2);
 
-    // Stop Timer 0 (Stops Arduino millis/micros)
-    // Setting TCCR0B to 0 stops the clock source. Setting TIMSK0 to 0 disables interrupts.
+    // --- Timer 0 Specific Shutdown ---
+    // Double security: disconnect clock source and disable interrupts
     TCCR0B = 0;
-    //#define F TIMSK0 = 0;
-
-    // Disable the Analog Comparator (Frees up resources on PD6/PD7)
-    // ACD at 1 = Comparator off.
-    ACSR |= (1 << ACD);
+    TIMSK0 = 0;
   }
 
   // Define the clock speed for the microcontroller
@@ -322,6 +320,7 @@
     #define PIN_AX_INTERRUPT_ENABLE EIMSK |= (1 << INT0)  // Enable external interrupt on INT0 (PINB2)
     #define PIN_AX_INTERRUPT_DISABLE EIMSK &= ~(1 << INT0)  // Disable external interrupt on INT0
     #define PIN_AX_INTERRUPT_RISING EICRA |= (1 << ISC01) | (1 << ISC00)  // Configure INT0 for rising edge trigger
+    //#define PIN_AX_INTERRUPT_FALLING (EICRA = (1 << ISC01)) 
     #define PIN_AX_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC00)) | (1 << ISC01))  // Configure INT0 for falling edge trigger
 
     // Interrupt vectors for external interrupts
@@ -357,6 +356,36 @@
 
 
 #ifdef ATmega32U4_16U4
+
+  static inline void optimizePeripherals(void) {
+    // --- Digital Input Configuration (A0-A5) ---
+    // On 32U4, A0-A5 are spread across Port F (F7-F4) and Port D (D4, D7)
+    // 1. Set all Analog/Digital pins to Input
+    DDRF &= ~((1<<DDF7)|(1<<DDF6)|(1<<DDF5)|(1<<DDF4)); // A0-A3
+    DDRD &= ~((1<<DDD4)|(1<<DDD7));                    // A4-A5
+    
+    // 2. Disable Digital Input Buffers (DIDR0/DIDR2)
+    // On 32U4, DIDR0 and DIDR2 control the digital buffer for ADC pins.
+    // Setting these bits to 0 ENABLES digital reads (PINF/PIND).
+    DIDR0 &= ~((1<<ADC7D)|(1<<ADC6D)|(1<<ADC5D)|(1<<ADC4D)); // A0-A3
+    DIDR2 &= ~((1<<ADC10D)|(1<<ADC8D));                      // A4-A5
+
+    // --- Analog Modules Shutdown (32U4 specific) ---
+    // 1. Disable the ADC module
+    ADCSRA &= ~(1 << ADEN);
+    // 2. Disable the Analog Comparator
+    ACSR   |= (1 << ACD);
+
+    // --- Power Reduction Register (32U4 Hard Clock Shut Off) ---
+    // PRR0 and PRR1 handle the clocks on 32U4.
+    // Note: We DO NOT touch PRUSB if we want to keep the Serial/USB alive.
+    PRR0 |= (1 << PRADC) | (1 << PRTIM0) | (1 << PRTIM1); 
+    PRR1 |= (1 << PRTIM3); // 32U4 has an extra Timer 3
+
+    // --- Timer 0 Specific Shutdown ---
+    TCCR0B = 0;
+    TIMSK0 = 0;    
+  }
 
   #define F_CPU 16000000L
 
@@ -448,6 +477,23 @@
 #endif
 
 #ifdef ATtiny85_45_25
+
+static inline void optimizePeripherals(void) {
+      // --- Analog Modules Shutdown (ATtiny Specific) ---
+    // 1. Disable the ADC module
+    ADCSRA &= ~(1 << ADEN);
+    // 2. Disable the Analog Comparator
+    ACSR |= (1 << ACD);
+
+    // --- Power Reduction Register (Hard Clock Shut Off) ---
+    // On ATtiny85, PRR controls Timer 0, Timer 1, USI, and ADC.
+    // We stop the ADC and Timer 0 clocks.
+    PRR |= (1 << PRADC) | (1 << PRTIM0);
+
+    // --- Timer 0 Specific Shutdown ---
+    TCCR0B = 0;
+    TIMSK  = 0; // On ATtiny85, it's TIMSK (not TIMSK0)
+}
 
   #define DF_CPU 8000000L
   #define TIMER_TCNT_CLEAR TCNT0 = 0x00;

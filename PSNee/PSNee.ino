@@ -19,11 +19,11 @@
 
    SCPH model number //  region code | region
 -------------------------------------------------------------------------------------------------*/
-#define SCPH_xxxx  //              | Universal.
+//#define SCPH_xxxx  //              | Universal.
 //#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
-//#define SCPH_5903  //  NTSC J      | Asia VCD.
+#define SCPH_5903  //  NTSC J      | Asia VCD.
 
 // Models that require a BIOS patch.
 
@@ -127,25 +127,29 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
-uint8_t wfck_mode = 0;
+volatile uint8_t wfck_mode = 0;
 
 
 // --- Prototypes (Forward declarations) ---
 // These tell the compiler that the functions exist later in the code.
 
-//#ifdef SCPH_5903
-void logic_SCPH_5903(uint8_t isDataSector);
-//#else
-void logic_Standard(uint8_t isDataSector);
-//#endif
 
 // Function pointer type definition for the console detection logic.
 // This allows switching between 'Standard' and 'SCPH-5903' heuristics dynamically.
 typedef void (*ConsoleLogicPtr)(uint8_t isDataSector);
 
+#ifdef SCPH_5903
+void logic_SCPH_5903(uint8_t isDataSector);
+volatile ConsoleLogicPtr currentLogic = logic_SCPH_5903;
+#else
+void logic_Standard(uint8_t isDataSector);
+volatile ConsoleLogicPtr currentLogic = logic_Standard;
+#endif
+
+
 // Global pointer holding the currently active logic function.
 // Using a function pointer eliminates the need for repetitive 'if/else' checks in the main loop.
-volatile ConsoleLogicPtr currentLogic = logic_Standard; 
+//volatile ConsoleLogicPtr currentLogic = logic_Standard; 
 
 // Variables de contrôle globales 
 uint8_t scbuf[12] = { 0 };
@@ -204,6 +208,10 @@ void board_detection() {
 
   // Low count implies a static signal (Older boards)
   wfck_mode = 0; // Target: PU-7 to PU-20
+
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  Debug_Log(wfck_mode);
+#endif
 }
 
 
@@ -232,6 +240,10 @@ void captureSubQ(void) {
     }
     scbuf[scpos++] = bitbuf;
   } while (scpos < 12);
+
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  Debug_Scbuf(scbuf);
+#endif
 
 }
 
@@ -405,6 +417,10 @@ void performInjectionSequence(uint8_t injectSCEx) {
   #ifdef LED_RUN
     PIN_LED_OFF;
   #endif
+
+#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+ Debug_Inject();
+#endif
 }
 
 void Init() {
@@ -453,33 +469,27 @@ void Init() {
 #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(ATtiny85_45_25)
   Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
 #endif
+
+
+  board_detection();
 }
 
 int main() {
 
   Init();
 
+// #ifdef SCPH_5903
+//   currentLogic = logic_SCPH_5903;
+// #else
+//   currentLogic = logic_Standard;
+// #endif
 
-#ifdef SCPH_5903
-  currentLogic = logic_SCPH_5903;
-#else
-  currentLogic = logic_Standard;
-#endif
-  board_detection();
-
-#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-  Debug_Log(lows, wfck_mode);
-#endif
 
   while (1) {
 
     _delay_ms(1); /* Start with a small delay, which can be necessary 
                     in cases where the MCU loops too quickly and picks up the laster SUBQ trailing end*/
     captureSubQ();
-
-#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-  Debug_Scbuf(scbuf);
-#endif
 
     /*-------------------------------------------------------------------------------
      Check if read head is in wobble area
@@ -490,19 +500,22 @@ int main() {
      While the laser lens moves to correct for the error, they can pick up a few TOC sectors.
     -------------------------------------------------------------------------------*/
 
-  //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
-  uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && (((scbuf[0] & 0x10) == 0) && ((scbuf[0] & 0x80) == 0)));
+    //This variable initialization macro is to replace (0x41) with a filter that will check that only the three most significant bits are correct. 0x001xxxxx
+    //uint8_t isDataSector = (((scbuf[0] & 0x40) == 0x40) && 
+           //                   (((scbuf[0] & 0x10) == 0) && 
+             //                  ((scbuf[0] & 0x80) == 0)));
+
+    // Optimized Sector Filtering:
+    // Masking bits 7, 6, and 4 simultaneously using 0xD0 (binary 11010000).
+    // This verifies that the "Data/TOC" bit (0x40) is SET, while bits 7 and 4 are CLEARED.
+    // Equivalent to: (bit7 == 0 && bit6 == 1 && bit4 == 0).
+    uint8_t isDataSector = ((scbuf[0] & 0xD0) == 0x40);
       
-  // Execute selected logic through function pointer
-  currentLogic(isDataSector);
+    // Execute selected logic through function pointer
+    currentLogic(isDataSector);
 
-  if (hysteresis >= HYSTERESIS_MAX) {
-      performInjectionSequence(INJECT_SCEx);
-  }
-
-#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
- Debug_Inject();
-#endif
-
+    if (hysteresis >= HYSTERESIS_MAX) {
+        performInjectionSequence(INJECT_SCEx);
+    }
   }
 }

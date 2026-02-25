@@ -144,13 +144,13 @@
 
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
 
-void Debug_Log (uint16_t Lows, int Wfck_mode){          //Information about the MCU, and old or late console mode.
+void Debug_Log (int Wfck_mode){          //Information about the MCU, and old or late console mode.
 
 #if  defined(ATtiny85_45_25)
   mySerial.print("m "); mySerial.println(Wfck_mode);
 #elif !defined(ATtiny85_45_25)
   Serial.print(" MCU frequency: "); Serial.print(F_CPU); Serial.println(" Hz");
-  Serial.print(" lows: "); Serial.println(Lows);
+  //Serial.print(" lows: "); Serial.println(Lows);
   Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
   Serial.print(" region: "); Serial.print(region[0]); Serial.print(region[1]); Serial.println(region[2]);
 #endif
