@@ -250,7 +250,7 @@
   }
 
   // Define the clock speed for the microcontroller
-  #define F_CPU 16000000L
+  //#define F_CPU 16000000L
 
   #include <stdint.h>
   #include <stdbool.h>

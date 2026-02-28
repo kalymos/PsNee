@@ -24,11 +24,12 @@
                                     // tested with  an Atmega328P
 
 #ifdef  SCPH_102      
-#define BIOS_PATCH
+#define BIOS_PATCH_2
 #define INTERRUPT_RISING
 #define BOOT_OFFSET 83.9
 #define PULSE_COUNT 48
-#define BIT_OFFSET 2.75
+//#define BIT_OFFSET 2.75
+#define BIT_OFFSET 3.25 //BIOS_PATCH_2
 #define OVERRIDE 0.2
 #endif
 
