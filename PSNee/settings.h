@@ -157,31 +157,38 @@ void Debug_Log (int Wfck_mode){          //Information about the MCU, and old or
 #endif
 }
 
-  // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
-void Debug_Scbuf (uint8_t *Scbuf){         // Data from the DATA bus
+// Logs SUBQ packets to serial. We only have 12ms to write logs before the next packet.
+// Slower MCUs (like ATtiny) receive minimal formatting to save cycles.
+void logSubQ(uint8_t *dataBuffer) {
+  
+  // A bad sector read results in zeros (except for CRC). Skip logging if first 4 bytes are 0.
+  if (!(dataBuffer[0] == 0 && dataBuffer[1] == 0 && dataBuffer[2] == 0 && dataBuffer[3] == 0)) {
+
 #if defined(ATtiny85_45_25)
-  if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) { // a bad sector read is all 0 except for the CRC fields. Don't log it.
-    for (int i = 0; i < 12; i++) {
-      if (Scbuf[i] < 0x10) {
-        mySerial.print("0"); // padding
+    // Compact formatting for ATtiny to meet the 12ms timing constraint
+    for (uint8_t i = 0; i < 12; i++) {
+      if (dataBuffer[i] < 0x10) {
+        mySerial.print("0"); // Leading zero padding
       }
-      mySerial.print(Scbuf[i, HEX]);
+      mySerial.print(dataBuffer[i], HEX);
     }
-   mySerial.println("");
-  }
-#elif !defined(ATtiny85_45_25)
-  if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) {
-    for (int i = 0; i < 12; i++) {
-      if (Scbuf[i] < 0x10) {
-        Serial.print("0"); // padding
+    mySerial.println("");
+
+#else
+    // Standard formatting with spaces for more powerful MCUs
+    for (uint8_t i = 0; i < 12; i++) {
+      if (dataBuffer[i] < 0x10) {
+        Serial.print("0"); // Leading zero padding
       }
-      Serial.print(Scbuf[i], HEX);
+      Serial.print(dataBuffer[i], HEX);
       Serial.print(" ");
     }
     Serial.println("");
-  }
 #endif
+
+  }
 }
+
 
 void Debug_Inject(){       // Confirmation of region code injection
 

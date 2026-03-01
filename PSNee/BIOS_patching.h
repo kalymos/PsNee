@@ -4,8 +4,8 @@
 
 #ifdef BIOS_PATCH
 
-  volatile uint8_t pulse_counter = 0;
-  volatile uint8_t patch_done = 0;
+  volatile uint8_t pulseCounter = 0;
+  volatile uint8_t patchStep = 0;
 
 
   #ifdef INTERRUPT_RISING
@@ -20,9 +20,9 @@
       */
 
 
-      //if (--pulse_counter == 0) {           
-      pulse_counter++;                         
-      if (pulse_counter == PULSE_COUNT){           // If pulse_counter reaches the value defined by PULSE_COUNT
+      //if (--pulseCounter == 0) {           
+      pulseCounter++;                         
+      if (pulseCounter == PULSE_COUNT){           // If pulseCounter reaches the value defined by PULSE_COUNT
        /* 
         * PHASE 4: Precision Bit Alignment
         * Once the PULSE_COUNT is reached, a micro-delay (BIT_OFFSET) is applied.
@@ -40,8 +40,8 @@
         _delay_us (OVERRIDE);                       
         PIN_DX_INPUT;                      
         PIN_AX_INTERRUPT_DISABLE;          
-        pulse_counter = 0;                    
-        patch_done = 1;                       // patch_done is set to 1, indicating that the first patch is completed.
+        pulseCounter = 0;                    
+        patchStep = 1;                       // patchStep is set to 1, indicating that the first patch is completed.
       }
     }
 
@@ -72,10 +72,10 @@
       */
       _delay_ms(BOOT_OFFSET);         
        // Armed for hardware detection
-       //pulse_counter = PULSE_COUNT; 
+       //pulseCounter = PULSE_COUNT; 
       PIN_AX_INTERRUPT_RISING;
       PIN_AX_INTERRUPT_ENABLE;              
-      while (patch_done != 1);                   // Wait for the first stage of the patch to complete:
+      while (patchStep != 1);                   // Wait for the first stage of the patch to complete:
     }
   #endif
 
@@ -83,8 +83,8 @@
 
     ISR(PIN_AX_INTERRUPT_VECTOR) {
 
-      pulse_counter++;                         
-      if (pulse_counter == PULSE_COUNT){          
+      pulseCounter++;                         
+      if (pulseCounter == PULSE_COUNT){          
         _delay_us (BIT_OFFSET);                          
         PIN_DX_OUTPUT;                   
         _delay_us (OVERRIDE);                       
@@ -92,8 +92,8 @@
 
         PIN_AX_INTERRUPT_DISABLE;          
 
-        pulse_counter = 0;                    
-        patch_done = 1;                       
+        pulseCounter = 0;                    
+        patchStep = 1;                       
       }
     }
 
@@ -112,14 +112,14 @@
       PIN_AX_INTERRUPT_FALLING;     
       PIN_AX_INTERRUPT_ENABLE;    
 
-      while (patch_done != 1);                   
+      while (patchStep != 1);                   
     }
   #endif
 
   #ifdef INTERRUPT_RISING_HIGH_PATCH
     ISR(PIN_AX_INTERRUPT_VECTOR) {
-      pulse_counter++;                         
-      if (pulse_counter == PULSE_COUNT){          
+      pulseCounter++;                         
+      if (pulseCounter == PULSE_COUNT){          
         _delay_us (BIT_OFFSET);                                         
         PIN_DX_SET;                     
         PIN_DX_OUTPUT;                   
@@ -127,22 +127,22 @@
         PIN_DX_CLEAR;                     
         PIN_DX_INPUT;                      
         PIN_AX_INTERRUPT_DISABLE;          
-        pulse_counter = 0;                    
-        patch_done = 1;                      
+        pulseCounter = 0;                    
+        patchStep = 1;                      
       }
     }
 
     ISR(PIN_AY_INTERRUPT_VECTOR){
 
-      pulse_counter++;                         
+      pulseCounter++;                         
       
-      if (pulse_counter == PULSE_COUNT_2) {
+      if (pulseCounter == PULSE_COUNT_2) {
         _delay_us (BIT_OFFSET_2);                           
         PIN_DX_OUTPUT;                  
         _delay_us (OVERRIDE_2);                      
         PIN_DX_INPUT;                        
         PIN_AY_INTERRUPT_DISABLE;           
-        patch_done = 2;                      
+        patchStep = 2;                      
       }
     }
 
@@ -161,7 +161,7 @@
 
       PIN_AX_INTERRUPT_ENABLE;              
 
-      while (patch_done != 1);                  
+      while (patchStep != 1);                  
 
       while (PIN_AY_READ != 0);             
 
@@ -169,7 +169,7 @@
 
       PIN_AY_INTERRUPT_RISING;                    
       PIN_AY_INTERRUPT_ENABLE;            
-      while (patch_done != 2);                 
+      while (patchStep != 2);                 
     }
 
   #endif
@@ -202,8 +202,8 @@
 
 #ifdef BIOS_PATCH_2
 
-  volatile uint8_t pulse_counter = 0;
-  volatile uint8_t patch_done = 0;
+  volatile uint8_t pulseCounter = 0;
+  volatile uint8_t patchStep = 0;
 
   // --- MAIN INTERRUPT SERVICE ROUTINE (ADDRESS AX) ---
   ISR(PIN_AX_INTERRUPT_VECTOR) {
@@ -211,7 +211,7 @@
      * PHASE 3: Pulse Counting (Inside ISR)
      * Decrementing towards zero is the fastest operation on AVR architecture.
      */
-    if (--pulse_counter == 0) {           
+    if (--pulseCounter == 0) {           
       
       /* PHASE 4: Precision Bit Alignment */
       _delay_us(BIT_OFFSET);                            
@@ -230,20 +230,20 @@
 
       PIN_DX_INPUT;                         // Immediately release the Data Bus
       PIN_AX_INTERRUPT_DISABLE;          
-      patch_done = 1;                       // Notify Stage 1 completion
+      patchStep = 1;                       // Notify Stage 1 completion
     }
   }
 
   // --- SECONDARY INTERRUPT SERVICE ROUTINE (ADDRESS AY - Variant 3) ---
   #ifdef INTERRUPT_RISING_HIGH_PATCH
     ISR(PIN_AY_INTERRUPT_VECTOR) {
-      if (--pulse_counter == 0) {           
+      if (--pulseCounter == 0) {           
         _delay_us(BIT_OFFSET_2);                           
         PIN_DX_OUTPUT;                  
         _delay_us(OVERRIDE_2);                      
         PIN_DX_INPUT;                        
         PIN_AY_INTERRUPT_DISABLE;           
-        patch_done = 2;                      // Notify Stage 2 completion
+        patchStep = 2;                      // Notify Stage 2 completion
       }
     }
   #endif
@@ -265,8 +265,8 @@
     _delay_ms(BOOT_OFFSET);         
 
     // Countdown Preparation (Optimized for speed)
-    pulse_counter = PULSE_COUNT; 
-    patch_done = 0;
+    pulseCounter = PULSE_COUNT; 
+    patchStep = 0;
 
     // Dynamic Interrupt Configuration
     #if defined(INTERRUPT_RISING) || defined(INTERRUPT_RISING_HIGH_PATCH)
@@ -277,7 +277,7 @@
 
     // Arm Hardware Interrupt
     PIN_AX_INTERRUPT_ENABLE;              
-    while (patch_done != 1);              // Block until first patch is applied
+    while (patchStep != 1);              // Block until first patch is applied
 
     /* 
      * OPTIONAL PHASE: Secondary Patch (Variant 3 only) 
@@ -287,10 +287,10 @@
       while (PIN_AY_READ != 0);           // Ensure AY is low before arming
       _delay_ms(FOLLOWUP_OFFSET);  
 
-      pulse_counter = PULSE_COUNT_2;      // Re-load counter for AY pulses
+      pulseCounter = PULSE_COUNT_2;      // Re-load counter for AY pulses
       PIN_AY_INTERRUPT_RISING;                    
       PIN_AY_INTERRUPT_ENABLE;            
-      while (patch_done != 2);            // Block until second patch is applied
+      while (patchStep != 2);            // Block until second patch is applied
     #endif
   }
 
