@@ -115,6 +115,186 @@
 #define OVERRIDE_2 0.15
 #endif
 
+
+// // -------- SCPH 102 --------
+// #ifdef SCPH_102
+// #define BIOS_PATCH_2
+// #define INTERRUPT_RISING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 84
+// #define PULSE_COUNT 48
+// #define BIT_OFFSET_CYCLES 26    // 3.25us / 0.125us ≈ 26 cycles
+// #define OVERRIDE_CYCLES 2       // 0.2us / 0.125us ≈ 2 cycles
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 84
+// #define PULSE_COUNT 48
+// #define BIT_OFFSET_CYCLES 52    // 3.25 / 0.0625 ≈ 52 cycles
+// #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
+// #endif
+// #endif
+
+// // -------- SCPH 100 --------
+// #ifdef SCPH_100
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 84
+// #define PULSE_COUNT 48
+// #define BIT_OFFSET_CYCLES 22    // 2.75 / 0.125 ≈ 22 cycles
+// #define OVERRIDE_CYCLES 2       // 0.2 / 0.125 ≈ 2 cycles
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 84
+// #define PULSE_COUNT 48
+// #define BIT_OFFSET_CYCLES 44    // 2.75 / 0.0625 ≈ 44 cycles
+// #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
+// #endif
+// #endif
+
+// // -------- SCPH 7500 / 9000 --------
+// #ifdef SCPH_7500_9000
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 16
+// #define BIT_OFFSET_CYCLES 22    // 2.8 / 0.125 ≈ 22 cycles
+// #define OVERRIDE_CYCLES 2       // 0.2 / 0.125 ≈ 2 cycles
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 16
+// #define BIT_OFFSET_CYCLES 45    // 2.8 / 0.0625 ≈ 45 cycles
+// #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
+// #endif
+// #endif
+
+// // -------- SCPH 7000 --------
+// #ifdef SCPH_7000
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 16
+// #define BIT_OFFSET_CYCLES 22
+// #define OVERRIDE_CYCLES 2
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 16
+// #define BIT_OFFSET_CYCLES 45
+// #define OVERRIDE_CYCLES 3
+// #endif
+// #endif
+
+// // -------- SCPH 5500 --------
+// #ifdef SCPH_5500
+// #define BIOS_PATCH
+// #define INTERRUPT_FALLING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 76
+// #define PULSE_COUNT 21
+// #define BIT_OFFSET_CYCLES 22
+// #define OVERRIDE_CYCLES 2
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 76
+// #define PULSE_COUNT 21
+// #define BIT_OFFSET_CYCLES 45
+// #define OVERRIDE_CYCLES 3
+// #endif
+// #endif
+
+// // -------- SCPH 5000 --------
+// #ifdef SCPH_5000
+// #define BIOS_PATCH
+// #define INTERRUPT_FALLING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 21
+// #define BIT_OFFSET_CYCLES 22
+// #define OVERRIDE_CYCLES 1
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 21
+// #define BIT_OFFSET_CYCLES 45
+// #define OVERRIDE_CYCLES 2
+// #endif
+// #endif
+
+// // -------- SCPH 3500 --------
+// #ifdef SCPH_3500
+// #define BIOS_PATCH
+// #define INTERRUPT_FALLING
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 21
+// #define BIT_OFFSET_CYCLES 22
+// #define OVERRIDE_CYCLES 2
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 75
+// #define PULSE_COUNT 21
+// #define BIT_OFFSET_CYCLES 44
+// #define OVERRIDE_CYCLES 3
+// #endif
+// #endif
+
+// // -------- SCPH 3000 --------
+// #ifdef SCPH_3000
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING_HIGH_PATCH
+// #define HIGH_PATCH
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 83
+// #define PULSE_COUNT 60
+// #define BIT_OFFSET_CYCLES 22
+// #define OVERRIDE_CYCLES 1
+// #define FOLLOWUP_OFFSET_MS 253
+// #define PULSE_COUNT_2 43
+// #define BIT_OFFSET_2_CYCLES 23
+// #define OVERRIDE_2_CYCLES 1
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 83
+// #define PULSE_COUNT 60
+// #define BIT_OFFSET_CYCLES 43
+// #define OVERRIDE_CYCLES 2
+// #define FOLLOWUP_OFFSET_MS 253
+// #define PULSE_COUNT_2 43
+// #define BIT_OFFSET_2_CYCLES 46
+// #define OVERRIDE_2_CYCLES 2
+// #endif
+// #endif
+
+// // -------- SCPH 1000 --------
+// #ifdef SCPH_1000
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING_HIGH_PATCH
+// #define HIGH_PATCH
+
+// #ifdef F_CPU_8MHZ
+// #define BOOT_OFFSET_MS 83
+// #define PULSE_COUNT 92
+// #define BIT_OFFSET_CYCLES 21
+// #define OVERRIDE_CYCLES 1
+// #define FOLLOWUP_OFFSET_MS 273
+// #define PULSE_COUNT_2 71
+// #define BIT_OFFSET_2_CYCLES 23
+// #define OVERRIDE_2_CYCLES 1
+// #elif defined(F_CPU_16MHZ)
+// #define BOOT_OFFSET_MS 83
+// #define PULSE_COUNT 92
+// #define BIT_OFFSET_CYCLES 42
+// #define OVERRIDE_CYCLES 2
+// #define FOLLOWUP_OFFSET_MS 273
+// #define PULSE_COUNT_2 71
+// #define BIT_OFFSET_2_CYCLES 46
+// #define OVERRIDE_2_CYCLES 2
+// #endif
+// #endif
 /*------------------------------------------------------------------------------------------------
                   Region Settings Section
 ------------------------------------------------------------------------------------------------*/

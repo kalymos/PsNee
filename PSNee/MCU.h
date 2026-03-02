@@ -260,10 +260,12 @@
   #include <util/delay.h>
 
   // Global interrupt control settings
-  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
-  #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
+  #define GLOBAL_INTERRUPT_ENABLE  sei()
+  #define GLOBAL_INTERRUPT_DISABLE cli()
+  // #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
+  // #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
 
-  // Main pin configuration for input and output
+  // Main pin configuration
 
   // Define the main pins as inputs
   #define PIN_DATA_INPUT DDRB &= ~(1 << DDB0)  // Set DDRB register to configure PINB0 as input
