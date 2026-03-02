@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-#define ATmega328_168    //  Nano, Pro Mini, Uno
+//#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -20,7 +20,7 @@
    SCPH model number //  region code | region
 -------------------------------------------------------------------------------------------------*/
 //#define SCPH_xxxx  //              | Universal.
-#define SCPH_xxx1  //  NTSC U/C    | America.
+//#define SCPH_xxx1  //  NTSC U/C    | America.
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
 //#define SCPH_5903  //  NTSC J      | Asia VCD.
@@ -124,6 +124,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "MCU.h"
 #include "settings.h"
 #include "BIOS_patching.h"
+#include <util/delay.h>
 
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
@@ -136,24 +137,20 @@ volatile uint8_t wfck_mode = 0;
 
 // Function pointer type definition for the console detection logic.
 // This allows switching between 'Standard' and 'SCPH-5903' heuristics dynamically.
+// Définition du type de pointeur de fonction pour la logique de console
 typedef void (*ConsoleLogicPtr)(uint8_t isDataSector);
 
+// Déclarations forward des deux fonctions
+void processStandardLogic(uint8_t isDataSector);
+void processScph5903Logic(uint8_t isDataSector);
+
+// Pointeur global vers la fonction active
 #ifdef SCPH_5903
-  // Forward declaration
-  void logic_SCPH_5903(uint8_t isDataSector);
-  // Pointer assignment
-  volatile ConsoleLogicPtr currentLogic = logic_SCPH_5903;
+  volatile ConsoleLogicPtr currentLogic = processScph5903Logic;
 #else
-  // Forward declaration
-  void logic_Standard(uint8_t isDataSector);
-  // Pointer assignment
-  volatile ConsoleLogicPtr currentLogic = logic_Standard;
+  volatile ConsoleLogicPtr currentLogic = processStandardLogic;
 #endif
 
-
-// Global pointer holding the currently active logic function.
-// Using a function pointer eliminates the need for repetitive 'if/else' checks in the main loop.
-//volatile ConsoleLogicPtr currentLogic = logic_Standard; 
 
 // Variables de contrôle globales 
 // Global buffer to store the 12-byte Sub-Q channel data
@@ -573,7 +570,7 @@ int main() {
 
       
     // Execute selected logic through function pointer
-    processStandardLogic(isDataSector);
+    currentLogic(isDataSector);
 
     //Trigger SCEx injection once the confidence threshold is reached
     if (hysteresis >= HYSTERESIS_MAX) {

@@ -389,7 +389,7 @@
     TIMSK0 = 0;    
   }
 
-  #define F_CPU 16000000L
+  //#define F_CPU 16000000L
 
 
   #include <stdint.h>
