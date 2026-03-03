@@ -63,7 +63,7 @@
 #ifdef  SCPH_5500         
 #define BIOS_PATCH
 #define INTERRUPT_FALLING
-#define BOOT_OFFSET 76.07             //75.99 - 76.14
+#define BOOT_OFFSET 76.04             //75.99 - 76.14
 #define PULSE_COUNT 21
 #define BIT_OFFSET 2.8
 #define OVERRIDE 0.2
