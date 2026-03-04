@@ -76,6 +76,7 @@
       PIN_AX_INTERRUPT_RISING;
       PIN_AX_INTERRUPT_ENABLE;              
       while (patchStep != 1);                   // Wait for the first stage of the patch to complete:
+PIN_LED_OFF;
     }
   #endif
 
@@ -200,190 +201,89 @@
  * ======================================================================================
  */
 
-#ifdef BIOS_PATCH_2
+#ifdef BIOS_PATCH_3
 
-  volatile uint8_t pulseCounter = 0;
-  volatile uint8_t patchStep = 0;
+// Shared variables between ISR and main loop
+volatile uint8_t pulse_counter = 0;
+volatile uint8_t patch_done = 0;
 
-  // --- MAIN INTERRUPT SERVICE ROUTINE (ADDRESS AX) ---
-  ISR(PIN_AX_INTERRUPT_VECTOR) {
-    /* 
-     * PHASE 3: Pulse Counting (Inside ISR)
-     * Decrementing towards zero is the fastest operation on AVR architecture.
-     */
-    if (--pulseCounter == 0) {           
-      
-      /* PHASE 4: Precision Bit Alignment */
-      _delay_us(BIT_OFFSET);                            
-      
-      /* PHASE 5: Data Bus Overdrive (The Patch on DX) */
-      #ifdef INTERRUPT_RISING_HIGH_PATCH
-        PIN_DX_SET;                         // Pre-set HIGH state for Variant 3
-      #endif
 
-      PIN_DX_OUTPUT;                        // Take control of the Data Bus
-      _delay_us(OVERRIDE);                       
-      
-      #ifdef INTERRUPT_RISING_HIGH_PATCH
-        PIN_DX_CLEAR;                       // Release HIGH state
-      #endif
+// --- MAIN INTERRUPT SERVICE ROUTINE (ADDRESS AX) ---
+ISR(PIN_AX_INTERRUPT_VECTOR) {
+    if (--pulse_counter == 0) {           
+        // --- PHASE 4: Precision Bit Alignment ---
+        __builtin_avr_delay_cycles(BIT_OFFSET_CYCLES);
 
-      PIN_DX_INPUT;                         // Immediately release the Data Bus
-      PIN_AX_INTERRUPT_DISABLE;          
-      patchStep = 1;                       // Notify Stage 1 completion
+        // --- PHASE 5: Data Bus Overdrive (Patch applied on DX) ---
+        #ifdef INTERRUPT_RISING_HIGH_PATCH
+            PIN_DX_SET;       // Pre-set HIGH if needed for this variant
+        #endif
+
+        PIN_DX_OUTPUT;       // Take control of the data bus
+        __builtin_avr_delay_cycles(OVERRIDE_CYCLES);
+
+        #ifdef INTERRUPT_RISING_HIGH_PATCH
+            PIN_DX_CLEAR;     // Release HIGH state
+        #endif
+
+        PIN_DX_INPUT;        // Immediately release the data bus
+        PIN_AX_INTERRUPT_DISABLE;
+        PIN_LED_OFF;
+        patch_done = 1;      // Signal completion of stage 1
     }
-  }
+}
 
-  // --- SECONDARY INTERRUPT SERVICE ROUTINE (ADDRESS AY - Variant 3) ---
-  #ifdef INTERRUPT_RISING_HIGH_PATCH
-    ISR(PIN_AY_INTERRUPT_VECTOR) {
-      if (--pulseCounter == 0) {           
-        _delay_us(BIT_OFFSET_2);                           
-        PIN_DX_OUTPUT;                  
-        _delay_us(OVERRIDE_2);                      
-        PIN_DX_INPUT;                        
-        PIN_AY_INTERRUPT_DISABLE;           
-        patchStep = 2;                      // Notify Stage 2 completion
-      }
+// --- SECONDARY ISR (ADDRESS AY, HIGH_PATCH variant) ---
+#ifdef INTERRUPT_RISING_HIGH_PATCH
+ISR(PIN_AY_INTERRUPT_VECTOR) {
+    if (--pulse_counter == 0) {
+        delay_cycles(BIT_OFFSET_2_CYCLES);
+        PIN_DX_OUTPUT;
+        delay_cycles(OVERRIDE_2_CYCLES);
+        PIN_DX_INPUT;
+        PIN_AY_INTERRUPT_DISABLE;
+        patch_done = 2;      // Signal completion of stage 2
     }
-  #endif
-
-  void Bios_Patching() {
-    /* 
-     * PHASE 1: Signal Stabilization & Alignment (AX) 
-     * Handles Cold Boot (Line High) vs Reset (Line Low) states.
-     */
-    if (PIN_AX_READ != 0) {                // Case: Power-on / Line high
-      while (PIN_AX_READ != 0);           // Wait for falling edge
-      while (PIN_AX_READ == 0);           // Wait for next rising edge to sync
-    }
-    else {                                // Case: Reset / Line low
-      while (PIN_AX_READ == 0);           // Wait for the very first rising edge
-    }
-
-    /* PHASE 2: Reaching the Target Memory Window */
-    _delay_ms(BOOT_OFFSET);         
-
-    // Countdown Preparation (Optimized for speed)
-    pulseCounter = PULSE_COUNT; 
-    patchStep = 0;
-
-    // Dynamic Interrupt Configuration
-    #if defined(INTERRUPT_RISING) || defined(INTERRUPT_RISING_HIGH_PATCH)
-      PIN_AX_INTERRUPT_RISING;
-    #elif defined(INTERRUPT_FALLING)
-      PIN_AX_INTERRUPT_FALLING;
-    #endif
-
-    // Arm Hardware Interrupt
-    PIN_AX_INTERRUPT_ENABLE;              
-    while (patchStep != 1);              // Block until first patch is applied
-
-    /* 
-     * OPTIONAL PHASE: Secondary Patch (Variant 3 only) 
-     * Switches detection to the second Address line (AY).
-     */
-    #ifdef INTERRUPT_RISING_HIGH_PATCH
-      while (PIN_AY_READ != 0);           // Ensure AY is low before arming
-      _delay_ms(FOLLOWUP_OFFSET);  
-
-      pulseCounter = PULSE_COUNT_2;      // Re-load counter for AY pulses
-      PIN_AY_INTERRUPT_RISING;                    
-      PIN_AY_INTERRUPT_ENABLE;            
-      while (patchStep != 2);            // Block until second patch is applied
-    #endif
-  }
-
+}
 #endif
 
-// #ifdef BIOS_PATCH
+// --- BIOS Patching Main Function ---
+void Bios_Patching(void) {
+    // --- PHASE 1: Signal Stabilization & Alignment (AX) ---
+    if (PIN_AX_READ != 0) {        // Case: Power-on, line is high
+        while (PIN_AX_READ != 0);  // Wait for falling edge
+        while (PIN_AX_READ == 0);  // Wait for next rising edge to sync
+    } else {                       // Case: Reset, line is low
+        while (PIN_AX_READ == 0);  // Wait for first rising edge
+    }
 
-// // Shared variables between ISR and main loop
-// volatile uint8_t pulse_counter = 0;
-// volatile uint8_t patch_done = 0;
+    // --- PHASE 2: Reaching the Target Memory Window ---
+    _delay_ms(BOOT_OFFSET_MS);
+PIN_LED_ON;
+    // --- Prepare pulse counter and patch status flag ---
+    pulse_counter = PULSE_COUNT;
+    patch_done = 0;
 
-// // --- Utility function for a CPU cycle delay (NOP) ---
-// static inline void delay_cycles(uint8_t cycles) {
-//     while(cycles--) {
-//         asm volatile("nop");
-//     }
-// }
+    // --- Dynamic interrupt configuration ---
+    #if defined(INTERRUPT_RISING) || defined(INTERRUPT_RISING_HIGH_PATCH)
+        PIN_AX_INTERRUPT_RISING;
+    #elif defined(INTERRUPT_FALLING)
+        PIN_AX_INTERRUPT_FALLING;
+    #endif
 
-// // --- MAIN INTERRUPT SERVICE ROUTINE (ADDRESS AX) ---
-// ISR(PIN_AX_INTERRUPT_VECTOR) {
-//     if (--pulse_counter == 0) {           
-//         // --- PHASE 4: Precision Bit Alignment ---
-//         delay_cycles(BIT_OFFSET_CYCLES);
+    PIN_AX_INTERRUPT_ENABLE;
+    while (patch_done != 1);      // Wait until stage 1 is completed
 
-//         // --- PHASE 5: Data Bus Overdrive (Patch applied on DX) ---
-//         #ifdef INTERRUPT_RISING_HIGH_PATCH
-//             PIN_DX_SET;       // Pre-set HIGH if needed for this variant
-//         #endif
+    // --- Optional secondary patch phase for HIGH_PATCH ---
+    #ifdef INTERRUPT_RISING_HIGH_PATCH
+        while (PIN_AY_READ != 0);          // Ensure AY line is low before arming
+        _delay_ms(FOLLOWUP_OFFSET_MS);
 
-//         PIN_DX_OUTPUT;       // Take control of the data bus
-//         delay_cycles(OVERRIDE_CYCLES);
+        pulse_counter = PULSE_COUNT_2;     // Reload counter for AY pulses
+        PIN_AY_INTERRUPT_RISING;
+        PIN_AY_INTERRUPT_ENABLE;
+        while (patch_done != 2);           // Wait until stage 2 is completed
+    #endif
+}
 
-//         #ifdef INTERRUPT_RISING_HIGH_PATCH
-//             PIN_DX_CLEAR;     // Release HIGH state
-//         #endif
-
-//         PIN_DX_INPUT;        // Immediately release the data bus
-//         PIN_AX_INTERRUPT_DISABLE;
-//         patch_done = 1;      // Signal completion of stage 1
-//     }
-// }
-
-// // --- SECONDARY ISR (ADDRESS AY, HIGH_PATCH variant) ---
-// #ifdef INTERRUPT_RISING_HIGH_PATCH
-// ISR(PIN_AY_INTERRUPT_VECTOR) {
-//     if (--pulse_counter == 0) {
-//         delay_cycles(BIT_OFFSET_2_CYCLES);
-//         PIN_DX_OUTPUT;
-//         delay_cycles(OVERRIDE_2_CYCLES);
-//         PIN_DX_INPUT;
-//         PIN_AY_INTERRUPT_DISABLE;
-//         patch_done = 2;      // Signal completion of stage 2
-//     }
-// }
-// #endif
-
-// // --- BIOS Patching Main Function ---
-// void Bios_Patching(void) {
-//     // --- PHASE 1: Signal Stabilization & Alignment (AX) ---
-//     if (PIN_AX_READ != 0) {        // Case: Power-on, line is high
-//         while (PIN_AX_READ != 0);  // Wait for falling edge
-//         while (PIN_AX_READ == 0);  // Wait for next rising edge to sync
-//     } else {                       // Case: Reset, line is low
-//         while (PIN_AX_READ == 0);  // Wait for first rising edge
-//     }
-
-//     // --- PHASE 2: Reaching the Target Memory Window ---
-//     _delay_ms(BOOT_OFFSET_MS);
-
-//     // --- Prepare pulse counter and patch status flag ---
-//     pulse_counter = PULSE_COUNT;
-//     patch_done = 0;
-
-//     // --- Dynamic interrupt configuration ---
-//     #if defined(INTERRUPT_RISING) || defined(INTERRUPT_RISING_HIGH_PATCH)
-//         PIN_AX_INTERRUPT_RISING;
-//     #elif defined(INTERRUPT_FALLING)
-//         PIN_AX_INTERRUPT_FALLING;
-//     #endif
-
-//     PIN_AX_INTERRUPT_ENABLE;
-//     while (patch_done != 1);      // Wait until stage 1 is completed
-
-//     // --- Optional secondary patch phase for HIGH_PATCH ---
-//     #ifdef INTERRUPT_RISING_HIGH_PATCH
-//         while (PIN_AY_READ != 0);          // Ensure AY line is low before arming
-//         _delay_ms(FOLLOWUP_OFFSET_MS);
-
-//         pulse_counter = PULSE_COUNT_2;     // Reload counter for AY pulses
-//         PIN_AY_INTERRUPT_RISING;
-//         PIN_AY_INTERRUPT_ENABLE;
-//         while (patch_done != 2);           // Wait until stage 2 is completed
-//     #endif
-// }
-
-// #endif
+#endif

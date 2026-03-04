@@ -497,7 +497,7 @@ void Init() {
   PIN_LED_OUTPUT;
 #endif
 
-#ifdef BIOS_PATCH
+#ifdef BIOS_PATCH_3
   uint8_t skipPatch = 0;
   GLOBAL_INTERRUPT_ENABLE;
 
@@ -510,18 +510,18 @@ void Init() {
   }
 #endif
 
-#ifdef LED_RUN
-  PIN_LED_ON;
-#endif
+// #ifdef LED_RUN
+//   PIN_LED_ON;
+// #endif
 
   // Execute BIOS patching unless bypassed by switch
   if (skipPatch == 0) {
     Bios_Patching();
   }
 
-#ifdef LED_RUN
-  PIN_LED_OFF;
-#endif
+// #ifdef LED_RUN
+//   PIN_LED_OFF;
+// #endif
 #endif
 
 

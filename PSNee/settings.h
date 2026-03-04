@@ -33,23 +33,23 @@
 #define OVERRIDE 0.2
 #endif
 
-#ifdef  SCPH_100        
-#define BIOS_PATCH
-#define INTERRUPT_RISING
-#define BOOT_OFFSET 83.9              //83.72 - 84.15
-#define PULSE_COUNT 48
-#define BIT_OFFSET 2.75                     //2.63 - 2.87
-#define OVERRIDE 0.2
-#endif
+// #ifdef  SCPH_100        
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING
+// #define BOOT_OFFSET 83.9              //83.72 - 84.15
+// #define PULSE_COUNT 48
+// #define BIT_OFFSET 2.75                     //2.63 - 2.87
+// #define OVERRIDE 0.2
+// #endif
 
-#ifdef  SCPH_7500_9000    
-#define BIOS_PATCH
-#define INTERRUPT_RISING
-#define BOOT_OFFSET 75.2              //74.95 - 75.55
-#define PULSE_COUNT 16
-#define BIT_OFFSET 2.8
-#define OVERRIDE 0.2
-#endif
+// #ifdef  SCPH_7500_9000    
+// #define BIOS_PATCH
+// #define INTERRUPT_RISING
+// #define BOOT_OFFSET 75.2              //74.95 - 75.55
+// #define PULSE_COUNT 16
+// #define BIT_OFFSET 2.8
+// #define OVERRIDE 0.2
+// #endif
 
 #ifdef  SCPH_7000         
 #define BIOS_PATCH
@@ -134,10 +134,10 @@
 // #endif
 // #endif
 
-// // -------- SCPH 100 --------
-// #ifdef SCPH_100
-// #define BIOS_PATCH
-// #define INTERRUPT_RISING
+// -------- SCPH 100 --------
+#ifdef SCPH_100
+#define BIOS_PATCH_3
+#define INTERRUPT_RISING
 
 // #ifdef F_CPU_8MHZ
 // #define BOOT_OFFSET_MS 84
@@ -145,29 +145,29 @@
 // #define BIT_OFFSET_CYCLES 22    // 2.75 / 0.125 ≈ 22 cycles
 // #define OVERRIDE_CYCLES 2       // 0.2 / 0.125 ≈ 2 cycles
 // #elif defined(F_CPU_16MHZ)
-// #define BOOT_OFFSET_MS 84
-// #define PULSE_COUNT 48
-// #define BIT_OFFSET_CYCLES 44    // 2.75 / 0.0625 ≈ 44 cycles
-// #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
-// #endif
+#define BOOT_OFFSET_MS 84
+#define PULSE_COUNT 48         
+#define BIT_OFFSET_CYCLES 47    // 2.75 / 0.0625 ≈ 44 cycles +3
+#define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
+#endif
 // #endif
 
 // // -------- SCPH 7500 / 9000 --------
-// #ifdef SCPH_7500_9000
-// #define BIOS_PATCH
-// #define INTERRUPT_RISING
+#ifdef SCPH_7500_9000
+#define BIOS_PATCH_3
+#define INTERRUPT_RISING
 
 // #ifdef F_CPU_8MHZ
 // #define BOOT_OFFSET_MS 75
 // #define PULSE_COUNT 16
 // #define BIT_OFFSET_CYCLES 22    // 2.8 / 0.125 ≈ 22 cycles
 // #define OVERRIDE_CYCLES 2       // 0.2 / 0.125 ≈ 2 cycles
-// #elif defined(F_CPU_16MHZ)
-// #define BOOT_OFFSET_MS 75
-// #define PULSE_COUNT 16
-// #define BIT_OFFSET_CYCLES 45    // 2.8 / 0.0625 ≈ 45 cycles
-// #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
-// #endif
+//#elif defined(F_CPU_16MHZ)
+#define BOOT_OFFSET_MS 75
+#define PULSE_COUNT 16
+#define BIT_OFFSET_CYCLES 47    // 2.8 / 0.0625 ≈ 45 cycles
+#define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
+#endif
 // #endif
 
 // // -------- SCPH 7000 --------
