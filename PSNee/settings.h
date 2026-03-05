@@ -145,7 +145,10 @@
 // #define BIT_OFFSET_CYCLES 22    // 2.75 / 0.125 ≈ 22 cycles
 // #define OVERRIDE_CYCLES 2       // 0.2 / 0.125 ≈ 2 cycles
 // #elif defined(F_CPU_16MHZ)
-#define BOOT_OFFSET_MS 84
+//#define BOOT_OFFSET_MS 84
+
+#define SILENCE_THRESHOLD 1428
+#define CONFIRM_COUNTER_TARGET 8
 #define PULSE_COUNT 48         
 #define BIT_OFFSET_CYCLES 47    // 2.75 / 0.0625 ≈ 44 cycles +3
 #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
@@ -163,7 +166,10 @@
 // #define BIT_OFFSET_CYCLES 22    // 2.8 / 0.125 ≈ 22 cycles
 // #define OVERRIDE_CYCLES 2       // 0.2 / 0.125 ≈ 2 cycles
 //#elif defined(F_CPU_16MHZ)
-#define BOOT_OFFSET_MS 75
+//#define BOOT_OFFSET_MS 75
+
+#define SILENCE_THRESHOLD 1428
+#define CONFIRM_COUNTER_TARGET 1
 #define PULSE_COUNT 16
 #define BIT_OFFSET_CYCLES 47    // 2.8 / 0.0625 ≈ 45 cycles
 #define OVERRIDE_CYCLES 3       // 0.2 / 0.0625 ≈ 3 cycles
