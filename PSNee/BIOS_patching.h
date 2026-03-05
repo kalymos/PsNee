@@ -258,7 +258,32 @@ void Bios_Patching(void) {
     }
 
     // --- PHASE 2: Reaching the Target Memory Window ---
-    _delay_ms(BOOT_OFFSET_MS);
+   // _delay_ms(BOOT_OFFSET_MS);
+
+    // --- PHASE 2: Reaching the Target Memory Window (Silence Detection) ---
+    // Replaces the fixed _delay_ms(BOOT_OFFSET_MS)
+    uint8_t current_confirms = 0;
+    
+    while (current_confirms < CONFIRM_COUNTER_TARGET) {
+        // SILENCE_THRESHOLD 5000 is approx 2.5ms @ 16MHz
+        uint16_t count = SILENCE_THRESHOLD; 
+        
+        while (count > 0) {
+            if (PIN_AX_READ != 0) { 
+                // Activity detected: Reset both counters immediately
+                count = SILENCE_THRESHOLD;
+                current_confirms = 0;
+            } else {
+                // No activity: Countdown towards zero
+                count--;
+            }
+        }
+        // One block of silence successfully validated
+        current_confirms++;
+    }
+
+
+  
 PIN_LED_ON;
     // --- Prepare pulse counter and patch status flag ---
     pulse_counter = PULSE_COUNT;
