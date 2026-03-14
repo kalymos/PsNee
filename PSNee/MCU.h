@@ -227,30 +227,38 @@
 #ifdef ATmega328_168
 
   static inline void optimizePeripherals(void) {
-    // --- Port C & Digital Input Configuration (A0-A5) ---
-    // 1. Set Port C as inputs (DDRC bits 0-5 to 0)
-    DDRC  &= ~((1<<DDC5)|(1<<DDC4)|(1<<DDC3)|(1<<DDC2)|(1<<DDC1)|(1<<DDC0));
-    // 2. Enable Digital Input Buffers by clearing DIDR0 (Required for digital PINC reads)
-    DIDR0 &= ~((1<<ADC5D)|(1<<ADC4D)|(1<<ADC3D)|(1<<ADC2D)|(1<<ADC1D)|(1<<ADC0D));
+    // 1. Disable Interrupts during setup
+    cli();
 
-    // --- Analog Modules Shutdown (Power Saving & Noise Reduction) ---
-    // 1. Disable the ADC module (ADEN = 0)
-    ADCSRA &= ~(1 << ADEN);
-    // 2. Disable the Analog Comparator (ACD = 1) to free resources on PD6/PD7
-    ACSR   |= (1 << ACD);
+    // 2. Analog Modules Shutdown (Critical for Power)
+    ADCSRA &= ~(1 << ADEN); // Disable ADC
+    ACSR   |= (1 << ACD);   // Disable Analog Comparator
 
-    // --- Power Reduction Register (Hard Clock Shut Off) ---
-    // Stops the clock to internal modules: ADC, Timer 0 (millis), and Timer 2
-    PRR |= (1 << PRADC) | (1 << PRTIM0) | (1 << PRTIM2);
+    // 3. Digital Input Disable (Set bits to 1 to DISABLE)
+    // Disconnects digital buffers on analog pins to stop leakage
+    DIDR0 = 0x3F; // Pins A0 to A5
 
-    // --- Timer 0 Specific Shutdown ---
-    // Double security: disconnect clock source and disable interrupts
+    // 4. GPIO Strategy (Unused pins to Pull-up)
+    // PORTx = 0xFF (Pull-ups) | DDRx = 0x00 (Inputs)
+    PORTC |= 0xFF;
+
+    // 5. Power Reduction Register (PRR)
+    // We KEEP PRUSART0 (UART) and shut down EVERYTHING else.
+    // _delay_ms() will still work (it's cycle-based, not timer-based).
+    PRR = (1 << PRTWI)  | // I2C Off
+          (1 << PRSPI)  | // SPI Off
+          (1 << PRTIM0) | // Timer 0 Off (millis/delay Arduino Off)
+          (1 << PRTIM1) | // Timer 1 Off
+          (1 << PRTIM2) | // Timer 2 Off
+          (1 << PRADC);   // ADC Clock Off
+
+    // 6. Double Security for Timer 0
     TCCR0B = 0;
     TIMSK0 = 0;
-  }
 
-  // Define the clock speed for the microcontroller
-  //#define F_CPU 16000000L
+    // 7. Restart interrupts if UART uses them (RX/TX ISR)
+    sei();
+  }
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -258,12 +266,6 @@
   #include <avr/interrupt.h>
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
-
-  // Global interrupt control settings
-  #define GLOBAL_INTERRUPT_ENABLE  sei()
-  #define GLOBAL_INTERRUPT_DISABLE cli()
-  // #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
-  // #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
 
   // Main pin configuration
 
@@ -297,10 +299,7 @@
   #endif
 
   // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_5000) || defined(SCPH_3500) || defined(SCPH_3000) || defined(SCPH_1000)
-
-    // Clear the timer interrupt flag
-    //#define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
+  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5000_5500) || defined(SCPH_3500) || defined(SCPH_3000) || defined(SCPH_1000)
 
     // Define input pins for the BIOS patch
     #define PIN_AX_INPUT DDRD &= ~(1 << DDD2)  // Set DDRD register to configure PIND2 as input
@@ -315,28 +314,19 @@
     // Set pull-ups low on output pins
     #define PIN_DX_CLEAR PORTD &= ~(1 << PD4)  // Set PORTD register to make PIND4 low
 
+
+    #define WAIT_AX_RISING    (!(PIND & (1 << PIND2)))  // Attend le début de l'impulsion
+    #define WAIT_AX_FALLING   (PIND & (1 << PIND2))     // Attend la fin de l'impulsion
+
     // Read the input pins for the BIOS patch
     #define PIN_AX_READ (!!(PIND & (1 << PIND2)))  // Read the state of PIND2
-
-    // External interrupt configuration for BIOS patch
-    #define PIN_AX_INTERRUPT_ENABLE EIMSK |= (1 << INT0)  // Enable external interrupt on INT0 (PINB2)
-    #define PIN_AX_INTERRUPT_DISABLE EIMSK &= ~(1 << INT0)  // Disable external interrupt on INT0
-    #define PIN_AX_INTERRUPT_RISING EICRA |= (1 << ISC01) | (1 << ISC00)  // Configure INT0 for rising edge trigger
-    //#define PIN_AX_INTERRUPT_FALLING (EICRA = (1 << ISC01)) 
-    #define PIN_AX_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC00)) | (1 << ISC01))  // Configure INT0 for falling edge trigger
-
-    // Interrupt vectors for external interrupts
-    #define PIN_AX_INTERRUPT_VECTOR INT0_vect  // Interrupt vector for INT0 (external interrupt)
 
     // Defin PIN_AY for HIGH_PATCH
     #if defined(SCPH_3000) || defined(SCPH_1000)
       #define PIN_AY_INPUT DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
-      #define PIN_AY_READ (!!(PIND & (1 << PIND3)))  // Read the state of PIND3
-      #define PIN_AY_INTERRUPT_ENABLE EIMSK |= (1 << INT1)  // Enable external interrupt on INT1 (PINB3)
-      #define PIN_AY_INTERRUPT_DISABLE EIMSK &= ~(1 << INT1)  // Disable external interrupt on INT1
-      #define PIN_AY_INTERRUPT_RISING EICRA |= (1 << ISC11) | (1 << ISC10)  // Configure INT1 for rising edge trigger
-      #define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))  // Configure INT1 for falling edge trigger
-      #define PIN_AY_INTERRUPT_VECTOR INT1_vect  // Interrupt vector for INT1 (external interrupt)
+      #define WAIT_AY_RISING     (!(PIND & (1 << PIND3))) // AY est sur PIND3
+      #define WAIT_AY_FALLING    (PIND & (1 << PIND3))
+ 
     #endif
       // Handle switch input for BIOS patch
     #if defined(SCPH_7000)
