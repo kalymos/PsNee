@@ -150,3 +150,87 @@ void Bios_Patching(void) {
     #endif
   }
 #endif
+
+#ifdef BIOS_PATCH_4
+
+volatile uint8_t patch_done = 0;
+
+void Bios_Patching(void) {
+    // PHASE 1: Sync (unchanged)
+    if (PIN_AX_READ) {
+        while (PIN_AX_READ);
+        while (!PIN_AX_READ);
+    } else {
+        while (!PIN_AX_READ);
+    }
+
+    // PHASE 2: Silence Detection
+    uint8_t confirms = 0;
+    while (confirms < CONFIRM_COUNTER_TARGET) {
+        uint16_t silence = SILENCE_THRESHOLD;
+        uint8_t valid = 1;
+        
+        while (silence) {
+            if (PIN_AX_READ) {
+                while (PIN_AX_READ);
+                valid = 0;
+                break;
+            }
+            silence--;
+        }
+        
+        if (valid) confirms++;
+    }
+    
+    PIN_LED_ON;
+    
+    // PHASE 3: Pulse counting AX
+    uint8_t pulses = PULSE_COUNT;
+    uint8_t prev = (PIN_AX_READ != 0);
+    
+    while (pulses) {
+        uint8_t curr = (PIN_AX_READ != 0);
+        if (!prev && curr) {
+            pulses--;
+            if (!pulses) {
+                __builtin_avr_delay_cycles(BIT_OFFSET_CYCLES);
+                PIN_DX_OUTPUT;
+                __builtin_avr_delay_cycles(OVERRIDE_CYCLES);
+                PIN_DX_INPUT;
+                break;
+            }
+        }
+        prev = curr;
+    }
+    
+    // PHASE 4: Optional AY patch
+    #ifdef INTERRUPT_RISING_HIGH_PATCH
+    
+        while (PIN_AY_READ);
+        _delay_ms(FOLLOWUP_OFFSET_MS);
+        
+        pulses = PULSE_COUNT_2;
+        prev = (PIN_AY_READ != 0);
+        
+        while (pulses) {
+            uint8_t curr = (PIN_AY_READ != 0);
+            if (!prev && curr) {
+                pulses--;
+                if (!pulses) {
+                    __builtin_avr_delay_cycles(BIT_OFFSET_2_CYCLES);
+                    PIN_DX_OUTPUT;
+                    __builtin_avr_delay_cycles(OVERRIDE_2_CYCLES);
+                    PIN_DX_INPUT;
+                    break;
+                }
+            }
+            prev = curr;
+        }
+    
+    #endif
+    
+    patch_done = 1;
+}
+
+#endif
+
