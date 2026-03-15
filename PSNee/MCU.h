@@ -257,7 +257,7 @@
     TIMSK0 = 0;
 
     // 7. Restart interrupts if UART uses them (RX/TX ISR)
-    sei();
+    //sei();
   }
 
   #include <stdint.h>
@@ -315,23 +315,34 @@
     #define PIN_DX_CLEAR PORTD &= ~(1 << PD4)  // Set PORTD register to make PIND4 low
 
 
-    #define WAIT_AX_RISING    (!(PIND & (1 << PIND2)))  // Attend le début de l'impulsion
-    #define WAIT_AX_FALLING   (PIND & (1 << PIND2))     // Attend la fin de l'impulsion
+    #define WAIT_AX_RISING    (!(PIND & (1 << PIND2)))  // Wait for pulse start (Blocking until Rising Edge)
+    #define WAIT_AX_FALLING   (PIND & (1 << PIND2))     // Wait for pulse end (Blocking until Falling Edge)
 
     // Read the input pins for the BIOS patch
     #define PIN_AX_READ (!!(PIND & (1 << PIND2)))  // Read the state of PIND2
 
+    #define PIN_AX_INTERRUPT_ENABLE     EIMSK  |=  (1<<INT0)      // Enable external interrupt on INT0 (PINB2)
+    #define PIN_AX_INTERRUPT_DISABLE    EIMSK  &= ~(1<<INT0)      // Disable external interrupt on INT0
+    #define PIN_AX_INTERRUPT_RISING     EICRA  |=  (1<<ISC01)|(1<<ISC00)                  // Configure INT0 for rising edge trigger
+    #define PIN_AX_INTERRUPT_VECTOR     INT0_vect               // Interrupt vector for INT0 (external interrupt)
+
     // Defin PIN_AY for HIGH_PATCH
     #if defined(SCPH_3000) || defined(SCPH_1000)
-      #define PIN_AY_INPUT DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
-      #define WAIT_AY_RISING     (!(PIND & (1 << PIND3))) // AY est sur PIND3
+      #define PIN_AY_INPUT       DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
+      #define WAIT_AY_RISING     (!(PIND & (1 << PIND3))) 
       #define WAIT_AY_FALLING    (PIND & (1 << PIND3))
+      
+      #define PIN_AY_INTERRUPT_ENABLE     EIMSK  |=  (1<<INT1)      // Enable external interrupt on INT1 (PINB3)
+      #define PIN_AY_INTERRUPT_DISABLE    EIMSK  &= ~(1<<INT1)      // Disable external interrupt on INT1
+      #define PIN_AY_INTERRUPT_RISING     EICRA  |=  (1<<ISC11)|(1<<ISC10)                  // Configure INT1 for rising edge trigger
+      #define PIN_AY_INTERRUPT_VECTOR     INT1_vect              // Interrupt vector for INT1 (external interrupt)
+
  
     #endif
       // Handle switch input for BIOS patch
     #if defined(SCPH_7000)
       #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
-      #define PIN_SWITCH_SET PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
+      #define PIN_SWITCH_SET   PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
       #define PIN_SWITCH_READ (!!(PIND & (1 << PIND5)))  // Read the state of PIND5 (switch input)
     #endif
 

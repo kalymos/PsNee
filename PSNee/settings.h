@@ -13,7 +13,6 @@
 /*------------------------------------------------------------------------------------------------
            Specific parameter section for BIOS patches
 ------------------------------------------------------------------------------------------------*/
-                                    // Results of the  maximum values
 
                                     // tested with  an Atmega328P
 
@@ -24,10 +23,10 @@
     defined(SCPH_102)
 
   #define BIOS_PATCH
-  #define SILENCE_THRESHOLD 1400
+  #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 8
-  #define PULSE_COUNT 47         
-  #define BIT_OFFSET_CYCLES 67   //60+7
+  #define PULSE_COUNT 48         //47
+  #define BIT_OFFSET_CYCLES 47   //60
   #define OVERRIDE_CYCLES 3       
 #endif
 // #endif
@@ -35,32 +34,32 @@
 // // -------- SCPH 7500 / 9000 --------
 #ifdef SCPH_7500_9000
   #define BIOS_PATCH
-  #define SILENCE_THRESHOLD 1400
+  #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 1
-  #define PULSE_COUNT 15
-  #define BIT_OFFSET_CYCLES 66    //60+
-  #define OVERRIDE_CYCLES 4       
+  #define PULSE_COUNT 16          //15
+  #define BIT_OFFSET_CYCLES 47    //60
+  #define OVERRIDE_CYCLES 3       
 #endif
 
 
 // -------- SCPH 7000 --------
 #ifdef SCPH_7000
   #define BIOS_PATCH
-  #define SILENCE_THRESHOLD 1400
+  #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 1
-  #define PULSE_COUNT 15
-  #define BIT_OFFSET_CYCLES 66
-  #define OVERRIDE_CYCLES 4
+  #define PULSE_COUNT 16
+  #define BIT_OFFSET_CYCLES 47
+  #define OVERRIDE_CYCLES 3
 #endif
 
 
 // // ----- SCPH 5000 / 5500 -----
 #ifdef SCPH_5000_5500
   #define BIOS_PATCH
-  #define SILENCE_THRESHOLD 35000
+  #define SILENCE_THRESHOLD 35600
   #define CONFIRM_COUNTER_TARGET 1
-  #define PULSE_COUNT 84
-  #define BIT_OFFSET_CYCLES 60
+  #define PULSE_COUNT 85         //84
+  #define BIT_OFFSET_CYCLES 47    //60
   #define OVERRIDE_CYCLES 3
 #endif
 
