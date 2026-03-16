@@ -197,7 +197,7 @@ void board_detection() {
       */
       if (!PIN_WFCK_READ) {
         wfck_mode = 1; // Target: PU-22 or newer
-        return;
+        break;
       }
     }
   }
