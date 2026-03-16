@@ -11,21 +11,21 @@
  *    delays to inject modified data onto the Data line (DX) in real-time.
  *
  * KEY PHASES:
- *    1. STABILIZATION & ALIGNMENT (AX): Synchronizes execution with a clean rising
+ *    1. STABILIZATION & ALIGNMENT (AX): Synchronizes execution with a clean rising 
  *       edge of the AX signal to establish a deterministic timing reference.
  *
- *    2. SILENCE DETECTION (GATING): Scans for a specific window of bus inactivity
- *       (SILENCE_THRESHOLD) to ensure the system is at the correct pre-patching stage.
+ *    2. ADDRESS CALL DETECTION (PHASE 2): Scans the bus for specific address calls 
+ *       by validating consecutive polling blocks (SILENCE_THRESHOLD).
  *
- *    3. HARDWARE PULSE COUNTING (ISR): Switches to interrupt-driven logic (INT0/INT1)
- *       to count address pulses with minimal latency and high-priority execution.
+ *    3. SILENCE CONFIRMATION (GATING): Counts the exact number of validated silence 
+ *       windows (CONFIRM_COUNTER_TARGET) to reach the correct pre-patching stage.
  *
- *    4. DATA OVERDRIVE (DX): Upon reaching the target pulse, triggers a calibrated
- *       delay (BIT_OFFSET) and momentarily forces the DX pin to OUTPUT mode to
+ *    4. HARDWARE PULSE COUNTING (ISR): Uses INT0/INT1 to decrement the 'impulse' 
+ *       counter on each rising edge with minimal hardware latency.
+ *
+ *    5. DATA OVERDRIVE (DX): Upon reaching the target pulse, triggers a calibrated 
+ *       delay (BIT_OFFSET) and momentarily forces the DX pin to OUTPUT mode to 
  *       overwrite the BIOS bit for a precise duration (OVERRIDE).
- *
- *    5. SECONDARY PATCH (AY): If enabled, repeats the silence/counting sequence
- *       on a secondary address line (AY) for multi-stage memory patching.
  * ======================================================================================
  */
 
@@ -35,12 +35,12 @@
  * Shared state variables between ISRs and the main patching loop.
  * Declared 'volatile' to prevent compiler optimization during busy-wait loops.
  */
-volatile uint8_t impulse = 0; // Current address pulse countdown
+volatile uint8_t impulse = 0; // Down-counter for physical address pulses
 volatile uint8_t patch = 0;   // Synchronization flag (0: Idle, 1: AX Done, 2: AY Done)
 
 /**
  * PHASE 3: Primary Interrupt Service Routine (AX)
- * Executes the real-time override on the target address cycle.
+ * Triggered on rising edges to perform the real-time bus override.
  */
 ISR(PIN_AX_INTERRUPT_VECTOR) {
     if (--impulse == 0) {
@@ -89,10 +89,26 @@ ISR(PIN_AY_INTERRUPT_VECTOR) {
 #endif
 
 void Bios_Patching(void) {
-    uint8_t current_confirms = 0;
-    uint16_t count;
 
-    patch = 0;
+    // --- HARDWARE BYPASS OPTION (SCPH-7000 specific) ---
+    #if defined(SCPH_7000)
+        PIN_SWITCH_INPUT;              // Configure Pin D5 as Input
+        PIN_SWITCH_SET;                // Enable internal Pull-up (D5 defaults to HIGH)
+        __builtin_avr_delay_cycles(2); // Short delay for voltage stabilization
+        
+        /** 
+         * Exit immediately if the switch pulls the pin to GND (Logic LOW).
+         * This allows the user to disable the BIOS patch on-the-fly.
+         */
+        if (PIN_SWITCH_READ == 0) { 
+            return; 
+        }
+    #endif
+
+    uint8_t current_confirms = 0;
+    //uint16_t count;
+
+    patch = 0;     // Reset sync flag
     sei();         // Enable Global Interrupts
     PIN_AX_INPUT;  // Set AX to monitor mode
 
@@ -106,9 +122,9 @@ void Bios_Patching(void) {
     }
 
     // --- PHASE 2: SILENCE DETECTION ---
-    // Accumulate validated silence blocks to filter boot noise.
+    // Validate the exact number of silence windows to identify the boot stage.
     while (current_confirms < CONFIRM_COUNTER_TARGET) {
-        count = SILENCE_THRESHOLD;
+        uint16_t count = SILENCE_THRESHOLD; 
         while (count > 0) {
             if (PIN_AX_READ != 0) {
                 while (WAIT_AX_FALLING);
@@ -117,7 +133,7 @@ void Bios_Patching(void) {
             count--;
         }
         if (count == 0) {
-            current_confirms++; // Silence block confirmed
+            current_confirms++; // Validated one silence window
         }
     }
 
