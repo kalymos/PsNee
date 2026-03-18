@@ -253,11 +253,13 @@ void Debug_Inject(){       // Confirmation of region code injection
 
 #if !defined(ATmega328_168)   && \
     !defined(ATmega32U4_16U4) && \
-    !defined(ATtiny85_45_25)
+    !defined(ATtiny85_45_25) && \
+    !defined(RP2040)
  #error "MCU not selected! Please choose one"
 #elif !defined(ATmega328_168)    ^ \
        defined(ATmega32U4_16U4 ) ^ \
-       defined(ATtiny85_45_25)
+       defined(ATtiny85_45_25 ) ^ \
+       defined(RP2040)
  #error "May be selected only one MCU"
 #endif
 

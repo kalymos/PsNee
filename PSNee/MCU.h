@@ -864,3 +864,84 @@ static inline void optimizePeripherals(void) {
 
 #endif
 
+#ifdef RP2040
+
+  #include <stdint.h>
+  #include <stdbool.h>
+  #include <pico/stdlib.h>
+
+  // Main pin configuration
+
+  // Define the main pins as inputs
+  #define RP2040_INPUT(gpio) (gpio_set_dir(gpio, false))
+  #define PIN_DATA_INPUT RP2040_INPUT(4)    // Set GPIO4 as input
+  #define PIN_WFCK_INPUT RP2040_INPUT(5)    // Set GPIO5 as input
+  #define PIN_SQCK_INPUT RP2040_INPUT(6)    // Set GPIO6 as input
+  #define PIN_SUBQ_INPUT RP2040_INPUT(7)    // Set GPIO7 as input
+  
+  // Enable pull-ups and set high on the main pins
+  #define RP2040_OUTPUT(gpio) (gpio_set_dir(gpio, true))
+  #define PIN_DATA_OUTPUT RP2040_OUTPUT(4)  // Set GPIO4 as output
+  #define PIN_WFCK_OUTPUT RP2040_OUTPUT(5)  // Set GPIO5 as output
+  
+  // Define pull-ups and set high at the main pin
+  #define RP2040_SET(gpio, high) (gpio_put(gpio, high))
+  #define PIN_DATA_SET RP2040_SET(4, true)    // Set GPIO4 high
+  
+  // Clear the main pins (set low)
+  #define PIN_DATA_CLEAR RP2040_SET(4, false) // Set GPIO4 low
+  #define PIN_WFCK_CLEAR RP2040_SET(5, false) // Set GPIO5 low
+  
+  // Read the state of the main input pins
+  #define RP2040_READ(gpio) (gpio_get(gpio))
+  #define PIN_WFCK_READ RP2040_READ(5)  // Check if the value of GPIO5 is high (1)
+  #define PIN_SQCK_READ RP2040_READ(6)  // Check if the value of GPIO6 is high (1)
+  #define PIN_SUBQ_READ RP2040_READ(7)  // Check if the value of GPIO7 is high (1)
+
+  // LED pin handling (for indication)
+  #ifdef LED_RUN
+    #define PIN_LED_OUTPUT  RP2040_OUTPUT(25)  // Configure GPIO25 as output (builtin LED)
+    #define PIN_LED_ON      RP2040_SET(25, true)  // Set GPIO25 high (turn on LED)
+    #define PIN_LED_OFF     RP2040_SET(25, false)  // Set GPIO25 low (turn off LED)
+  #endif
+
+  // Handling the BIOS patch
+  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5000_5500) || defined(SCPH_3500) || defined(SCPH_3000) || defined(SCPH_1000)
+
+    // Define input pins for the BIOS patch
+    #define PIN_AX_INPUT RP2040_INPUT(8)        // Set GPIO8 as input
+    #define PIN_DX_INPUT RP2040_INPUT(9)        // Set GPIO9 as input
+
+    // Define output pins for the BIOS patch
+    #define PIN_DX_OUTPUT RP2040_OUTPUT(9)      // Set GPIO9 as output
+
+    // Set pull-ups high on output pins
+    #define PIN_DX_SET RP2040_SET(9, true)      // Set GPIO9 high
+
+    // Set pull-ups low on output pins
+    #define PIN_DX_CLEAR RP2040_SET(9, false)   // Set GPIO4 low
+
+
+    #define WAIT_AX_RISING    (!RP2040_READ(8)) // Attend le début de l'impulsion
+    #define WAIT_AX_FALLING    (RP2040_READ(8)) // Attend la fin de l'impulsion
+
+    // Read the input pins for the BIOS patch
+    #define PIN_AX_READ RP2040_READ(8)          // Check if the value of GPIO8 is high (1)
+
+    // Defin PIN_AY for HIGH_PATCH
+    #if defined(SCPH_3000) || defined(SCPH_1000)
+      #define PIN_AY_INPUT RP2040_INPUT(10)        // Set GPIO10 as input
+      #define WAIT_AY_RISING     (!RP2040_READ(10)) // AY est sur GPIO10
+      #define WAIT_AY_FALLING    (RP2040_READ(10))
+ 
+    #endif
+      // Handle switch input for BIOS patch
+    #if defined(SCPH_7000)
+      #define PIN_SWITCH_INPUT RP2040_INPUT(11)        // Set GPIO11 as input
+      #define PIN_SWITCH_SET RP2040_SET(11, true)      // Set GPIO11 high
+      #define PIN_SWITCH_READ RP2040_READ(11)          // Check if the value of GPIO11 is high (1)
+    #endif
+
+  #endif
+
+#endif

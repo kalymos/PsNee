@@ -120,10 +120,14 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
                          pointer and variable section
 ------------------------------------------------------------------------------------------------*/
 
+#ifdef RP2040
+  #include "RP2040_MCU.h"
+#else
+  #include <util/delay.h>
+#endif
 #include "MCU.h"
 #include "settings.h"
 #include "BIOS_patching.h"
-#include <util/delay.h>
 
 
 //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
@@ -500,6 +504,8 @@ void Init() {
   #if defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(ATtiny85_45_25)
     //pinMode(debugtx, OUTPUT); // software serial tx pin
     mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
+  #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(RP2040)
+    Serial.begin(115200);
   #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(ATtiny85_45_25)
     Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
   #endif
@@ -508,10 +514,20 @@ void Init() {
   board_detection();
 }
 
-int main() {
+#ifdef RP2040
+void loop() {}
 
+void setup()
+#else
+int main()
+#endif
+{
+
+#ifdef RP2040
+  start_rp2040();
+#endif
+  
   Init();
-
 
   while (1) {
 
