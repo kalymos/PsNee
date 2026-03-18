@@ -34,7 +34,7 @@
   #define BIOS_PATCH
   #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 8
-  #define PULSE_COUNT 48         //47
+  #define PULSE_COUNT 47         //47
   #define BIT_OFFSET_CYCLES 47   //60
   #define OVERRIDE_CYCLES 3       
 #endif
@@ -45,7 +45,7 @@
   #define BIOS_PATCH
   #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 1
-  #define PULSE_COUNT 16          //15
+  #define PULSE_COUNT 15          //15
   #define BIT_OFFSET_CYCLES 47    //60
   #define OVERRIDE_CYCLES 3       
 #endif
@@ -56,7 +56,7 @@
   #define BIOS_PATCH
   #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 1
-  #define PULSE_COUNT 16
+  #define PULSE_COUNT 15
   #define BIT_OFFSET_CYCLES 47
   #define OVERRIDE_CYCLES 3
 #endif
@@ -67,7 +67,7 @@
   #define BIOS_PATCH
   #define SILENCE_THRESHOLD 35600
   #define CONFIRM_COUNTER_TARGET 1
-  #define PULSE_COUNT 85         //84
+  #define PULSE_COUNT 84         //84
   #define BIT_OFFSET_CYCLES 47    //60
   #define OVERRIDE_CYCLES 3
 #endif
@@ -76,16 +76,15 @@
 #ifdef SCPH_3000
   #define BIOS_PATCH
   #define INTERRUPT_RISING_HIGH_PATCH
-  #define SILENCE_THRESHOLD 1200
+  #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 9
-  #define PULSE_COUNT 60
-  #define BIT_OFFSET_CYCLES 46
+  #define PULSE_COUNT 59
+  #define BIT_OFFSET_CYCLES 45
   #define OVERRIDE_CYCLES 3
-  #define SILENCE_THRESHOLD_2 1200
   #define CONFIRM_COUNTER_TARGET_2 206 
-  #define PULSE_COUNT_2 43
-  #define BIT_OFFSET_2_CYCLES 54
-  #define OVERRIDE_2_CYCLES 2
+  #define PULSE_COUNT_2 42
+  #define BIT_OFFSET_2_CYCLES 48
+  #define OVERRIDE_2_CYCLES 3
 #endif
 
 
@@ -93,14 +92,14 @@
 #ifdef SCPH_1000
   #define BIOS_PATCH
   #define INTERRUPT_RISING_HIGH_PATCH
-  #define SILENCE_THRESHOLD 1300
+  #define SILENCE_THRESHOLD 1500
   #define CONFIRM_COUNTER_TARGET 9
   #define PULSE_COUNT 91             
-  #define BIT_OFFSET_CYCLES 58      
+  #define BIT_OFFSET_CYCLES 45      
   #define OVERRIDE_CYCLES 3
   #define CONFIRM_COUNTER_TARGET_2 222   
-  #define PULSE_COUNT_2 71
-  #define BIT_OFFSET_2_CYCLES 54
+  #define PULSE_COUNT_2 70
+  #define BIT_OFFSET_2_CYCLES 48
   #define OVERRIDE_2_CYCLES 3
 #endif
 

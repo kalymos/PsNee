@@ -6,7 +6,7 @@
 
 //       MCU               //     Arduino
 //------------------------------------------------------------------------------------------------
-#define ATmega328_168    //  Nano, Pro Mini, Uno
+//#define ATmega328_168    //  Nano, Pro Mini, Uno
 //#define ATmega32U4_16U4  //  Micro, Pro Micro
 //#define ATtiny85_45_25   //  ATtiny
 
@@ -501,6 +501,8 @@ void Init() {
 
   // Execute BIOS patching 
   Bios_Patching();
+
+  cli();
 
 // #ifdef LED_RUN
 //   PIN_LED_OFF;

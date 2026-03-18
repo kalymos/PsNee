@@ -94,7 +94,7 @@ void Bios_Patching(void) {
     #if defined(SCPH_7000)
         PIN_SWITCH_INPUT;              // Configure Pin D5 as Input
         PIN_SWITCH_SET;                // Enable internal Pull-up (D5 defaults to HIGH)
-        __builtin_avr_delay_cycles(2); // Short delay for voltage stabilization
+        __builtin_avr_delay_cycles(10); // Short delay for voltage stabilization
         
         /** 
          * Exit immediately if the switch pulls the pin to GND (Logic LOW).
@@ -140,17 +140,21 @@ void Bios_Patching(void) {
     // --- PHASE 3: LAUNCH HARDWARE COUNTING (AX) ---
     impulse = PULSE_COUNT;
     PIN_LED_ON;
+    PIN_AX_INTERRUPT_CLEAR;
     PIN_AX_INTERRUPT_RISING; // Setup rising-edge trigger
     PIN_AX_INTERRUPT_ENABLE; // Engage ISR
 
-    while (patch != 1); // Busy-wait for ISR completion
+    while (patch != 1);
+
 
     // --- PHASE 4 & 5: SECONDARY PATCHING SEQUENCE ---
     #ifdef INTERRUPT_RISING_HIGH_PATCH
+        PIN_AY_INPUT;
         current_confirms = 0;
+        impulse = PULSE_COUNT_2;
         // Monitor for the specific silent gap before the second patch window
         while (current_confirms < CONFIRM_COUNTER_TARGET_2) {
-            count = SILENCE_THRESHOLD;
+            uint16_t count = SILENCE_THRESHOLD;
             while (count > 0) {
                 if (PIN_AX_READ != 0) {
                     while (WAIT_AX_FALLING);
@@ -163,15 +167,19 @@ void Bios_Patching(void) {
             }
         }
 
-        impulse = PULSE_COUNT_2;
         PIN_LED_ON;
-        PIN_AY_INTERRUPT_RISING;
+        PIN_AY_INTERRUPT_CLEAR;
+        PIN_AY_INTERRUPT_FALLING;
         PIN_AY_INTERRUPT_ENABLE;
-
+    
         while (patch != 2); // Busy-wait for secondary ISR completion
+
+        
+        return;
+
     #endif
 
-    cli(); // Post-patching cleanup: disable interrupts
+    
 }
 #endif
 
