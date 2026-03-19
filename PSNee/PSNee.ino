@@ -70,9 +70,12 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 /*------------------------------------------------------------------------------------------------
                           Hysteresis 
 ------------------------------------------------------------------------------------------------*/
-#define HYSTERESIS_MAX 15         // All model.  
-//#define HYSTERESIS_MAX 25         // Only FAT! For models with problematic CD players.
-//           Determines the number of times the data in the DATA line must match the filter of the region code injection function to trigger the injection.
+#define HYSTERESIS_MAX 25       // Coupled with hysteresis-reset post-injection; allows for a 
+                                // wider tuning range without drifting out of the sweet spot 
+                                // between hysteresis_max and hysteresis_reset.
+ 
+
+
 
 /*------------------------------------------------------------------------------------------------
             Summary of practical information. Fuses. Pinout
@@ -135,7 +138,6 @@ uint8_t hysteresis = 0;
 
   //Initializing values ​​for region code injection timing
 #define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
-#define DELAY_BETWEEN_INJECTIONS 90  // The sweet spot is around 80~100. For all observed models, the worst minimum time seen is 72, and it works well up to 250.
 
 
 /*------------------------------------------------------------------------------------------------
@@ -387,7 +389,7 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
   };
 
 
-  hysteresis = 11;  // Reset hysteresis to mid-point after triggering
+  hysteresis = (HYSTERESIS_MAX - 10);  // Reset hysteresis to mid-point after triggering
   #ifdef LED_RUN
       PIN_LED_ON;
   #endif
@@ -402,8 +404,6 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
       PIN_WFCK_OUTPUT; 
       PIN_WFCK_CLEAR; 
   }
-  
-  _delay_ms(DELAY_BETWEEN_INJECTIONS);
 
   // Loop through the selected region(s)
   for (uint8_t i = 0; i < 3; i++) {
@@ -452,17 +452,29 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
       }
     }
 
-    // Clean up state between region cycles
-    PIN_DATA_OUTPUT; 
-    PIN_DATA_CLEAR;
-    _delay_ms(DELAY_BETWEEN_INJECTIONS);
-
     /* 
         EXIT CONDITION:
         If we are NOT in Universal mode (3), we stop after the first 
         successful region injection.
     */
-    if (injectSCEx != 3) break; 
+    if (injectSCEx != 3) {
+
+      PIN_DATA_OUTPUT; 
+      PIN_DATA_CLEAR;
+
+      if (!isWfck) {
+        PIN_WFCK_INPUT;
+        PIN_DATA_INPUT;
+      }
+      break;
+    }
+
+
+    // Clean up state between region cycles
+    PIN_DATA_OUTPUT; 
+    PIN_DATA_CLEAR;
+    _delay_ms(180);
+
   }
 
   // Restore pins to Input/High-Z to avoid signal interference after injection
