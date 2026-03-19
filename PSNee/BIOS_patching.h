@@ -47,7 +47,7 @@ ISR(PIN_AX_INTERRUPT_VECTOR) {
         // Precise bit-alignment delay within the memory cycle
         __builtin_avr_delay_cycles(BIT_OFFSET_CYCLES);
 
-        #ifdef INTERRUPT_RISING_HIGH_PATCH
+        #ifdef PHASE_TWO_PATCH
             PIN_DX_SET; // Pre-drive high if required by specific logic
         #endif
 
@@ -55,7 +55,7 @@ ISR(PIN_AX_INTERRUPT_VECTOR) {
         PIN_DX_OUTPUT;
         __builtin_avr_delay_cycles(OVERRIDE_CYCLES);
 
-        #ifdef INTERRUPT_RISING_HIGH_PATCH
+        #ifdef PHASE_TWO_PATCH
             PIN_DX_CLEAR;
         #endif
 
@@ -68,7 +68,7 @@ ISR(PIN_AX_INTERRUPT_VECTOR) {
     }
 }
 
-#ifdef INTERRUPT_RISING_HIGH_PATCH
+#ifdef PHASE_TWO_PATCH
 /**
  * PHASE 5: Secondary Interrupt Service Routine (AY)
  * Handles the second injection stage if multi-patching is active.
@@ -130,6 +130,10 @@ void Bios_Patching(void) {
                 while (WAIT_AX_FALLING);
                 break; // Impulse detected: retry current silence block
             }
+            #ifdef ATmega32U4_16U4
+            __asm__ __volatile__ ("nop"); 
+            #endif
+
             count--;
         }
         if (count == 0) {
@@ -148,7 +152,7 @@ void Bios_Patching(void) {
 
 
     // --- PHASE 4 & 5: SECONDARY PATCHING SEQUENCE ---
-    #ifdef INTERRUPT_RISING_HIGH_PATCH
+    #ifdef PHASE_TWO_PATCH
         PIN_AY_INPUT;
         current_confirms = 0;
         impulse = PULSE_COUNT_2;
@@ -160,6 +164,11 @@ void Bios_Patching(void) {
                     while (WAIT_AX_FALLING);
                     break;
                 }
+
+                #ifdef ATmega32U4_16U4
+                __asm__ __volatile__ ("nop"); 
+                #endif
+
                 count--;
             }
             if (count == 0) {
@@ -209,14 +218,14 @@ void Bios_Patching(void) {
 //         // Precise cycle-accurate delay before triggering
 //             __builtin_avr_delay_cycles(BIT_OFFSET_CYCLES);
 
-//             #ifdef INTERRUPT_RISING_HIGH_PATCH
+//             #ifdef PHASE_TWO_PATCH
 //                 PIN_DX_SET;
 //             #endif
 
 //             PIN_DX_OUTPUT; // Pull the line (Override start)
 //             __builtin_avr_delay_cycles(OVERRIDE_CYCLES);
 
-//             #ifdef INTERRUPT_RISING_HIGH_PATCH
+//             #ifdef PHASE_TWO_PATCH
 //                 PIN_DX_CLEAR; // Release the bus (Override end)
 //             #endif
 
@@ -228,7 +237,7 @@ void Bios_Patching(void) {
 //         }
 //     }
 
-//     #ifdef INTERRUPT_RISING_HIGH_PATCH
+//     #ifdef PHASE_TWO_PATCH
 
 
 //         ISR(PIN_AY_INTERRUPT_VECTOR){
@@ -292,7 +301,7 @@ void Bios_Patching(void) {
 
 //         //PIN_LED_OFF;
 //         // -------- Secondary Patch ----------
-//         #ifdef INTERRUPT_RISING_HIGH_PATCH
+//         #ifdef PHASE_TWO_PATCH
 
 //             current_confirms = 0;
 //             while (current_confirms < CONFIRM_COUNTER_TARGET_2) {

@@ -224,7 +224,8 @@
 
 #pragma once
 
-#ifdef ATmega328_168
+#if defined(ATmega328_168) || \
+    defined(ATmega328_168PB)   
   /*------------------------------------------------------------------------------------------------
   * FUNCTION    : optimizePeripherals()
   * 
@@ -252,16 +253,30 @@
     // 4. GPIO Strategy (Unused pins to Pull-up)
     // PORTx = 0xFF (Pull-ups) | DDRx = 0x00 (Inputs)
     PORTC |= 0xFF;
-
     // 5. Power Reduction Register (PRR)
     // We KEEP PRUSART0 (UART) and shut down EVERYTHING else.
     // _delay_ms() will still work (it's cycle-based, not timer-based).
-    PRR = (1 << PRTWI)  | // I2C Off
-          (1 << PRSPI)  | // SPI Off
-          (1 << PRTIM0) | // Timer 0 Off (millis/delay Arduino Off)
-          (1 << PRTIM1) | // Timer 1 Off
-          (1 << PRTIM2) | // Timer 2 Off
-          (1 << PRADC);   // ADC Clock Off
+
+    #if defined(ATmega328_168PB)
+      PRR0  = (1 << PRTWI0) | // I2C Off
+              (1 << PRSPI0) | // SPI Off
+              (1 << PRTIM0) | // Timer 0 Off
+              (1 << PRTIM1) | // Timer 1 Off
+              (1 << PRTIM2) | // Timer 2 Off
+              (1 << PRADC);   // ADC Clock Off
+
+      PRR1  = (1 << PRTWI1) | // TWI 1 Off
+              (1 << PRSPI1) | // SPI 1 Off
+              (1 << PRTIM3) | // Timer 3 Off
+              (1 << PRTIM4);  // Timer 4 Off
+    #else
+      PRR = (1 << PRTWI)  | // I2C Off
+            (1 << PRSPI)  | // SPI Off
+            (1 << PRTIM0) | // Timer 0 Off (millis/delay Arduino Off)
+            (1 << PRTIM1) | // Timer 1 Off
+            (1 << PRTIM2) | // Timer 2 Off
+            (1 << PRADC);   // ADC Clock Off
+    #endif
 
     // 6. Double Security for Timer 0
     TCCR0B = 0;
@@ -391,21 +406,23 @@
       // 5. Power Reduction Registers (PRR0 & PRR1)
       // PRR0 handles TWI, SPI, Timers 0, 1 and ADC.
       PRR0 = (1 << PRTWI)  | // I2C Off
-            (1 << PRSPI)  | // SPI Off
-            (1 << PRTIM0) | // Timer 0 Off
-            (1 << PRTIM1) | // Timer 1 Off
-            (1 << PRADC);   // ADC Clock Off
+             (1 << PRSPI)  | // SPI Off
+             (1 << PRTIM0) | // Timer 0 Off
+             (1 << PRTIM1) | // Timer 1 Off
+             (1 << PRADC);   // ADC Clock Off
       
       // PRR1 handles Timer 3, Timer 4 and USB.
       // We KEEP PRUSART1 (Serial1) and PRUSB active for communication.
-      PRR1 = (1 << PRTIM3) | // Timer 3 Off
-            (1 << 4);  // Timer 4 Off (High speed timer)
+      PRR1 = (1 << PRUSB)   | // Disable USB Controller (Stops SOF interrupts)
+             (1 << PRTIM3)  | // Timer 3 Off
+             (1 << 4)       | // Timer 4 Off (High speed timer)
+             (1 << PRUSART1);  // Disable Serial1 (UART)
 
       // 6. Double Security for Timer 0 (Redundancy)
       TCCR0B = 0;
       TIMSK0 = 0;
 
-      // 7. Note: USB/Serial1 remain functional unless PRUSB/PRUSART1 are set.
+
   }
 
   //#define F_CPU 16000000L
@@ -509,7 +526,7 @@
       cli();
 
       // 2. Analog Modules Shutdown
-      ADCSRA &= ~(1 << ADEN); // Disable ADC
+      ADCSRA = 0;             // Power off ADC completely
       ACSR   |=  (1 << ACD);  // Disable Analog Comparator
 
       // 3. Digital Input Buffer Disable (DIDR0)
@@ -524,7 +541,14 @@
       // 5. Timer 0 Specific Shutdown (Hardware Redundancy)
       TCCR0B = 0;
       TCCR0B = 0;
-      TIMSK &= ~((1 << OCIE0A) | (1 << OCIE0B) | (1 << TOIE0)); // Disable Timer 0 interrupts
+      //TIMSK &= ~((1 << OCIE0A) | (1 << OCIE0B) | (1 << TOIE0)); // Disable Timer 0 interrupts
+      TIMSK  = 0; // Disable ALL timer interrupts (OCIE0A, OCIE0B, TOIE0, etc.)
+
+      // 6. Watchdog: Ensure it's disabled to prevent random resets
+      MCUSR &= ~(1 << WDRF);
+      WDTCR |= (1 << WDCE) | (1 << WDE);
+      WDTCR = 0x00;
+
   }
 
 
@@ -579,7 +603,8 @@
       defined(SCPH_3000)      || \
       defined(SCPH_3500_5000) || \
       defined(SCPH_5500)      || \
-      defined(SCPH_7000_9000) || \
+      defined(SCPH_7000)      || \
+      defined(SCPH_7500_9000) || \
       defined(SCPH_100)       || \
       defined(SCPH_102) 
     #error "ATtiny85/45/25 architecture is not compatible with the BIOS patch feature."
