@@ -1,6 +1,7 @@
 //                           PSNee-8.7
 
 /*------------------------------------------------------------------------------------------------
+<<<<<<< Updated upstream
                             MCU selection
 ------------------------------------------------------------------------------------------------*/
 
@@ -11,6 +12,8 @@
 //#define ATtiny85_45_25   //  ATtiny
 
 /*------------------------------------------------------------------------------------------------
+=======
+>>>>>>> Stashed changes
                           Console selection
 --------------------------------------------------------------------------------------------------
 
@@ -19,7 +22,12 @@
 
    SCPH model number //  region code | region
 -------------------------------------------------------------------------------------------------*/
+<<<<<<< Updated upstream
 //#define SCPH_xxx1  //  NTSC U/C    | America.
+=======
+//#define SCPH_xxxx  //              | Universal.
+#define SCPH_xxx1  //  NTSC U/C    | America.
+>>>>>>> Stashed changes
 //#define SCPH_xxx2  //  PAL         | Europ.
 //#define SCPH_xxx3  //  NTSC J      | Asia.
 //#define SCPH_xxxx  //  Universal
@@ -582,6 +590,7 @@ void Init() {
   PIN_SQCK_INPUT;
   PIN_SUBQ_INPUT;
 
+<<<<<<< Updated upstream
 #if defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(ATtiny85_45_25)
   //pinMode(debugtx, OUTPUT); // software serial tx pin
   mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
@@ -589,6 +598,20 @@ void Init() {
   Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
 #endif
 }
+=======
+  // --- Debug Interface Setup ---
+  #if defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(IS_ATTINY_FAMILY)
+    //pinMode(debugtx, OUTPUT); // software serial tx pin
+    mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
+  #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(IS_ATTINY_FAMILY)
+    Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
+  #endif
+
+  // --- Console Analysis ---
+  // Identify board revision (PU-7 to PU-22+) to set correct injection timings
+  BoardBetection();
+  }
+>>>>>>> Stashed changes
 
 int main() {
 

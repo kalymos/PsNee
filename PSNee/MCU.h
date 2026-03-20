@@ -93,9 +93,36 @@
 
 #pragma once
 
+<<<<<<< Updated upstream
+=======
+#if defined(__AVR_ATmega328__)   || defined(__AVR_ATmega328A__)  || \
+    defined(__AVR_ATmega328P__)  || defined(__AVR_ATmega328PA__) || \
+    defined(__AVR_ATmega328PB__) || defined(__AVR_ATmega168__)   || \
+    defined(__AVR_ATmega168A__)  || defined(__AVR_ATmega168P__)  || \
+    defined(__AVR_ATmega168PA__) || defined(__AVR_ATmega168PB__) || \
+    defined(__AVR_ATmega128A__)  || defined(__AVR_ATmega128PB__)
+  /*------------------------------------------------------------------------------------------------
+  * FUNCTION    : optimizePeripherals()
+  * 
+  * DESCRIPTION : 
+  *    Minimizes power consumption and internal noise by disabling unused hardware modules.
+  *    Performs a hard shutdown of peripherals to reduce current leakage and CPU jitter.
+  * 
+  *    1. ANALOG SHUTDOWN: Disables ADC and Analog Comparator to prevent parasitic drain.
+  *    2. BUFFER DISABLE: Disconnects digital input buffers on analog pins (A0-A5).
+  *    3. CLOCK GATING (PRR): Shuts down clocks to TWI, SPI, and all Timers (0, 1, 2).
+  *    4. UART MAINTENANCE: Keeps PRUSART0 active to allow Serial communication.
+  ------------------------------------------------------------------------------------------------*/
+#define IS_328_168_FAMILY
+
+  static inline void OptimizePeripherals(void) {
+    // 1. Disable Interrupts during setup
+    cli();
+>>>>>>> Stashed changes
 
 #ifdef ATmega328_168
 
+<<<<<<< Updated upstream
 static inline void optimizePeripherals(void) {
   // Configuring Port C (A0-A5) as Digital Inputs
   // DDRC at 0 = Input. Ensure that the first 6 bits are 0. 
@@ -136,6 +163,73 @@ static inline void optimizePeripherals(void) {
                                                     //Waveform Generation Mode, Mode 2 CTC
   // Interrupt vector for timer compare match event
   //#define CTC_TIMER_VECTOR TIMER0_COMPA_vect  //interrupt vector for match event, OCR0A comparison and Timer/Counter 0
+=======
+    // 3. Digital Input Disable (Set bits to 1 to DISABLE)
+    // Disconnects digital buffers on analog pins to stop leakage
+    DIDR0 = 0xFF; // Pins A0 to A7
+    #if defined(__AVR_ATmega128PB__)
+      DIDR2 = 0xFF;
+    #endif
+
+    // 4. GPIO Strategy (Unused pins to Pull-up)
+    // PORTx = 0xFF (Pull-ups) | DDRx = 0x00 (Inputs)
+    PORTC |= 0xFF;
+    #if defined(__AVR_ATmega328PB__) || defined(__AVR_ATmega128PB__)
+      PORTE |= 0x0F; // Le Port E existe sur la série PB (PE0 à PE3)
+    #endif
+    // 5. Power Reduction Register (PRR)
+    // We KEEP PRUSART0 (UART) and shut down EVERYTHING else.
+    // _delay_ms() will still work (it's cycle-based, not timer-based).
+
+    #if defined(__AVR_ATmega328PB__)
+      PRR0  = (1 << PRTWI0) | // I2C Off
+              (1 << PRSPI0) | // SPI Off
+              (1 << PRTIM0) | // Timer 0 Off
+              (1 << PRTIM1) | // Timer 1 Off
+              (1 << PRTIM2) | // Timer 2 Off
+              (1 << PRADC);   // ADC Clock Off
+
+      PRR1  = (1 << PRTWI1) | // TWI 1 Off
+              (1 << PRSPI1) | // SPI 1 Off
+              (1 << PRTIM3) | // Timer 3 Off
+              (1 << PRTIM4);  // Timer 4 Off
+
+    #elif defined(__AVR_ATmega128PB__)
+      PRR0  = (1 << PRTWI0) | // I2C Off
+              (1 << PRSPI0) | // SPI Off
+              (1 << PRTIM0) | // Timer 0 Off
+              (1 << PRTIM1) | // Timer 1 Off
+              (1 << PRTIM2) | // Timer 2 Off
+              (1 << PRADC);   // ADC Clock Off
+
+      PRR1  = (1 << PRTWI1) | // TWI 1 Off
+              (1 << PRSPI1) | // SPI 1 Off
+              (1 << PRTIM3) | // Timer 3 Off
+              (1 << PRTIM4);  // Timer 4 Off
+
+      PRR2  = (1 << PRTIM5);  // Timer 5 Off (Spécifique au 128PB)
+
+    #else
+      PRR   = (1 << PRTWI)  | // I2C Off
+              (1 << PRSPI)  | // SPI Off
+              (1 << PRTIM0) | // Timer 0 Off
+              (1 << PRTIM1) | // Timer 1 Off
+              (1 << PRTIM2) | // Timer 2 Off
+              (1 << PRADC);   // ADC Clock Off
+    #endif
+
+
+    // 6. Double Security for Timer 0
+    TCCR0B = 0; TIMSK0 = 0; // Timer 0
+    TCCR1B = 0; TIMSK1 = 0; // Timer 1
+    TCCR2B = 0; TIMSK2 = 0; // Timer 2
+    #if defined(TCCR3B)
+      TCCR3B = 0; TIMSK3 = 0; // Timer 3 (série PB)
+      TCCR4B = 0; TIMSK4 = 0; // Timer 4 (série PB)
+    #endif
+
+  }
+>>>>>>> Stashed changes
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -246,14 +340,61 @@ static inline void optimizePeripherals(void) {
 #endif
 
 
-#ifdef ATmega32U4_16U4
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+#define IS_32U4_FAMILY
 
+<<<<<<< Updated upstream
   #define F_CPU 16000000L
   // #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
   // #define SET_OCROA_DIV OCR0A = 159;
   // #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
   // #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
   // #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
+=======
+  static inline void OptimizePeripherals(void) {
+      // 1. Global Interrupt Disable during hardware reconfiguration
+      cli();
+
+      // 2. Analog Front-End Shutdown
+      ADCSRA &= ~(1 << ADEN); // Disable ADC
+      ACSR   |= (1 << ACD);   // Disable Analog Comparator
+
+      // 3. Digital Input Buffer Disable (DIDR0 & DIDR2)
+      // 32U4 has more analog channels (ADC0-ADC7 and ADC8-ADC13)
+      DIDR0 = 0xFF; // Disable digital buffers on F0-F7
+      DIDR2 = 0x3F; // Disable digital buffers on D4, D6, D7, B4, B5, B6
+
+      // 4. GPIO Strategy (Unused pins to Pull-up)
+      // On 32U4, Port C is small (only PC6/PC7). Adjusting to cover most unused pins.
+      PORTC |= 0xFF;
+      PORTE |= 0xFF; // Extra port on 32U4
+
+      // 5. Power Reduction Registers (PRR0 & PRR1)
+      // PRR0 handles TWI, SPI, Timers 0, 1 and ADC.
+      PRR0 = (1 << PRTWI)  | // I2C Off
+             (1 << PRSPI)  | // SPI Off
+             (1 << PRTIM0) | // Timer 0 Off
+             (1 << PRTIM1) | // Timer 1 Off
+             (1 << PRADC);   // ADC Clock Off
+      
+      // PRR1 handles Timer 3, Timer 4 and USB.
+      // We KEEP PRUSART1 (Serial1) and PRUSB active for communication.
+      PRR1 = (1 << PRUSB)   | // Disable USB Controller (Stops SOF interrupts)
+             (1 << PRTIM3)  | // Timer 3 Off
+             (1 << 4)       | // Timer 4 Off (High speed timer)
+             (1 << PRUSART1);  // Disable Serial1 (UART)
+
+      // 6. Double Security for Timer 0 (Redundancy)
+      TCCR0B = 0;
+      TIMSK0 = 0;
+      TCCR1B = 0;
+      TIMSK1 = 0;
+      TCCR3B = 0;
+      TIMSK3 = 0;
+      TCCR4B = 0;
+  }
+
+>>>>>>> Stashed changes
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -342,7 +483,13 @@ static inline void optimizePeripherals(void) {
 
 #endif
 
+<<<<<<< Updated upstream
 #ifdef ATtiny85_45_25
+=======
+
+#if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+  #define IS_ATTINY_FAMILY
+>>>>>>> Stashed changes
 
   #define DF_CPU 8000000L
   #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
@@ -351,6 +498,36 @@ static inline void optimizePeripherals(void) {
   #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
   #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
 
+<<<<<<< Updated upstream
+=======
+      // 2. Analog Modules Shutdown
+      ADCSRA = 0;             // Power off ADC completely
+      ACSR   |=  (1 << ACD);  // Disable Analog Comparator
+
+      // 3. Digital Input Buffer Disable (DIDR0)
+      // Disconnects digital buffers on PB0-PB5 to prevent leakage
+      DIDR0 = 0x00;  
+
+      // 4. Power Reduction Register (PRR)
+      // Shuts down clocks to ADC and Timer 0.
+      // We KEEP USI or Timer 1 if required for specific logic.
+      PRR |= (1 << PRADC) | \
+             (1 << PRTIM0)| \
+             (1 << PRUSI);
+
+      // 5. Timer 0 Specific Shutdown (Hardware Redundancy)
+      TCCR0B = 0;
+      TCCR0B = 0;
+      //TIMSK &= ~((1 << OCIE0A) | (1 << OCIE0B) | (1 << TOIE0)); // Disable Timer 0 interrupts
+      TIMSK  = 0; // Disable ALL timer interrupts (OCIE0A, OCIE0B, TOIE0, etc.)
+
+      // 6. Watchdog: Ensure it's disabled to prevent random resets
+      MCUSR &= ~(1 << WDRF);
+      WDTCR |= (1 << WDCE) | (1 << WDE);
+      WDTCR = 0x00;
+
+  }
+>>>>>>> Stashed changes
 
 
   #include <stdint.h>
@@ -628,96 +805,129 @@ static inline void optimizePeripherals(void) {
 
 #endif
 
-#ifdef LGT8F328P
+#if defined(__LGT8F328P__) || defined(__LGT8F__)
+  /*------------------------------------------------------------------------------------------------
+  * FUNCTION    : OptimizePeripherals() - LGT8F328P Edition
+  * 
+  * DESCRIPTION : 
+  *    Optimisation spécifique pour l'architecture LGT8F (LogicGreen).
+  *    Le LGT8F possède des périphériques analogiques plus complexes (DAC, OPAMP).
+  ------------------------------------------------------------------------------------------------*/
+  static inline void OptimizePeripherals(void) {
+    cli();
 
-#define F_CPU 32000000L
+    // 1. Analog Modules Shutdown (LGT8F328P)
+    ADCSRA &= ~(1 << ADEN); // Disable ADC
+    ADCSRC &= ~(1 << ADEN); // Disable LGT8F specific ADC stage
+    DACON  &= ~(1 << DACEN); // Disable DAC (Digital to Analog Converter)
+    OPACON &= ~(1 << OPAEN); // Disable OpAmp (Ampli Op interne)
+
+    // 2. Analog Comparator Shutdown
+    ACSR   |= (1 << ACD);   
+
+    // 3. Digital Input Disable (DIDR)
+    // Le LGT8F328P possède 8 canaux ADC (A0-A7)
+    DIDR0 = 0xFF; 
+
+    // 4. GPIO Strategy (Pull-ups sur tous les ports)
+    // Le LGT8F possède les ports B, C, D et souvent un port E (PE0, PE2)
+    PORTB |= 0xFF;
+    PORTC |= 0xFF;
+    PORTD |= 0xFF;
+    PORTE |= 0x05; // PE0 et PE2 sur LGT8F
+
+    // 5. Power Reduction Register (PRR)
+    // Sur LGT8F, PRR gère les horloges. 
+    // On garde PRUSART0 (bit 1) à 0 pour le Debug Serial.
+    PRR = (1 << PRTWI)  | // I2C Off
+          (1 << PRSPI)  | // SPI Off
+          (1 << PRTIM0) | // Timer 0 Off
+          (1 << PRTIM1) | // Timer 1 Off
+          (1 << PRTIM2) | // Timer 2 Off
+          (1 << PRADC);   // ADC Clock Off
+    
+    // Le LGT8F n'a généralement pas de PRR1/PRR2 comme le 128PB,
+    // mais possède PRR1 pour PCI (Pin Change Interrupt) sur certaines versions.
+    #if defined(PRR1)
+      PRR1 = (1 << PRPCI); // Disable Pin Change Interrupt clock if unused
+    #endif
+
+    // 6. Double Security for Timers
+    TCCR0B = 0; TIMSK0 = 0;
+    TCCR1B = 0; TIMSK1 = 0;
+    TCCR2B = 0; TIMSK2 = 0;
+  }
+
+  // --- Mapping des Pins (Identique au 328P pour la compatibilité) ---
+  
+  #define PIN_DATA_INPUT   DDRB &= ~(1 << DDB0)
+  #define PIN_WFCK_INPUT   DDRB &= ~(1 << DDB1)
+  #define PIN_SQCK_INPUT   DDRD &= ~(1 << DDD6)
+  #define PIN_SUBQ_INPUT   DDRD &= ~(1 << DDD7)
+
+  #define PIN_DATA_OUTPUT  DDRB |= (1 << DDB0)
+  #define PIN_WFCK_OUTPUT  DDRB |= (1 << DDB1)
+
+  #define PIN_DATA_SET     PORTB |= (1 << PB0)
+  #define PIN_DATA_CLEAR   PORTB &= ~(1 << PB0)
+  #define PIN_WFCK_CLEAR   PORTB &= ~(1 << PB1)
+
+  #define PIN_SQCK_READ    (!!(PIND & (1 << PIND6)))
+  #define PIN_SUBQ_READ    (!!(PIND & (1 << PIND7)))
+  #define PIN_WFCK_READ    (!!(PINB & (1 << PINB1)))
 
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/sfr_defs.h>
-#include <util/delay.h>
+  // --- BIOS Patching Configuration (32U4 Mapping) ---
+  #if defined(SCPH_102)       || \
+      defined(SCPH_100)       || \
+      defined(SCPH_7500_9000) || \
+      defined(SCPH_7000)      || \
+      defined(SCPH_3500_5500) || \
+      defined(SCPH_3000)      || \
+      defined(SCPH_1000)
 
-// Globale interrupt seting
-#define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
-#define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)
+    // --- DX (Data) sur PD4 ---
+    #define PIN_DX_INPUT    DDRD &= ~(1 << DDD4)
+    #define PIN_DX_OUTPUT   DDRD |=  (1 << DDD4)
+    #define PIN_DX_SET      PORTD |=  (1 << PD4)
+    #define PIN_DX_CLEAR    PORTD &= ~(1 << PD4)
+    
+    // --- AX (Address) sur PD1 (Utilise INT1 sur 32U4) ---
+    #define PIN_AX_INPUT    DDRD &= ~(1 << DDD1)
+    #define WAIT_AX_RISING  (!(PIND & (1 << PIND1)))
+    #define WAIT_AX_FALLING  (PIND & (1 << PIND1))
+    #define PIN_AX_READ      (PIND & (1 << PIND1))
 
-// Handling the main pins
+    // Interruption INT1 pour AX (PD1)
+    #define PIN_AX_INTERRUPT_ENABLE   EIMSK  |=  (1 << INT1)
+    #define PIN_AX_INTERRUPT_DISABLE  EIMSK  &= ~(1 << INT1)
+    #define PIN_AX_INTERRUPT_RISING   EICRA  |=  (1 << ISC11) | (1 << ISC10)
+    #define PIN_AX_INTERRUPT_VECTOR   INT1_vect
+    #define PIN_AX_INTERRUPT_CLEAR    EIFR   |=  (1 << INTF1) 
 
-// Main pins input
-#define PIN_DATA_INPUT DDRB &= ~(1 << DDB0)
-#define PIN_WFCK_INPUT DDRB &= ~(1 << DDB1)
-#define PIN_SQCK_INPUT DDRD &= ~(1 << DDD6)
-#define PIN_SUBQ_INPUT DDRD &= ~(1 << DDD7)
+    // --- AY (Secondary Address) sur PD0 (Utilise INT0 sur 32U4) ---
+    #if defined(SCPH_3000) || defined(SCPH_1000)
+      #define PIN_AY_INPUT      DDRD &= ~(1 << DDD0)
+      #define PIN_AY_READ       (PIND & (1 << PIND0))
+      #define WAIT_AY_RISING    (!(PIND & (1 << PIND0)))
+      #define WAIT_AY_FALLING   (PIND & (1 << PIND0))
+      
+      // Interruption INT0 pour AY (PD0)
+      #define PIN_AY_INTERRUPT_ENABLE   EIMSK  |=  (1 << INT0)
+      #define PIN_AY_INTERRUPT_DISABLE  EIMSK  &= ~(1 << INT0)
+      #define PIN_AY_INTERRUPT_RISING   EICRA  |=  (1 << ISC01) | (1 << ISC00)
+      #define PIN_AY_INTERRUPT_VECTOR   INT0_vect
+      #define PIN_AY_INTERRUPT_CLEAR    EIFR   |=  (1 << INTF0)
+    #endif
 
-// Main pin output
-#define PIN_DATA_OUTPUT DDRB |= (1 << DDB0)
-#define PIN_WFCK_OUTPUT DDRB |= (1 << DDB1)
+    // --- Switch Bypass sur PC6 (Pin 5 sur Arduino Micro) ---
+    #ifdef SCPH_7000
+      #define PIN_SWITCH_INPUT  DDRC  &= ~(1 << DDC6)
+      #define PIN_SWITCH_SET    PORTC |=  (1 << PC6)
+      #define PIN_SWITCH_READ   (!!(PINC & (1 << PINC6)))
+    #endif
 
-// Define pull-ups and set high at the main pin
-#define PIN_DATA_SET PORTB |= (1 << PB0)
-
-
-// Define pull-ups set down at the main pin
-#define PIN_DATA_CLEAR PORTB &= ~(1 << PB0)
-#define PIN_WFCK_CLEAR PORTB &= ~(1 << PB1)
-
-// Read the main pins
-#define PIN_SQCK_READ (PIND & (1 << PIND6))
-#define PIN_SUBQ_READ (PIND & (1 << PIND7))
-#define PIN_WFCK_READ (PINB & (1 << PINB1))
-
-// Handling and use of the LED pin
-#define LED_RUN
-#define PIN_LED_OUTPUT DDRB |= (1 << DDB5)
-#define PIN_LED_ON PORTB |= (1 << PB5)
-#define PIN_LED_OFF PORTB &= ~(1 << PB5)
-
-// Handling the BIOS patch
-
-// BIOS interrupt seting
-#define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)
-#define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)
-
-// BIOS timer clear
-#define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)
-
-// Pins input
-#define PIN_AX_INPUT DDRD &= ~(1 << DDD2)
-#define PIN_AY_INPUT DDRD &= ~(1 << DDD3)
-#define PIN_DX_INPUT DDRD &= ~(1 << DDD4)
-// Pin output
-#define PIN_DX_OUTPUT DDRD |= (1 << DDD4)
-// Define pull-ups set high
-#define PIN_DX_SET PORTD |= (1 << PD4)
-// Define pull-ups set down
-#define PIN_DX_CLEAR PORTD &= ~(1 << PD4)
-// Read pins for BIOS patch
-#define PIN_AX_READ (PIND & (1 << PIND2))
-#define PIN_AY_READ (PIND & (1 << PIND3))
-
-// Handling the external interrupt
-#define PIN_AX_INTERRUPT_ENABLE EIMSK |= (1 << INT0)
-#define PIN_AY_INTERRUPT_ENABLE EIMSK |= (1 << INT1)
-
-#define PIN_AX_INTERRUPT_DISABLE EIMSK &= ~(1 << INT0)
-#define PIN_AY_INTERRUPT_DISABLE EIMSK &= ~(1 << INT1)
-
-#define PIN_AX_INTERRUPT_RISING EICRA |= (1 << ISC01) | (1 << ISC00)
-#define PIN_AY_INTERRUPT_RISING EICRA |= (1 << ISC11) | (1 << ISC10)
-
-#define PIN_AX_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC00)) | (1 << ISC01))
-#define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))
-
-#define PIN_AX_INTERRUPT_VECTOR INT0_vect
-#define PIN_AY_INTERRUPT_VECTOR INT1_vect
-
-// Handling and reading the switch pin for patch BIOS
-#define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)
-#define PIN_SWITCH_SET PORTD |= (1 << PD5)
-#define PIN_SWITCH_READ (PIND & (1 << PIND5))
-
+  #endif // BIOS Patching
 #endif
+
 

@@ -22,6 +22,21 @@
 
                                     // Results of the  maximum values
                                     // tested with  an Atmega328P
+<<<<<<< Updated upstream
+=======
+#if defined(IS_32U4_FAMILY)
+
+  // ------ SCPH 100 / 102 ------
+  #if defined(SCPH_100) || \
+      defined(SCPH_102)
+    #define BIOS_PATCH
+    #define SILENCE_THRESHOLD 1100
+    #define CONFIRM_COUNTER_TARGET 8
+    #define PULSE_COUNT 47         //47
+    #define BIT_OFFSET_CYCLES 47   //60
+    #define OVERRIDE_CYCLES 3       
+  #endif
+>>>>>>> Stashed changes
 
 
 // #ifdef  SCPH_102      
@@ -211,6 +226,7 @@
 
 void Debug_Log (uint16_t Lows, int Wfck_mode){          //Information about the MCU, and old or late console mode.
 
+<<<<<<< Updated upstream
 #if  defined(ATtiny85_45_25)
   mySerial.print("m "); mySerial.println(Wfck_mode);
 #elif !defined(ATtiny85_45_25)
@@ -228,6 +244,59 @@ void Debug_Scbuf (uint8_t *Scbuf){         // Data from the DATA bus
     for (int i = 0; i < 12; i++) {
       if (Scbuf[i] < 0x10) {
         mySerial.print("0"); // padding
+=======
+    #if  defined(IS_ATTINY_FAMILY)
+      // --- COMPACT SYSTEM LOG (ATtiny) ---
+      // Minimalistic output to save CPU cycles and maintain timing precision.
+      mySerial.print("m "); 
+      mySerial.println(Wfck_mode); // Mode indicator
+    #else
+      // --- VERBOSE DIAGNOSTICS (ATmega) ---
+      // Detailed system information for standard development and debugging.
+      Serial.print(" MCU frequency: "); 
+      Serial.print(F_CPU); 
+      Serial.println(" Hz");
+
+      Serial.print(" wfck_mode: "); 
+      Serial.println(Wfck_mode); // Board generation (0: Legacy, 1: Modern)
+
+      Serial.print(" region: "); 
+      Serial.print(region[0]); 
+      Serial.print(region[1]); 
+      Serial.println(region[2]); // Active injection string (e.g., SCEE)
+    #endif
+  }
+
+/******************************************************************************************
+ * FUNCTION    : LogSUBQ
+ * 
+ * DESCRIPTION : 
+ *    Logs captured SUBQ frames to the serial interface.
+ *    Timing is critical: the entire 12-byte frame must be processed and transmitted 
+ *    within the ~12ms window before the next SUBQ packet arrives.
+ * 
+ *    - ATtiny: Uses minimal formatting (no spaces) to stay within the timing budget.
+ *    - Standard MCUs: Includes spaces for better readability.
+ * 
+ * INPUT       : dataBuffer (uint8_t*) - Pointer to the 12-byte SUBQ frame.
+ ******************************************************************************************/
+
+void LogSUBQ(uint8_t *dataBuffer) {
+  
+  /** 
+   * ERROR FILTERING:
+   * A failed sector read usually results in zeroed data (excluding CRC).
+   * Skip logging if the first 4 bytes are null to reduce bus traffic.
+   */
+  if (!(dataBuffer[0] == 0 && dataBuffer[1] == 0 && dataBuffer[2] == 0 && dataBuffer[3] == 0)) {
+
+#if defined(IS_ATTINY_FAMILY)
+    // --- COMPACT FORMATTING (ATtiny) ---
+    // Minimal formatting to meet the strict 12ms timing constraint on slower MCUs.
+    for (uint8_t i = 0; i < 12; i++) {
+      if (dataBuffer[i] < 0x10) {
+        mySerial.print("0"); // Leading zero padding for hex alignment
+>>>>>>> Stashed changes
       }
       mySerial.print(Scbuf[i, HEX]);
     }
@@ -249,9 +318,19 @@ void Debug_Scbuf (uint8_t *Scbuf){         // Data from the DATA bus
 
 void Debug_Inject(){       // Confirmation of region code injection
 
+<<<<<<< Updated upstream
 #if defined(ATtiny85_45_25)
     mySerial.print("!");
 #elif  !defined(ATtiny85_45_25)|| defined(SCPH_102_legacy) 
+=======
+#if defined(IS_ATTINY_FAMILY)
+    // --- MINIMALIST NOTIFICATION (ATtiny) ---
+    mySerial.print("!"); 
+
+#else
+    // --- VERBOSE NOTIFICATION (ATmega) ---
+    // Standard visual feedback for debugging and monitoring.
+>>>>>>> Stashed changes
     Serial.println("           INJECT ! ");
 #endif
 }
@@ -276,6 +355,7 @@ void Debug_Inject(){       // Confirmation of region code injection
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif
 
+<<<<<<< Updated upstream
 #if !defined(ATmega328_168) && !defined(ATmega32U4_16U4) && !defined(ATtiny85_45_25)
  #error "MCU not selected! Please choose one"
 #elif !defined(ATmega328_168) ^ defined(ATmega32U4_16U4 ) ^ defined(ATtiny85_45_25)
@@ -284,4 +364,73 @@ void Debug_Inject(){       // Confirmation of region code injection
 
 #if defined(LED_RUN) && defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(ATtiny85_45_25)
  #error"Compilation options LED_RUN and PSNEE_DEBUG_SERIAL_MONITOR are not simultaneously compatible with ATtiny85_45_25"
+=======
+// // --- MCU SELECTION CHECK ---
+// #if !defined(ATmega328_168)   && \
+//     !defined(ATmega328_168PB) && \
+//     !defined(ATmega32U4_16U4) && \
+//     !defined(ATtiny85_45_25)
+//   #error "No MCU selected! Please choose one supported architecture."
+
+// #elif (defined(ATmega328_168)    + \
+//        defined(ATmega328_168PB)  + \
+//        defined(ATmega32U4_16U4)  + \
+//        defined(ATtiny85_45_25) > 1)
+//   #error "Multiple MCUs selected! Please enable only one architecture."
+// #endif
+
+// --- RESOURCE CONFLICT CHECK (ATtiny) ---
+#if defined(IS_ATTINY_FAMILY) && \
+    defined(LED_RUN)        && \
+    defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  #error "Resource conflict: LED_RUN and DEBUG_SERIAL are incompatible on ATtiny."
+#endif
+
+// --- Console Model Info ---
+#if defined(SCPH_1000)
+  #pragma message "Target Console: SCPH-1000 (NTSC-J)"
+#elif defined(SCPH_3000)
+  #pragma message "Target Console: SCPH-3000 (NTSC-J)"
+#elif defined(SCPH_3500_5500)
+  #pragma message "Target Console: SCPH-3500/5000/5500 (NTSC-J)"
+#elif defined(SCPH_7000)
+  #pragma message "Target Console: SCPH-7000 (Internal Switch enabled)"
+#elif defined(SCPH_7500_9000)
+  #pragma message "Target Console: SCPH-7500/9000 (NTSC-J)"
+#elif defined(SCPH_100)
+  #pragma message "Target Console: SCPH-100 (NTSC-J)"
+#elif defined(SCPH_101)
+  #pragma message "Target Console: SCPH-101 (NTSC-U/C)"
+#elif defined(SCPH_102)
+  #pragma message "Target Console: SCPH-102 (PAL)"
+#elif defined(SCPH_xxx1)
+  #pragma message "Target Console: Generic NTSC-U/C"
+#elif defined(SCPH_xxx2)
+  #pragma message "Target Console: Generic PAL"
+#elif defined(SCPH_xxx3)
+  #pragma message "Target Console: Generic NTSC-J"
+#elif defined(SCPH_5903)
+  #pragma message "Target Console: SCPH-5903 (Video CD Dual-Interface)"
+#elif defined(SCPH_xxxx)
+  #pragma message "Target Console: Universal Region Mode"
+#endif
+
+// --- MCU Architecture Info ---
+#if defined(IS_328_168_FAMILY)
+  #pragma message "Microcontroller: ATmega328/168 (Arduino Nano/Uno)"
+#elif defined(IS_32U_FAMILY)
+  #pragma message "Microcontroller: ATmega32U4/16U4 (Leonardo/Pro Micro)"
+#elif defined(IS_ATTINY_FAMILY)
+  #pragma message "Microcontroller: ATtiny85/45/25"
+#endif
+
+// --- Feature Status ---
+
+#ifdef PSNEE_DEBUG_SERIAL_MONITOR
+  #pragma message "Feature: Serial Debug Monitor ENABLED"
+#endif
+
+#ifdef LED_RUN
+  #pragma message "Feature: Status LED (PB5) ENABLED"
+>>>>>>> Stashed changes
 #endif
