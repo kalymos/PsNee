@@ -7,7 +7,7 @@ PSNee is compatible with all retail PlayStation 1 models and various AVR microco
 
 ## Features
 - **Disc Region Protection:** Removes region locks.
-- **BIOS Patching:** Provides enhanced compatibility (except on ATtiny).
+- **BIOS Patching:** Provides enhanced compatibility.
 - **Board Support:** Custom manager to simplify fuse settings and hardware configuration.
 
 > [!IMPORTANT]
@@ -21,7 +21,7 @@ PSNee is compatible with all retail PlayStation 1 models and various AVR microco
 - **ATmega328(A/P/PA)** @16MHz  
 - **ATmega168(A/P/PA)** @16MHz
 - **ATmega32U4** @16MHz
-- **ATtiny25/45/85** @8MHz *(Note: No BIOS patch support!)*
+- **ATtiny25/45/85** @8MHz *(No BIOS patch support!)*
 
 > [!CAUTION]
 > **BIOS Patching:** Timing for **PB-series** (328PB/128PB) is currently unoptimized. For stable BIOS patching, please use A/P/PA or 32U4 variants.
