@@ -2,7 +2,7 @@
 THE modechip supports the largest number of Playstation 1 variants, and the largest number of microcontrollers
 # For all useful information consult the ![Wiki](https://github.com/kalymos/PsNee/wiki)
 
-![Logo](/images/PSNee-8.7-logo.png)
+![Logo](/images/PSNee-9.0-logo.png)
 
 ## Features
 - Remove Disk Region Protection
