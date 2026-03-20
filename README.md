@@ -8,7 +8,7 @@ PSNee is compatible with all retail PlayStation 1 models and various AVR microco
 ## Features
 - **Disc Region Protection:** Removes region locks.
 - **BIOS Patching:** Provides enhanced compatibility.
-- **Board Support:** Custom manager to simplify fuse settings and hardware configuration.
+- **Board Support:** Custom boards manager to simplify fuse settings and hardware configuration.
 
 > [!IMPORTANT]
 > **Video Signal Note:** This modchip does not handle PAL/NTSC video signal conversion. Playing games from a different region may result in an incorrect display (e.g., NTSC games on early PAL consoles, or PAL games on NTSC-U/C or NTSC-J consoles).
