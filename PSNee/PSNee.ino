@@ -51,10 +51,15 @@
 /******************************************************************************************************************
  *  Requires compilation with Arduino libs!
  *  For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
- *          Arduino   |   ATtiny
- *          ---------------------
- *          TXD--RXD  |  PB3--RXD
- *          GND--GND  |  GND--GND 
+ *
+ *   For Arduino (Uno/Nano/Pro Mini):
+ *   TX (Pin 1)  ----->  RX (Serial Card)
+ *   GND         ----->  GND
+ *
+ *   For ATtiny (25/45/85):
+ *   Pin 2 (PB3) ----->  RX (Serial Card)
+ *   Pin 4 (GND) ----->  GND
+ *
  *******************************************************************************************************************/
 
 /******************************************************************************************************************
@@ -73,13 +78,13 @@
  * GND       | GND       |
  * RST       | RESET     | Only for JAP_FAT
  * D2        | BIOS AX   | Only for Bios patch
- * D3        | BIOS AY   | Only for BIOS patch ver, 1.0j, 1.1j
+ * D3        | BIOS AY   | Only for BIOS patch SCPH_1000, SCPH_3000
  * D4        | BIOS DX   | Only for Bios patch
  * D5        | SWITCH    | Optional for disabling Bios patch
  * D6        | SQCK      |
  * D7        | SUBQ      |
  * D8        | DATA      |
- * D9        | WFCK |
+ * D9        | WFCK      |
  * D13 ^ D10 | LED       | D10 only for ATmega32U4_16U4
  *
  * ATtiny | PSNee        | ISP   |
