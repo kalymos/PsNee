@@ -93,14 +93,14 @@
 
 #pragma once
 
-<<<<<<< Updated upstream
-=======
 #if defined(__AVR_ATmega328__)   || defined(__AVR_ATmega328A__)  || \
     defined(__AVR_ATmega328P__)  || defined(__AVR_ATmega328PA__) || \
     defined(__AVR_ATmega328PB__) || defined(__AVR_ATmega168__)   || \
     defined(__AVR_ATmega168A__)  || defined(__AVR_ATmega168P__)  || \
     defined(__AVR_ATmega168PA__) || defined(__AVR_ATmega168PB__) || \
     defined(__AVR_ATmega128A__)  || defined(__AVR_ATmega128PB__)
+
+#define IS_328_168_FAMILY
   /*------------------------------------------------------------------------------------------------
   * FUNCTION    : optimizePeripherals()
   * 
@@ -113,59 +113,15 @@
   *    3. CLOCK GATING (PRR): Shuts down clocks to TWI, SPI, and all Timers (0, 1, 2).
   *    4. UART MAINTENANCE: Keeps PRUSART0 active to allow Serial communication.
   ------------------------------------------------------------------------------------------------*/
-#define IS_328_168_FAMILY
 
   static inline void OptimizePeripherals(void) {
     // 1. Disable Interrupts during setup
     cli();
->>>>>>> Stashed changes
 
-#ifdef ATmega328_168
+    // 2. Analog Modules Shutdown (Critical for Power)
+    ADCSRA &= ~(1 << ADEN); // Disable ADC
+    ACSR   |= (1 << ACD);   // Disable Analog Comparator
 
-<<<<<<< Updated upstream
-static inline void optimizePeripherals(void) {
-  // Configuring Port C (A0-A5) as Digital Inputs
-  // DDRC at 0 = Input. Ensure that the first 6 bits are 0. 
-  DDRC &= ~0x3F; 
-
-  // Disable the ADC (Analog-to-Digital Converter)
-  // ADEN at 0 disables the module. PRADC at 1 disables the module's clock.
-  ADCSRA &= ~(1 << ADEN);
-  PRR    |= (1 << PRADC);
-
-  // Configure DIDR0 (Digital Input Disable Register)
-  // To read digitally via PINC, the bits of DIDR0 MUST be set to 0.
-  // (0 = Digital Buffer enabled)
-  DIDR0 &= ~0x3F;
-
-  // Stop Timer 0 (Stops Arduino millis/micros)
-  // Setting TCCR0B to 0 stops the clock source. Setting TIMSK0 to 0 disables interrupts.
-  TCCR0B = 0;
-  //#define F TIMSK0 = 0;
-
-  // Disable the Analog Comparator (Frees up resources on PD6/PD7)
-  // ACD at 1 = Comparator off.
-  ACSR |= (1 << ACD);
-}
-
-  // Define the clock speed for the microcontroller
-  #define F_CPU 16000000L
-
-  // Clear the timer count register (TCNT0)
-  //#define TIMER_TCNT_CLEAR TCNT0 = 0x00  // TCNT0 - Timer/Counter Register, clears the timer count
-
-  // Set OCR0A to achieve a 100KHz clock frequency
-  //#define SET_OCROA_DIV OCR0A = 159;  // OCR0A – Output Compare Register A, 100KHz clock generation, 0x10011111
-
-  // Configure Timer/Counter 0 for CTC mode and enable the clock source
-  //#define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);  // TCCR0A – Timer/Counter Control Register A, enable CTC mode (WGM01)
-  //#define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);   // TCCR0B – Timer/Counter Control Register B, set clock source to I/O clock
-                                                    //Waveform Generation Mode, Mode 2 CTC
-  // Interrupt vector for timer compare match event
-  //#define CTC_TIMER_VECTOR TIMER0_COMPA_vect  //interrupt vector for match event, OCR0A comparison and Timer/Counter 0
-=======
-    // 3. Digital Input Disable (Set bits to 1 to DISABLE)
-    // Disconnects digital buffers on analog pins to stop leakage
     DIDR0 = 0xFF; // Pins A0 to A7
     #if defined(__AVR_ATmega128PB__)
       DIDR2 = 0xFF;
@@ -228,8 +184,6 @@ static inline void optimizePeripherals(void) {
       TCCR4B = 0; TIMSK4 = 0; // Timer 4 (série PB)
     #endif
 
-  }
->>>>>>> Stashed changes
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -238,15 +192,10 @@ static inline void optimizePeripherals(void) {
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
 
-  // Global interrupt control settings
-  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)    // Set the I-bit (bit 7) in the Status Register to enable global interrupts
-  #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)  // Clear the I-bit (bit 7) in the Status Register to disable global interrupts
+  }
 
-  // Enable/Disable timer interrupts
-  //#define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)    // Enable interrupt on Timer0 Compare Match A
-  //#define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)  // Disable interrupt on Timer0 Compare Match A
 
-  // Main pin configuration for input and output
+  // Main pin configuration
 
   // Define the main pins as inputs
   #define PIN_DATA_INPUT DDRB &= ~(1 << DDB0)  // Set DDRB register to configure PINB0 as input
@@ -254,81 +203,77 @@ static inline void optimizePeripherals(void) {
   #define PIN_SQCK_INPUT DDRD &= ~(1 << DDD6)  // Set DDRB register to configure PINB6 as input
   #define PIN_SUBQ_INPUT DDRD &= ~(1 << DDD7)  // Set DDRB register to configure PINB7 as input
 
-  // Enable pull-ups and set high on the main pins
+  // Configure lines as outputs (for injection/override)
   #define PIN_DATA_OUTPUT DDRB |= (1 << DDB0)  // Set DDRB register to configure PINB0 as output
   #define PIN_WFCK_OUTPUT DDRB |= (1 << DDB1)  // Set DDRB register to configure PINB1 as output
 
-  // Define pull-ups and set high at the main pin
-  #define PIN_DATA_SET PORTB |= (1 << PB0)  // Set PORTB register to make PINB0 high (enable pull-up)
-
-  // Clear the main pins (set low)
+  // Bus line state control (Set High / Clear Low)
+  #define PIN_DATA_SET PORTB |= (1 << PB0)  // Set PORTB register to make PINB0 high (enable pull-up))
   #define PIN_DATA_CLEAR PORTB &= ~(1 << PB0)  // Set PORTB register to make PINB0 low
   #define PIN_WFCK_CLEAR PORTB &= ~(1 << PB1)  // Set PORTB register to make PINB1 low
 
-  // Read the state of the main input pins
-  #define PIN_SQCK_READ (PIND & (1 << PIND6))  // Check if the value of PIND6 is high (1)
-  #define PIN_SUBQ_READ (PIND & (1 << PIND7))  // Check if the value of PIND7 is high (1)
-  #define PIN_WFCK_READ (PINB & (1 << PINB1))  // Check if the value of PIND1 is high (1)
+  // Direct Register Reading (High-speed polling)
+  #define PIN_SQCK_READ (!!(PIND & (1 << PIND6)))  // Check if the value of PIND6 is high (1)
+  #define PIN_SUBQ_READ (!!(PIND & (1 << PIND7)))  // Check if the value of PIND7 is high (1)
+  #define PIN_WFCK_READ (!!(PINB & (1 << PINB1)))  // Check if the value of PIND1 is high (1)
 
-  // LED pin handling (for indication)
+  // --- Status Indication (LED) ---
   #ifdef LED_RUN
     #define PIN_LED_OUTPUT DDRB |= (1 << DDB5)  // Configure PINB5 as output (for LED)
     #define PIN_LED_ON    PORTB |= (1 << PB5)  // Set PINB5 high (turn on LED)
     #define PIN_LED_OFF   PORTB &= ~(1 << PB5)  // Set PINB5 low (turn off LED)
   #endif
 
-  // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_100) || defined(SCPH_7500_9000) || defined(SCPH_7000) || defined(SCPH_5500) || defined(SCPH_5000) || defined(SCPH_3500) || defined(SCPH_3000) || defined(SCPH_1000)
+  // --- BIOS Patching Configuration ---
+  #if defined(SCPH_102)       || \
+      defined(SCPH_100)       || \
+      defined(SCPH_7500_9000) || \
+      defined(SCPH_7000)      || \
+      defined(SCPH_3500_5500) || \
+      defined(SCPH_3000)      || \
+      defined(SCPH_1000)
 
-    // Clear the timer interrupt flag
-    //#define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)  // Clear the Timer0 Compare Match A interrupt flag
+    // Address (AX) and Data (DX) lines for BIOS override
+    #define PIN_DX_INPUT DDRD &= ~(1 << DDD4)
+    #define PIN_DX_OUTPUT DDRD |= (1 << DDD4)
+    #define PIN_DX_SET PORTD |= (1 << PD4)
+    #define PIN_DX_CLEAR PORTD &= ~(1 << PD4)
 
-    // Define input pins for the BIOS patch
-    #define PIN_AX_INPUT DDRD &= ~(1 << DDD2)  // Set DDRD register to configure PIND2 as input
-    #define PIN_DX_INPUT DDRD &= ~(1 << DDD4)  // Set DDRD register to configure PIND4 as input
+    #define PIN_AX_INPUT DDRD &= ~(1 << DDD2)
+    #define WAIT_AX_RISING    (!(PIND & (1 << PIND2)))  // Wait for pulse start (Blocking until Rising Edge)
+    #define WAIT_AX_FALLING   (PIND & (1 << PIND2))     // Wait for pulse end (Blocking until Falling Edge)
+    #define PIN_AX_READ   (!!(PIND & (1 << PIND2))) 
 
-    // Define output pins for the BIOS patch
-    #define PIN_DX_OUTPUT DDRD |= (1 << DDD4)  // Set DDRD register to configure PIND4 as output
+    // Hardware Interrupt (INT0) for AX pulse counting
+    #define PIN_AX_INTERRUPT_ENABLE     EIMSK  |=  (1<<INT0)      // Enable external interrupt on INT0 (PINB2)
+    #define PIN_AX_INTERRUPT_DISABLE    EIMSK  &= ~(1<<INT0)      // Disable external interrupt on INT0
+    #define PIN_AX_INTERRUPT_RISING     EICRA  |=  (1<<ISC01)|(1<<ISC00)                  // Configure INT0 for rising edge trigger
+    #define PIN_AX_INTERRUPT_VECTOR     INT0_vect               // Interrupt vector for INT0 (external interrupt)
+    #define PIN_AX_INTERRUPT_CLEAR      EIFR |= (1 << INTF0)  
 
-    // Set pull-ups high on output pins
-    #define PIN_DX_SET PORTD |= (1 << PD4)  // Set PORTD register to make PIND4 high
-
-    // Set pull-ups low on output pins
-    #define PIN_DX_CLEAR PORTD &= ~(1 << PD4)  // Set PORTD register to make PIND4 low
-
-    // Read the input pins for the BIOS patch
-    #define PIN_AX_READ (PIND & (1 << PIND2))  // Read the state of PIND2
-
-    // External interrupt configuration for BIOS patch
-    #define PIN_AX_INTERRUPT_ENABLE EIMSK |= (1 << INT0)  // Enable external interrupt on INT0 (PINB2)
-    #define PIN_AX_INTERRUPT_DISABLE EIMSK &= ~(1 << INT0)  // Disable external interrupt on INT0
-    #define PIN_AX_INTERRUPT_RISING EICRA |= (1 << ISC01) | (1 << ISC00)  // Configure INT0 for rising edge trigger
-    #define PIN_AX_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC00)) | (1 << ISC01))  // Configure INT0 for falling edge trigger
-
-    // Interrupt vectors for external interrupts
-    #define PIN_AX_INTERRUPT_VECTOR INT0_vect  // Interrupt vector for INT0 (external interrupt)
-
-    // Defin PIN_AY for HIGH_PATCH
-    #if defined(SCPH_3000) || defined(SCPH_1000)
-      #define PIN_AY_INPUT DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
-      #define PIN_AY_READ (PIND & (1 << PIND3))  // Read the state of PIND3
-      #define PIN_AY_INTERRUPT_ENABLE EIMSK |= (1 << INT1)  // Enable external interrupt on INT1 (PINB3)
-      #define PIN_AY_INTERRUPT_DISABLE EIMSK &= ~(1 << INT1)  // Disable external interrupt on INT1
-      #define PIN_AY_INTERRUPT_RISING EICRA |= (1 << ISC11) | (1 << ISC10)  // Configure INT1 for rising edge trigger
-      #define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))  // Configure INT1 for falling edge trigger
-      #define PIN_AY_INTERRUPT_VECTOR INT1_vect  // Interrupt vector for INT1 (external interrupt)
+    // Secondary Address line (AY) for multi-stage patching (INT1)
+    #if defined(SCPH_3000) || \
+        defined(SCPH_1000)
+      #define PIN_AY_INPUT       DDRD &= ~(1 << DDD3)  // Set DDRD register to configure PIND3 as input
+      #define WAIT_AY_RISING     (!(PIND & (1 << PIND3))) 
+      #define WAIT_AY_FALLING    (PIND & (1 << PIND3))
+      
+      #define PIN_AY_INTERRUPT_ENABLE     EIMSK  |=  (1<<INT1)      // Enable external interrupt on INT1 (PINB3)
+      #define PIN_AY_INTERRUPT_DISABLE    EIMSK  &= ~(1<<INT1)      // Disable external interrupt on INT1
+      #define PIN_AY_INTERRUPT_RISING     EICRA  |=  (1<<ISC11)|(1<<ISC10)                  // Configure INT1 for rising edge trigger
+      #define PIN_AY_INTERRUPT_FALLING    EICRA = (EICRA & ~((1 << ISC11) | (1 << ISC10))) | (1 << ISC11) // Configure INT1 for falling edge trigger
+      #define PIN_AY_INTERRUPT_VECTOR     INT1_vect              // Interrupt vector for INT1 (external interrupt)
+      #define PIN_AY_INTERRUPT_CLEAR    EIFR |= (1 << INTF1)
     #endif
-      // Handle switch input for BIOS patch
- #if defined(SCPH_7000)
-    #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
-    #define PIN_SWITCH_SET PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
-    #define PIN_SWITCH_READ (PIND & (1 << PIND5))  // Read the state of PIND5 (switch input)
- #endif
 
+     // Hardware Bypass Switch (On-the-fly deactivation)
+    #if defined(SCPH_7000)
+      #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
+      #define PIN_SWITCH_SET   PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
+      #define PIN_SWITCH_READ (!!(PIND & (1 << PIND5)))  // Read the state of PIND5 (switch input)
+    #endif
 
   #endif
-
-
 
   // #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
   //   #define DEBUG_PRINT(x)     Serial.print(x)
@@ -343,14 +288,6 @@ static inline void optimizePeripherals(void) {
 #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
 #define IS_32U4_FAMILY
 
-<<<<<<< Updated upstream
-  #define F_CPU 16000000L
-  // #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
-  // #define SET_OCROA_DIV OCR0A = 159;
-  // #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
-  // #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
-  // #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
-=======
   static inline void OptimizePeripherals(void) {
       // 1. Global Interrupt Disable during hardware reconfiguration
       cli();
@@ -394,7 +331,6 @@ static inline void optimizePeripherals(void) {
       TCCR4B = 0;
   }
 
->>>>>>> Stashed changes
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -403,103 +339,99 @@ static inline void optimizePeripherals(void) {
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
 
-  // Globale interrupt seting
-  // #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
-  #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)
 
-  // #define TIMER_INTERRUPT_ENABLE TIMSK0 |= (1 << OCIE0A)
-  // #define TIMER_INTERRUPT_DISABLE TIMSK0 &= ~(1 << OCIE0A)
 
-  // Handling the main pins
+  // --- Main Bus Interface (CD-ROM Controller) ---
 
-  // Main pins
-  #define PIN_DATA_INPUT DDRB &= ~(1 << DDB4)
-  #define PIN_WFCK_INPUT DDRB &= ~(1 << DDB5)
-  #define PIN_SQCK_INPUT DDRD &= ~(1 << DDD7)
-  #define PIN_SUBQ_INPUT DDRE &= ~(1 << DDE6)
+  // Define the main pins as inputs
+  #define PIN_DATA_INPUT  DDRB &= ~(1 << DDB4) // DATA line (PB4)
+  #define PIN_WFCK_INPUT  DDRB &= ~(1 << DDB5) // WFCK / GATE line (PB5)
+  #define PIN_SQCK_INPUT  DDRD &= ~(1 << DDD7) // SQCK Clock (PD7)
+  #define PIN_SUBQ_INPUT  DDRE &= ~(1 << DDE6) // SUBQ Data (PE6)
 
+  // Configure lines as outputs (for injection/override)
   #define PIN_DATA_OUTPUT DDRB |= (1 << DDB4)
   #define PIN_WFCK_OUTPUT DDRB |= (1 << DDB5)
 
-  // Define pull-ups and set high at the main pin
-  #define PIN_DATA_SET PORTB |= (1 << PB4)
-  // Define pull-ups set down at the main pin
-  #define PIN_DATA_CLEAR PORTB &= ~(1 << PB4)
-  #define PIN_WFCK_CLEAR PORTB &= ~(1 << PB5)
-  // Read the main pins
-  #define PIN_SQCK_READ (PIND & (1 << PIND7))
-  #define PIN_SUBQ_READ (PINE & (1 << PINE6))
-  #define PIN_WFCK_READ (PINB & (1 << PINB5))
+  // Bus line state control (Set High / Clear Low)
+  #define PIN_DATA_SET    PORTB |=  (1 << PB4) // Enable pull-up or drive HIGH
+  #define PIN_DATA_CLEAR  PORTB &= ~(1 << PB4) // Drive line LOW
+  #define PIN_WFCK_CLEAR  PORTB &= ~(1 << PB5) // Drive line LOW
 
-  // Handling and use of the LED pin
+  // Direct Register Reading (High-speed polling)
+  #define PIN_SQCK_READ   (!!(PIND & (1 << PIND7)))
+  #define PIN_SUBQ_READ   (!!(PINE & (1 << PINE6)))
+  #define PIN_WFCK_READ   (!!(PINB & (1 << PINB5)))
+
+  // --- Status Indication (LED) ---
   #ifdef LED_RUN
-    #define PIN_LED_OUTPUT DDRB |= (1 << DDB6)
-    #define PIN_LED_ON PORTB |= (1 << PB6)
-    #define PIN_LED_OFF PORTB &= ~(1 << PB6)
+    #define PIN_LED_OUTPUT DDRB  |=  (1 << DDB6) // LED on PB6
+    #define PIN_LED_ON     PORTB |=  (1 << PB6)
+    #define PIN_LED_OFF    PORTB &= ~(1 << PB6)
   #endif
 
-  // Handling the BIOS patch
-  #if defined(SCPH_102) || defined(SCPH_102_legacy) || defined(SCPH_100) || defined(SCPH_7000_9000) || defined(SCPH_5500) || defined(SCPH_3500_5000) || defined(SCPH_3000) || defined(SCPH_1000)
-  // Pins input
-    #define PIN_AX_INPUT DDRD &= ~(1 << DDD1)
-    #define PIN_AY_INPUT DDRD &= ~(1 << DDD0)
-    #define PIN_DX_INPUT DDRD &= ~(1 << DDD4)
-    // Pin output
-    #define PIN_DX_OUTPUT DDRD |= (1 << DDD4)
-    // Define pull-ups set high
-    #define PIN_DX_SET PORTD |= (1 << PD4)
-    // Define pull-ups set down
-    #define PIN_DX_CLEAR PORTD &= ~(1 << PD4)
-    // Read pins for BIOS patch
-    #define PIN_AX_READ (PIND & (1 << PIND1))
-    #define PIN_AY_READ (PIND & (1 << PIND0))
-    // Handling and reading the switch pin for patch BIOS
-    #ifdef PATCH_SWITCH
-      #define PIN_SWITCH_INPUT DDRC &= ~(1 << DDC6)
-      #define PIN_SWITCH_SET PORTC |= (1 << PC6)
-      #define PIN_SWITCH_READ (PINC & (1 << PINC6))
+  // --- BIOS Patching Configuration (32U4 Mapping) ---
+
+  #if defined(SCPH_102)       || \
+      defined(SCPH_100)       || \
+      defined(SCPH_7500_9000) || \
+      defined(SCPH_7000)      || \
+      defined(SCPH_3500_5500) || \
+      defined(SCPH_3000)      || \
+      defined(SCPH_1000)
+
+    // Address (AX) and Data (DX) lines for BIOS override
+
+    #define PIN_DX_INPUT    DDRD &= ~(1 << DDD4) // DX on PD4
+    #define PIN_DX_OUTPUT   DDRD |=  (1 << DDD4)
+    #define PIN_DX_SET      PORTD |=  (1 << PD4)
+    #define PIN_DX_CLEAR    PORTD &= ~(1 << PD4)
+    
+    #define PIN_AX_INPUT    DDRD &= ~(1 << DDD1) // AX on PD1 (INT1)
+    #define WAIT_AX_RISING  (!(PIND & (1 << PIND1))) // Wait for pulse start
+    #define WAIT_AX_FALLING   (PIND & (1 << PIND1))   // Wait for pulse end
+    #define PIN_AX_READ       (PIND & (1 << PIND1))
+
+    // Hardware Interrupt (INT1) for AX pulse counting
+    #define PIN_AX_INTERRUPT_ENABLE   EIMSK  |=  (1 << INT1)
+    #define PIN_AX_INTERRUPT_DISABLE  EIMSK  &= ~(1 << INT1)
+    #define PIN_AX_INTERRUPT_RISING   EICRA  |=  (1 << ISC11) | (1 << ISC10)
+    #define PIN_AX_INTERRUPT_VECTOR   INT1_vect
+    #define PIN_AX_INTERRUPT_CLEAR    EIFR |= (1 << INTF1) 
+
+    // Secondary Address line (AY) for multi-stage patching (INT0)
+    #if defined(SCPH_3000) || defined(SCPH_1000)
+
+      #define PIN_AY_INPUT        DDRD &= ~(1 << DDD0) // AY on PD0 (INT0)
+      #define PIN_AY_READ        (PIND & (1 << PIND0))
+      #define WAIT_AY_RISING   (!(PIND & (1 << PIND0)))
+      #define WAIT_AY_FALLING    (PIND & (1 << PIND0))
+      
+      #define PIN_AY_INTERRUPT_ENABLE   EIMSK  |=  (1 << INT0)
+      #define PIN_AY_INTERRUPT_DISABLE  EIMSK  &= ~(1 << INT0)
+      #define PIN_AY_INTERRUPT_RISING   EICRA  |=  (1 << ISC01) | (1 << ISC00)
+      #define PIN_AY_INTERRUPT_VECTOR   INT0_vect
+      #define PIN_AY_INTERRUPT_CLEAR    EIFR |= (1 << INTF0)
     #endif
 
-    // BIOS timer clear
-    #define TIMER_TIFR_CLEAR TIFR0 |= (1 << OCF0A)
-
-    // Handling the external interrupt
-    #define PIN_AX_INTERRUPT_ENABLE EIMSK |= (1 << INT1)
-    #define PIN_AY_INTERRUPT_ENABLE EIMSK |= (1 << INT0)
-
-    #define PIN_AX_INTERRUPT_DISABLE EIMSK &= ~(1 << INT1)
-    #define PIN_AY_INTERRUPT_DISABLE EIMSK &= ~(1 << INT0)
-
-    #define PIN_AX_INTERRUPT_RISING EICRA |= (1 << ISC11) | (1 << ISC10)
-    #define PIN_AY_INTERRUPT_RISING EICRA |= (1 << ISC01) | (1 << ISC00)
-
-    #define PIN_AX_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC10)) | (1 << ISC11))
-    #define PIN_AY_INTERRUPT_FALLING (EICRA = (EICRA & ~(1 << ISC00)) | (1 << ISC01))
-
-    #define PIN_AX_INTERRUPT_VECTOR INT1_vect
-    #define PIN_AY_INTERRUPT_VECTOR INT0_vect
-
+    // Hardware Bypass Switch (On-the-fly deactivation)
+    #ifdef SCPH_7000
+      #define PIN_SWITCH_INPUT DDRC  &= ~(1 << DDC6) // Bypass on PC6
+      #define PIN_SWITCH_SET   PORTC |=  (1 << PC6)  // Enable pull-up
+      #define PIN_SWITCH_READ  (!!(PINC & (1 << PINC6)))
+    #endif
   #endif
-
 #endif
 
-<<<<<<< Updated upstream
-#ifdef ATtiny85_45_25
-=======
+
 
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
   #define IS_ATTINY_FAMILY
->>>>>>> Stashed changes
 
-  #define DF_CPU 8000000L
-  #define TIMER_TCNT_CLEAR TCNT0 = 0x00;
-  #define SET_OCROA_DIV OCR0A = 79;  //OCR0A – Output Compare Register A,100KHz
-  #define SET_TIMER_TCCROA TCCR0A |= (1 << WGM01);
-  #define SET_TIMER_TCCROB TCCR0B |= (1 << CS00);
-  #define CTC_TIMER_VECTOR TIMER0_COMPA_vect
+  static inline void OptimizePeripherals(void) {
+      // 1. Global Interrupt Disable during reconfiguration
+      cli();
 
-<<<<<<< Updated upstream
-=======
       // 2. Analog Modules Shutdown
       ADCSRA = 0;             // Power off ADC completely
       ACSR   |=  (1 << ACD);  // Disable Analog Comparator
@@ -527,7 +459,7 @@ static inline void optimizePeripherals(void) {
       WDTCR = 0x00;
 
   }
->>>>>>> Stashed changes
+
 
 
   #include <stdint.h>
@@ -537,58 +469,55 @@ static inline void optimizePeripherals(void) {
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
 
-  // Globale interrupt seting
-  #define GLOBAL_INTERRUPT_ENABLE SREG |= (1 << 7)
-  #define GLOBAL_INTERRUPT_DISABLE SREG &= ~(1 << 7)
+  // --- Main Bus Interface (CD-ROM Controller) ---
 
-  // Handling the main pins
+  // Define the main pins as inputs
+  #define PIN_DATA_INPUT  DDRB &= ~(1 << DDB2) // DATA line (PB2)
+  #define PIN_WFCK_INPUT  DDRB &= ~(1 << DDB4) // WFCK / GATE line (PB4)
+  #define PIN_SQCK_INPUT  DDRB &= ~(1 << DDB0) // SQCK Clock (PB0)
+  #define PIN_SUBQ_INPUT  DDRB &= ~(1 << DDB1) // SUBQ Data (PB1)
 
-  // Main pins input
-  #define PIN_DATA_INPUT DDRB &= ~(1 << DDB2)
-  #define PIN_WFCK_INPUT DDRB &= ~(1 << DDB4)
-  #define PIN_SQCK_INPUT DDRB &= ~(1 << DDB0)
-  #define PIN_SUBQ_INPUT DDRB &= ~(1 << DDB1)
-
-  // Main pin output
+  // Configure lines as outputs (for injection/override)
   #define PIN_DATA_OUTPUT DDRB |= (1 << DDB2)
   #define PIN_WFCK_OUTPUT DDRB |= (1 << DDB4)
 
-  // Define pull-ups and set high at the main pin
-  #define PIN_DATA_SET PORTB |= (1 << PB2)
+  // Bus line state control (Set High / Clear Low)
+  #define PIN_DATA_SET    PORTB |=  (1 << PB2) // Enable pull-up or drive HIGH
+  #define PIN_DATA_CLEAR  PORTB &= ~(1 << PB2) // Drive line LOW
+  #define PIN_WFCK_CLEAR  PORTB &= ~(1 << PB4) // Drive line LOW
 
-  // Define pull-ups set down at the main pin
-  #define PIN_DATA_CLEAR PORTB &= ~(1 << PB2)
-  #define PIN_WFCK_CLEAR PORTB &= ~(1 << PB4)
+  // Direct Register Reading (High-speed polling)
+  #define PIN_SQCK_READ   (PINB & (1 << PINB0))
+  #define PIN_SUBQ_READ   (PINB & (1 << PINB1))
+  #define PIN_WFCK_READ   (PINB & (1 << PINB4))
 
-  // Read the main pins
-  #define PIN_SQCK_READ (PINB & (1 << PINB0))
-  #define PIN_SUBQ_READ (PINB & (1 << PINB1))
-  #define PIN_WFCK_READ (PINB & (1 << PINB4))
-
-  #define TIMER_INTERRUPT_ENABLE TIMSK |= (1 << OCIE0A)
-  #define TIMER_INTERRUPT_DISABLE TIMSK &= ~(1 << OCIE0A)
-
-  // Handling and use of the LED pin
+  // --- Status Indication (LED) ---
   #ifdef LED_RUN
-    #define PIN_LED_OUTPUT DDRB |= (1 << DDB3)
-    #define PIN_LED_ON PORTB |= (1 << PB3)
-    #define PIN_LED_OFF PORTB &= ~(1 << PB3)
+    #define PIN_LED_OUTPUT DDRB  |=  (1 << DDB3) // LED on PB3
+    #define PIN_LED_ON     PORTB |=  (1 << PB3)
+    #define PIN_LED_OFF    PORTB &= ~(1 << PB3)
   #endif
 
-  #if defined(SCPH_1000) || defined(SCPH_3000) || defined(SCPH_3500_5000) || defined(SCPH_5500) || defined(SCPH_7000_9000) || defined(SCPH_100) || defined(SCPH_102_legacy) || defined(SCPH_102) 
-   #error "ATtiny85_45_25 Not compatible with BIOS patch"
-  #endif
-
+  // --- Debug Serial (Software Serial) ---
   #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
     #include <SoftwareSerial.h>
-    SoftwareSerial mySerial(-1, 3); // RX, TX. (RX -1 = off)
+    // SoftwareSerial(RX, TX): RX set to -1 (disabled), TX on PB3
+    // Note: Resource conflict if LED_RUN is also on PB3
+    SoftwareSerial mySerial(-1, 3); 
     #define PIN_TXD_OUTPUT DDRB |= (1 << DDB3)
-    // #define DEBUG_PRINT(x)     mySerial.print(x)
-    // #define DEBUG_PRINTHEX(x)  mySerial.print(x, HEX)
-    // #define DEBUG_PRINTLN(x)   mySerial.println(x)
-    // #define DEBUG_FLUSH        mySerial.flush()
   #endif
 
+  // --- Safety Check: BIOS Patch Compatibility ---
+  #if defined(SCPH_1000)      || \
+      defined(SCPH_3000)      || \
+      defined(SCPH_3500_5000) || \
+      defined(SCPH_5500)      || \
+      defined(SCPH_7000)      || \
+      defined(SCPH_7500_9000) || \
+      defined(SCPH_100)       || \
+      defined(SCPH_102) 
+    #error "ATtiny85/45/25 architecture is not compatible with the BIOS patch feature."
+  #endif
 #endif
 
 // *****************************************************************************************************************
