@@ -1,4 +1,4 @@
-# PSNee V8.7
+# PSNee V9.0
 THE modechip supports the largest number of Playstation 1 variants, and the largest number of microcontrollers
 # For all useful information consult the ![Wiki](https://github.com/kalymos/PsNee/wiki)
 
@@ -11,7 +11,7 @@ THE modechip supports the largest number of Playstation 1 variants, and the larg
 - The mode does not take care of changing PAL <-> NTSC video output (in other words if you use a Japanese console and you put European games, or in older European models you use American or Japanese games... the display will not be correct)
 
 ## Supported Playstation 1
-All US models, all European models, and the vast majority of Japanese models.
+All US models, all European models, and the Japanese models.
 
 ## Supported platforms
 - ATmega328(A/P/PA) @16Mhz  
