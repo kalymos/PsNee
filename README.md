@@ -1,7 +1,7 @@
 # PSNee V9.0
 This modchip supports the widest range of PlayStation 1 models and the largest variety of microcontrollers.
 
-For all useful information, please consult the [Wiki](https://github.com/kalymos/PsNee/wiki).
+#For all useful information, please consult the [Wiki](https://github.com/kalymos/PsNee/wiki).
 
 ![Logo](/images/PSNee-9.0-logo.png)
 
