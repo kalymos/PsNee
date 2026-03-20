@@ -18,8 +18,12 @@ All US models, all European models, and the vast majority of Japanese models.
 - ATmega168(A/P/PA) @16Mhz
 - Atmega32U4        @16Mhz
 - ATtiny25/45/85    @8Mhz no BIOS patch!
+> [!CAUTION]
+> **BIOS Patching:** Timing for PB-series (328PB/128PB) is currently unoptimized.  
+> For stable BIOS patching, use A/P/PA or 32U4 variants.
+
 
 ## Model that I personally tested
-![test](images/test-PSNee-v8.6.png)
+![test](images/test-mat.png)
 Example of gray image  
 ![gray](https://github.com/kalymos/PsNee/blob/master/images/issue/gray-screens.png)
