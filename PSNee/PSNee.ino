@@ -1,136 +1,125 @@
+
 //                           PSNee-V9.0
+/*********************************************************************************************************************
+ *   CONSOLE MODEL SELECTION (SCPH Hardware Configuration)
+ *********************************************************************************************************************/
+/*--------------------------------------------------------------------------------------------------------------------
+ * Models below do not require BIOS patching. 
+ * Standard USB injection is supported.
+ *
+ *  SCPH model number //  region code | region
+ *--------------------------------------------------------------------------------------------------------------------*/
+ #define SCPH_xxx1  //  NTSC U/C    | America.
+// #define SCPH_xxx2  //  PAL         | Europ.
+// #define SCPH_xxx3  //  NTSC J      | Asia.
+// #define SCPH_xxxx  //  Universal
 
-/*------------------------------------------------------------------------------------------------
-                          Console selection
---------------------------------------------------------------------------------------------------
-
-   No BIOS patching. 
-   You can use injection via USB.
-
-   SCPH model number //  region code | region
--------------------------------------------------------------------------------------------------*/
-
-#define SCPH_xxx1  //  NTSC U/C    | America.
-//#define SCPH_xxx2  //  PAL         | Europ.
-//#define SCPH_xxx3  //  NTSC J      | Asia.
-//#define SCPH_xxxx  //  Universal
-
-//#define SCPH_5903  //  NTSC J      | Asia VCD:
-
-// Models that require a BIOS patch.
-
-/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-                              Caution!
-
- It is only possible to inject the code via ISP! 
-
- For the patch to work, the BIOS version is more important than the SCPH number.
- 
- The delay in starting up caused by the bootloader of the Arduino cards prevents the injection of the BIOS patch within the delay,
- that's why you have to use the ISP which eliminates the bootloader.
- 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// #define SCPH_5903  //  NTSC J      | Asia VCD:
 
 
-                                      |                Adres pin            |
-     SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
--------------------------------------------------------------------------------------------------*/
-//#define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
-//#define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
-//#define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
-//#define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
-//#define SCPH_3500_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
-//#define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
-//#define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
+/*------------------------------------------------------------------------------------------------------------------
+ * WARNING: These models REQUIRE a BIOS patch.
+ *
+ * ISP programming is MANDATORY. 
+ * The Arduino bootloader introduces a delay that prevents the BIOS patch injection.
+ * Using an ISP programmer eliminates this delay.
+ * 
+ * Note: BIOS version is more critical than the SCPH number for patch success.
+ *-------------------------------------------------------------------------------------------------------------------
+ *
+ *                                    |                Adres pin            |
+ *   SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
+ *------------------------------------------------------------------------------------------------------------------*/
+// #define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
+// #define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
+// #define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+// #define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
+// #define SCPH_3500_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
+// #define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
+// #define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
-/*------------------------------------------------------------------------------------------------
-                           Options
-------------------------------------------------------------------------------------------------*/
+/*******************************************************************************************************************
+ *                           Options
+ *******************************************************************************************************************/
 
-#define LED_RUN         // Turns on the LED when injections occur.
-//                         D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
+#define LED_RUN                       // Turns on the LED when injections occur.
+//                                       D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series,
+//                                       ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
 
+// #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
 
-//#define PSNEE_DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
-/*                                       Requires compilation with Arduino libs!
-                                         For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
-                                           Arduino   |   ATtiny
-                                           ---------------------
-                                           TXD--RXD  |  PB3--RXD
-                                           GND--GND  |  GND--GND */
+/******************************************************************************************************************
+ *  Requires compilation with Arduino libs!
+ *  For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
+ *          Arduino   |   ATtiny
+ *          ---------------------
+ *          TXD--RXD  |  PB3--RXD
+ *          GND--GND  |  GND--GND 
+ *******************************************************************************************************************/
 
-/*------------------------------------------------------------------------------------------------
-                          Hysteresis 
-------------------------------------------------------------------------------------------------*/
-#define HYSTERESIS_MAX 25       // Coupled with hysteresis-reset post-injection; allows for a 
-                                // wider tuning range without drifting out of the sweet spot 
-                                // between hysteresis_max and hysteresis_reset.
+/******************************************************************************************************************
+ *           Summary of practical information. Fuses. Pinout
+ *******************************************************************************************************************
+ * Fuses  
+ * MCU    | High | Low | Extended
+ * --------------------------------------------------
+ * ATmega | DF   | EE  | FF 
+ * ATtiny | DF   | E2  | FF
+ *
+ * Pinout
+ * Arduino   | PSNee     |
+ * ---------------------------------------------------
+ * VCC       | VCC       |
+ * GND       | GND       |
+ * RST       | RESET     | Only for JAP_FAT
+ * D2        | BIOS AX   | Only for Bios patch
+ * D3        | BIOS AY   | Only for BIOS patch ver, 1.0j, 1.1j
+ * D4        | BIOS DX   | Only for Bios patch
+ * D5        | SWITCH    | Optional for disabling Bios patch
+ * D6        | SQCK      |
+ * D7        | SUBQ      |
+ * D8        | DATA      |
+ * D9        | WFCK |
+ * D13 ^ D10 | LED       | D10 only for ATmega32U4_16U4
+ *
+ * ATtiny | PSNee        | ISP   |
+ * ---------------------------------------------------
+ * Pin1   |              | RESET |
+ * Pin2   | LED ^ serial |       | serial only for PSNEE_DEBUG_SERIAL_MONITOR
+ * Pin3   | WFCK         |       |
+ * Pin4   | GND          | GND   |
+ * Pin5   | SQCK         | MOSI  |
+ * Pin6   | SUBQ         | MISO  |
+ * Pin7   | DATA         | SCK   |
+ * Pin8   | VCC          | VCC   |
+ *******************************************************************************************************************/
 
-/*------------------------------------------------------------------------------------------------
-            Summary of practical information. Fuses. Pinout
-------------------------------------------------------------------------------------------------*/
-
-/*  
-  Fuses  
-  MCU    | High | Low | Extended
-  --------------------------------------------------
-  ATmega | DF   | EE  | FF 
-  ATtiny | DF   | E2  | FF
-
-  Pinout
-  Arduino   | PSNee     |
-  ---------------------------------------------------
-  VCC       | VCC       |
-  GND       | GND       |
-  RST       | RESET     | Only for JAP_FAT
-  D2        | BIOS AX   | Only for Bios patch
-  D3        | BIOS AY   | Only for BIOS patch ver, 1.0j, 1.1j
-  D4        | BIOS DX   | Only for Bios patch
-  D5        | SWITCH    | Optional for disabling Bios patch
-  D6        | SQCK      |
-  D7        | SUBQ      |
-  D8        | DATA      |
-  D9        | WFCK |
-  D13 ^ D10 | LED       | D10 only for ATmega32U4_16U4
-
-  ATtiny | PSNee        | ISP   |
-  ---------------------------------------------------
-  Pin1   |              | RESET |
-  Pin2   | LED ^ serial |       | serial only for PSNEE_DEBUG_SERIAL_MONITOR
-  Pin3   | WFCK         |       |
-  Pin4   | GND          | GND   |
-  Pin5   | SQCK         | MOSI  |
-  Pin6   | SUBQ         | MISO  |
-  Pin7   | DATA         | SCK   |
-  Pin8   | VCC          | VCC   |
-*/
-
-/*------------------------------------------------------------------------------------------------
-                         pointer and variable section
-------------------------------------------------------------------------------------------------*/
+/*******************************************************************************************************************
+ *                        pointer and variable section
+ *******************************************************************************************************************/
 
 #include "MCU.h"
 #include "settings.h"
 #include "BIOS_patching.h"
 
 
-//Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
-uint8_t wfck_mode = 0;
+uint8_t wfck_mode = 0;  //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
+uint8_t SUBQBuffer[12]; // Global buffer to store the 12-byte SUBQ channel data
 
-// Variables de contrôle globales 
-// Global buffer to store the 12-byte SUBQ channel data
-uint8_t subqBuffer[12]; 
+#define HYSTERESIS_MAX 25             // Coupled with hysteresis-reset post-injection; allows for a 
+//                                       wider tuning range without drifting out of the sweet spot 
+//                                       between hysteresis_max and hysteresis_reset.
+
 uint8_t hysteresis = 0;
 
-  //Initializing values ​​for region code injection timing
-#define DELAY_BETWEEN_BITS 4000      // 250 bits/s (microseconds) (ATtiny 8Mhz works from 3950 to 4100) PU-23 PU-22 MAX 4250 MIN 3850
-
-/*------------------------------------------------------------------------------------------------
-                         Code section
-------------------------------------------------------------------------------------------------*/
 
 
-/*----------------------------------------------------------------------
+/*******************************************************************************************************************
+ *                         Code section
+ ********************************************************************************************************************/
+
+
+/*******************************************************************************************************************
  * FUNCTION    : BoardDetection
  * 
  * DESCRIPTION : 
@@ -156,11 +145,12 @@ uint8_t hysteresis = 0;
  *    - Initial/Protection Phase: ~7.3 kHz.
  *    - Standard Data Reading: ~14.6 kHz.
  *
- *-----------------------------------------------------------------------*/
+ *******************************************************************************************************************/
 
 void BoardDetection() {
   // Default state: 0 (Static/GATE mode for PU-7 to PU-20)
   wfck_mode = 0;
+  uint8_t debounce = 100;
 
   /**
     * INITIAL STABILIZATION DELAY (300ms)
@@ -181,7 +171,6 @@ void BoardDetection() {
       */
     if (!PIN_WFCK_READ) {
       // Software debounce to filter out micro-glitches or parasitic noise
-      uint8_t debounce = 100;
       while (--debounce);
 
       /**
@@ -198,7 +187,7 @@ void BoardDetection() {
   }
 
   #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-    Debug_Log(debounce, wfck_mode);
+    BoardDetectionLog(debounce, wfck_mode, INJECT_SCEx);
   #endif
 }
 
@@ -209,14 +198,14 @@ void BoardDetection() {
  * 
  * DESCRIPTION : 
  *    Captures a complete 12-byte SUBQ frame from the CD controller.
- *    Synchronizes with the SQCK (Sub-Q Clock) pin to shift in serial data from 
+ *    Synchronizes with the SQCK (SUBQ Clock) pin to shift in serial data from 
  *    the SUBQ pin. This implementation follows the standard PlayStation CDIC 
  *    protocol (Synchronous Serial, LSB first).
  ******************************************************************************************************************/
 
 void CaptureSUBQ(void) {
   uint8_t bytesRemaining = 12; // Total frame size for a complete SUBQ
-  uint8_t* bufferPtr = subqBuffer;
+  uint8_t* bufferPtr = SUBQBuffer;
 
   do {
     uint8_t currentByte = 0;
@@ -247,7 +236,7 @@ void CaptureSUBQ(void) {
   } while (--bytesRemaining); // Efficient countdown for AVR binary size
 
   #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-    LogSUBQ(subqBuffer);
+    CaptureSUBQLog(SUBQBuffer);
   #endif
 }
 
@@ -275,8 +264,8 @@ void CaptureSUBQ(void) {
 
     // --- STEP 1: SUBQ Frame Synchronization ---
     // Fast filtering: ignore raw data if sync markers (index 1 and 6) are not 0x00.
-    if (subqBuffer[1] == 0x00 && subqBuffer[6] == 0x00) {
-        uint8_t pointAddress = subqBuffer[2];
+    if (SUBQBuffer[1] == 0x00 && SUBQBuffer[6] == 0x00) {
+        uint8_t pointAddress = SUBQBuffer[2];
 
         /** 
          * HIT INCREMENT CONDITIONS:
@@ -284,8 +273,8 @@ void CaptureSUBQ(void) {
          *    (uint8_t)(pointAddress - 0xA0) <= 2 is an optimized check for 0xA0, 0xA1, 0xA2.
          * B. TRACKING MAINTENANCE: Keeps count if already synced and reading Mode 0x01 or Data.
          */
-        if ( (isDataSector && (uint8_t)(pointAddress - 0xA0) <= 2 && subqBuffer[3] != 0x02) ||
-             (currentHysteresis > 0 && (subqBuffer[0] == 0x01 || isDataSector)) ) 
+        if ( (isDataSector && (uint8_t)(pointAddress - 0xA0) <= 2 && SUBQBuffer[3] != 0x02) ||
+             (currentHysteresis > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
         {
             hysteresis = currentHysteresis + 1;
             return;
@@ -316,23 +305,30 @@ void CaptureSUBQ(void) {
  * INPUT       : isDataSector (bool) - Filtered flag based on raw sector control bits.
  ******************************************************************************************/
 
-
 void FilterSUBQSamples(uint8_t isDataSector) {
     uint8_t currentHysteresis = hysteresis;
 
     // --- STEP 1: SUBQ Frame Synchronization ---
     // Ignore the raw bitstream unless sync markers (1 & 6) are 0x00.
-    if (subqBuffer[1] == 0x00 && subqBuffer[6] == 0x00) {
-        uint8_t pointAddress = subqBuffer[2];
+    if (SUBQBuffer[1] == 0x00 && SUBQBuffer[6] == 0x00) {
+        uint8_t pointAddress = SUBQBuffer[2];
+
+    // uint8_t syncMarker1 = SUBQBuffer[1];
+    // uint8_t syncMarker2 = SUBQBuffer[6];
+
+    // if (syncMarker1 == 0x00 && syncMarker2 == 0x00) {
+    //     uint8_t addrControl  = SUBQBuffer[0];
+    //     uint8_t pointAddress = SUBQBuffer[2];
+    //     uint8_t trackNumber  = SUBQBuffer[3];
         
         /*
          * HIT INCREMENT CONDITIONS:
          * A. LEAD-IN PATTERNS: Detects TOC markers (A0-A2) or Track 01 at spiral start.
-         *    (uint8_t)(subqBuffer[3] - 0x03) >= 0xF5 handles the 0x98 to 0x02 wrap-around.
+         *    (uint8_t)(SUBQBuffer[3] - 0x03) >= 0xF5 handles the 0x98 to 0x02 wrap-around.
          * B. TRACKING LOCK: Maintains count if already synced and reading valid sectors.
          */
-        if ( (isDataSector && (pointAddress >= 0xA0 || (pointAddress == 0x01 && ( (uint8_t)(subqBuffer[3] - 0x03) >= 0xF5)))) || 
-             (currentHysteresis > 0 && (subqBuffer[0] == 0x01 || isDataSector)) ) 
+        if ( (isDataSector && (pointAddress >= 0xA0 || (pointAddress == 0x01 && ( (uint8_t)(SUBQBuffer[3] - 0x03) >= 0xF5)))) || 
+             (currentHysteresis > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
         {
             hysteresis = currentHysteresis + 1;
             return;
@@ -374,15 +370,15 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
       { 0x59, 0xC9, 0x4B, 0x5D, 0xFA, 0x02 }, // SCEA
       { 0x59, 0xC9, 0x4B, 0x5D, 0xEA, 0x02 }  // SCEE
   };
-
-
+  
+  const uint16_t BIT_DELAY = 4000; // 4000us is the standard bit timing for SCEx signal (approx. 250 bps)
+  const uint8_t isWfck = wfck_mode; // Cache wfck_mode to save CPU cycles during the bit loop
   hysteresis = (HYSTERESIS_MAX - 10);  // Reset hysteresis to mid-point after triggering
+
   #ifdef LED_RUN
       PIN_LED_ON;
   #endif
 
-  // Cache wfck_mode to save CPU cycles during the bit loop
-  uint8_t isWfck = wfck_mode; 
   PIN_DATA_OUTPUT; 
   PIN_DATA_CLEAR;
 
@@ -416,13 +412,13 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
           // BIT 0: Pull DATA low-
           PIN_DATA_CLEAR;
           if (!isWfck) PIN_DATA_OUTPUT; 
-          _delay_us(DELAY_BETWEEN_BITS);
+          _delay_us(BIT_DELAY);
       } else {
         // BIT 1: Handle based on board generation
         if (!isWfck) {
           // Legacy Mode: Set DATA to High-Z (floating)
             PIN_DATA_INPUT; 
-            _delay_us(DELAY_BETWEEN_BITS);
+            _delay_us(BIT_DELAY);
         } else {
           /* 
               WFCK Modulation Loop: Syncs to 7.3kHz or 14.6kHz.
@@ -476,7 +472,7 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
 
 
   #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-  DebugInject();
+  InjectLog();
   #endif
 }
 
@@ -522,7 +518,7 @@ void Init() {
   // --- Console Analysis ---
   // Identify board revision (PU-7 to PU-22+) to set correct injection timings
   BoardDetection();
-  }
+}
 
 int main() {
 
@@ -540,14 +536,17 @@ int main() {
     // Masking bits 7, 6, and 4 simultaneously using 0xD0 (binary 11010000).
     // This verifies that the "Data/TOC" bit (0x40) is SET, while bits 7 and 4 are CLEARED.
     // Equivalent to: (bit7 == 0 && bit6 == 1 && bit4 == 0).
-    //uint8_t isDataSector = ((scbuf[0] & 0xD0) == 0x40);
-    uint8_t isDataSector = ((subqBuffer[0] & 0xD0) == 0x40);
+    // uint8_t firstByte = SUBQBuffer[0];
+    // uint8_t isDataSector = ((firstByte & 0xD0) == 0x40);
+    uint8_t isDataSector = ((SUBQBuffer[0] & 0xD0) == 0x40);
 
       
     // Execute selected logic 
     FilterSUBQSamples(isDataSector);
 
     // 5. Execution: Trigger SCEx injection once confidence (hysteresis) is reached
+    //     uint8_t currentHysteresis = hysteresis; 
+    // if (currentHysteresis >= HYSTERESIS_MAX) {
     if (hysteresis >= HYSTERESIS_MAX) {
         PerformInjectionSequence(INJECT_SCEx);
     }

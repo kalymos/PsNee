@@ -210,115 +210,90 @@
 
 #endif
 
-
-
 /*------------------------------------------------------------------------------------------------
                serial debug section
 ------------------------------------------------------------------------------------------------*/
 
-#if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+#if defined(DEBUG_SERIAL_MONITOR)
+extern uint8_t hysteresis;
 
-void Debug_Log (uint16_t debounce, int Wfck_mode){          //Information about the MCU, and old or late console mode.
+void BoardDetectionLog (uint16_t debounce, uint8_t Wfck_mode, uint8_t region){          //Information about the MCU, and old or late console mode.
 
 #if  defined(IS_ATTINY_FAMILY)
   mySerial.print("m "); mySerial.println(Wfck_mode);
 #else
-  Serial.print(" MCU frequency: "); Serial.print(F_CPU); Serial.println(" Hz");
+  static const char* regionNames[] = {
+    "NTSC-J",    // 0
+    "NTSC-U/C",  // 1
+    "PAL",       // 2
+    "Universal"  // 3
+  };
+  Serial.print(F(" MCU frequency: ")); Serial.print(F_CPU / 1000000L); Serial.println(F(" MHz"));
   Serial.print(" debounce: "); Serial.println(debounce);
   Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
-  Serial.print(" region: "); Serial.print(region[0]); Serial.print(region[1]); Serial.println(region[2]);
+  Serial.print(" region: "); Serial.print(regionNames[region]);
 #endif
 }
 
-  // log SUBQ packets. We only have 12ms to get the logs written out. Slower MCUs get less formatting.
-void Debug_Scbuf (uint8_t *Scbuf){         // Data from the DATA bus
-#if defined(IS_ATTINY_FAMILY)
-  if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) { // a bad sector read is all 0 except for the CRC fields. Don't log it.
-    for (int i = 0; i < 12; i++) {
-      if (Scbuf[i] < 0x10) {
-        mySerial.print("0"); // padding
-    #if  defined(IS_ATTINY_FAMILY)
-      // --- COMPACT SYSTEM LOG (ATtiny) ---
-      // Minimalistic output to save CPU cycles and maintain timing precision.
-      mySerial.print("m "); 
-      mySerial.println(Wfck_mode); // Mode indicator
-    #else
-      // --- VERBOSE DIAGNOSTICS (ATmega) ---
-      // Detailed system information for standard development and debugging.
-      Serial.print(" MCU frequency: "); 
-      Serial.print(F_CPU); 
-      Serial.println(" Hz");
 
-      Serial.print(" wfck_mode: "); 
-      Serial.println(Wfck_mode); // Board generation (0: Legacy, 1: Modern)
-
-      Serial.print(" region: "); 
-      Serial.print(region[0]); 
-      Serial.print(region[1]); 
-      Serial.println(region[2]); // Active injection string (e.g., SCEE)
-    #endif
-  }
-#endif
-/******************************************************************************************
- * FUNCTION    : LogSUBQ
- * 
- * DESCRIPTION : 
- *    Logs captured SUBQ frames to the serial interface.
- *    Timing is critical: the entire 12-byte frame must be processed and transmitted 
- *    within the ~12ms window before the next SUBQ packet arrives.
- * 
- *    - ATtiny: Uses minimal formatting (no spaces) to stay within the timing budget.
- *    - Standard MCUs: Includes spaces for better readability.
- * 
- * INPUT       : dataBuffer (uint8_t*) - Pointer to the 12-byte SUBQ frame.
- ******************************************************************************************/
-
-void LogSUBQ(uint8_t *dataBuffer) {
+void CaptureSUBQLog(uint8_t *dataBuffer) {
+  static uint16_t errorCount = 0; // Tracks missed sectors between valid reads
   
-  /** 
-   * ERROR FILTERING:
-   * A failed sector read usually results in zeroed data (excluding CRC).
-   * Skip logging if the first 4 bytes are null to reduce bus traffic.
-   */
-  if (!(dataBuffer[0] == 0 && dataBuffer[1] == 0 && dataBuffer[2] == 0 && dataBuffer[3] == 0)) {
+  // Cache the first 4 bytes for a quick null check (failed read)
+  uint8_t b0 = dataBuffer[0], b1 = dataBuffer[1], b2 = dataBuffer[2], b3 = dataBuffer[3];
+
+  // --- ERROR FILTERING ---
+  // If the sector is empty (all zeros), increment error counter and exit
+  if (b0 == 0 && b1 == 0 && b2 == 0 && b3 == 0) {
+    errorCount++; 
+    return;
+  }
+
+  // --- ERROR REPORTING ---
+  // If errors occurred before this valid read, report the total count
+  if (errorCount > 0) {
+    #if defined(IS_ATTINY_FAMILY)
+      mySerial.print(F(" [Err x")); mySerial.print(errorCount); mySerial.println(F("]"));
+    #else
+      Serial.print(F(" [Missed sectors: ")); Serial.print(errorCount); Serial.println(F("]"));
+    #endif
+    errorCount = 0; // Reset counter after reporting
+  }
+
+  // --- DATA & HYSTERESIS DISPLAY ---
+  #if defined(IS_ATTINY_FAMILY)
+    // Compact hex output for ATtiny to maintain 12ms timing
+    for (uint8_t i = 0; i < 12; i++) {
+      uint8_t val = dataBuffer[i];
+      if (val < 0x10) mySerial.print("0"); 
+      mySerial.print(val, HEX);
+    }
+    // Append global hysteresis on the same line
+    mySerial.print(F(" h:")); 
+    mySerial.println(hysteresis); 
+  #else
+    // Formatted hex output for ATmega
+    for (uint8_t i = 0; i < 12; i++) {
+      uint8_t val = dataBuffer[i];
+      if (val < 0x10) Serial.print("0");
+      Serial.print(val, HEX); 
+      Serial.print(" ");
+    }
+    // Append global hysteresis on the same line
+    Serial.print(F("| Hyst: ")); 
+    Serial.println(hysteresis); 
+  #endif
+}
+
+
+
+void InjectLog(){     
 
   #if defined(IS_ATTINY_FAMILY)
-      // --- COMPACT FORMATTING (ATtiny) ---
-      // Minimal formatting to meet the strict 12ms timing constraint on slower MCUs.
-      for (uint8_t i = 0; i < 12; i++) {
-        if (dataBuffer[i] < 0x10) {
-          mySerial.print("0"); // Leading zero padding for hex alignment
-
-        }
-        mySerial.print(Scbuf[i, HEX]);
-      }
-    mySerial.println("");
-    }
-  #elif !defined(IS_ATTINY_FAMILY)
-    if (!(Scbuf[0] == 0 && Scbuf[1] == 0 && Scbuf[2] == 0 && Scbuf[3] == 0)) {
-      for (int i = 0; i < 12; i++) {
-        if (Scbuf[i] < 0x10) {
-          Serial.print("0"); // padding
-        }
-        Serial.print(Scbuf[i], HEX);
-        Serial.print(" ");
-      }
-      Serial.println("");
-    }
-  #endif
-  }
-
-void Debug_Inject(){       // Confirmation of region code injection
-
-
-#if defined(IS_ATTINY_FAMILY)
-    // --- MINIMALIST NOTIFICATION (ATtiny) ---
-    mySerial.print("!"); 
-#else
-    // --- VERBOSE NOTIFICATION (ATmega) ---
-    // Standard visual feedback for debugging and monitoring.
+    mySerial.print("!"); // --- MINIMALIST NOTIFICATION (ATtiny) ---
+  #else
     Serial.println("           INJECT ! ");
-#endif
+  #endif
 }
 
 #endif
