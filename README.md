@@ -24,6 +24,6 @@ All US models, all European models, and the Japanese models.
 
 
 ## Model that I personally tested
-![test](images/test-mat)
+![test](images/test-mat.png)
 Example of gray image  
 ![gray](https://github.com/kalymos/PsNee/blob/master/images/issue/gray-screens.png)
