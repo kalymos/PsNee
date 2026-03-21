@@ -109,9 +109,9 @@
 uint8_t wfck_mode = 0;  //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
 uint8_t SUBQBuffer[12]; // Global buffer to store the 12-byte SUBQ channel data
 
-#define HYSTERESIS_MAX 25             // Coupled with hysteresis-reset post-injection; allows for a 
-//                                       wider tuning range without drifting out of the sweet spot 
-//                                       between hysteresis_max and hysteresis_reset.
+#define HYSTERESIS_MAX 25  // Now coupled with post-injection reset; allows for higher 
+                           // initial accumulation targets without the alignment drift 
+                           // (desync) previously affecting SCPH-100x models.
 
 uint8_t hysteresis = 0;
 
@@ -582,7 +582,10 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
   
   const uint16_t BIT_DELAY = 4000; // 4000us is the standard bit timing for SCEx signal (approx. 250 bps)
   const uint8_t isWfck = wfck_mode; // Cache wfck_mode to save CPU cycles during the bit loop
-  hysteresis = (HYSTERESIS_MAX - 6);  // Reset hysteresis to mid-point after triggering
+
+  hysteresis = (HYSTERESIS_MAX - 6);  // Coupled HYSTERESIS_MAX with hysteresis-reset post-injection; allows for a 
+//                                       wider tuning range of HYSTERESIS_MAX without drifting out of the sweet spot 
+//                                       between hysteresis_max and hysteresis_reset.
 
   #ifdef LED_RUN
       PIN_LED_ON;
