@@ -217,6 +217,12 @@
 #if defined(DEBUG_SERIAL_MONITOR)
 extern uint8_t hysteresis;
 
+  #if defined(IS_32U4_FAMILY)
+    #define DEBUG_OUT Serial1
+  #else
+    #define DEBUG_OUT Serial
+  #endif
+
 void BoardDetectionLog (uint16_t window_result, uint8_t Wfck_mode, uint8_t region){          //Information about the MCU, and old or late console mode.
 
 #if  defined(IS_ATTINY_FAMILY)
@@ -228,12 +234,13 @@ void BoardDetectionLog (uint16_t window_result, uint8_t Wfck_mode, uint8_t regio
     "PAL",       // 2
     "Universal"  // 3
   };
-  Serial.println(" ");
-  Serial.print(F(" MCU frequency: ")); Serial.print(F_CPU / 1000000L); Serial.println(F(" MHz"));
-  Serial.print(F(" Window remaining: ")); Serial.println(window_result); // Real-time diagnostic
-  Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
-  Serial.print(" region: "); Serial.print(regionNames[region]);
-  Serial.println(" ");
+
+  DEBUG_OUT.println("");
+  DEBUG_OUT.print(F(" CPU Speed: ")); DEBUG_OUT.print(F_CPU / 1000000L); DEBUG_OUT.println(F(" MHz"));
+  DEBUG_OUT.print(F(" Sync Window: ")); DEBUG_OUT.println(window_result); // Real-time diagnostic
+  DEBUG_OUT.print(F(" WFCK Mode: ")); DEBUG_OUT.println(Wfck_mode);
+  DEBUG_OUT.print(F(" Region ID: ")); DEBUG_OUT.println(regionNames[region]);
+  DEBUG_OUT.println("");
 #endif
 
 }
@@ -258,7 +265,7 @@ void CaptureSUBQLog(uint8_t *dataBuffer) {
     #if defined(IS_ATTINY_FAMILY)
       mySerial.print(F(" [Err x")); mySerial.print(errorCount); mySerial.println(F("]"));
     #else
-      Serial.print(F(" [Missed sectors: ")); Serial.print(errorCount); Serial.println(F("]"));
+      DEBUG_OUT.print(F(" [Missed sectors: ")); DEBUG_OUT.print(errorCount); DEBUG_OUT.println(F("]"));
     #endif
     errorCount = 0; // Reset counter after reporting
   }
@@ -278,13 +285,13 @@ void CaptureSUBQLog(uint8_t *dataBuffer) {
     // Formatted hex output for ATmega
     for (uint8_t i = 0; i < 12; i++) {
       uint8_t val = dataBuffer[i];
-      if (val < 0x10) Serial.print("0");
-      Serial.print(val, HEX); 
-      Serial.print(" ");
+      if (val < 0x10) DEBUG_OUT.print("0");
+      DEBUG_OUT.print(val, HEX); 
+      DEBUG_OUT.print(" ");
     }
     // Append global hysteresis on the same line
-    Serial.print(F("| Hyst: ")); 
-    Serial.println(hysteresis); 
+    DEBUG_OUT.print(F("| Hyst: ")); 
+    DEBUG_OUT.println(hysteresis); 
   #endif
 }
 
@@ -295,7 +302,7 @@ void InjectLog(){
   #if defined(IS_ATTINY_FAMILY)
     mySerial.print("!"); // --- MINIMALIST NOTIFICATION (ATtiny) ---
   #else
-    Serial.println("           INJECT ! ");
+    DEBUG_OUT.println("           INJECT ! ");
   #endif
 }
 

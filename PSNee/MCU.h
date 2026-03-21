@@ -298,7 +298,7 @@
       // 3. Digital Input Buffer Disable (DIDR0 & DIDR2)
       // 32U4 has more analog channels (ADC0-ADC7 and ADC8-ADC13)
       DIDR0 = 0xFF; // Disable digital buffers on F0-F7
-      DIDR2 = 0x3F; // Disable digital buffers on D4, D6, D7, B4, B5, B6
+      //DIDR2 = 0x3F; // Disable digital buffers on D4, D6, D7, B4, B5, B6
 
       // 4. GPIO Strategy (Unused pins to Pull-up)
       // On 32U4, Port C is small (only PC6/PC7). Adjusting to cover most unused pins.
@@ -318,7 +318,7 @@
       PRR1 = (1 << PRUSB)   | // Disable USB Controller (Stops SOF interrupts)
              (1 << PRTIM3)  | // Timer 3 Off
              (1 << 4)       | // Timer 4 Off (High speed timer)
-             (1 << PRUSART1);  // Disable Serial1 (UART)
+             (0 << PRUSART1); // KEEP SERIAL1 ACTIVE (PD1/TX1) - Must be 0
 
       // 6. Double Security for Timer 0 (Redundancy)
       TCCR0B = 0;
@@ -857,5 +857,147 @@
 
   #endif // BIOS Patching
 #endif
+
+/*
+ *  Portability Note: The non-ISR (polling-based) version of the code is maintained
+ *  to facilitate porting to other platforms and architectures that may not support
+ *  AVR-specific hardware interrupts.
+ *
+ *  Stability Limitation: While the polling version is more portable, it was found
+ *  that at 16MHz, achieving consistent DATA OVERDRIVE stability is nearly impossible
+ *  without using a Hardware ISR. The latency and jitter of software polling at this
+ *  frequency are too high to guarantee a sub-microsecond cycle-accurate injection.
+ *  Therefore, for ATmega328P @ 16MHz, the ISR-driven implementation remains the
+ *  tandard.
+ */
+
+// #ifdef BIOS_PATCH
+
+// volatile uint8_t impulse = 0;
+// volatile uint8_t patch = 0;
+
+
+//     ISR(PIN_AX_INTERRUPT_VECTOR) {
+//         //impulse--;
+//         if (--impulse == 0){           // If impulse reaches the value defined by TRIGGER, the following actions are performed:
+//         // Precise cycle-accurate delay before triggering
+//             __builtin_avr_delay_cycles(BIT_OFFSET_CYCLES);
+
+//             #ifdef PHASE_TWO_PATCH
+//                 PIN_DX_SET;
+//             #endif
+
+//             PIN_DX_OUTPUT; // Pull the line (Override start)
+//             __builtin_avr_delay_cycles(OVERRIDE_CYCLES);
+
+//             #ifdef PHASE_TWO_PATCH
+//                 PIN_DX_CLEAR; // Release the bus (Override end)
+//             #endif
+
+//             PIN_DX_INPUT;
+
+//             PIN_LED_OFF;
+//             PIN_AX_INTERRUPT_DISABLE;
+//             patch = 1;                       // patch is set to 1, indicating that the first patch is completed.
+//         }
+//     }
+
+//     #ifdef PHASE_TWO_PATCH
+
+
+//         ISR(PIN_AY_INTERRUPT_VECTOR){
+
+//             //impulse--;
+//             if (--impulse == 0)           // If impulse reaches the value defined by TRIGGER2, the following actions are performed:
+//             {
+//                 __builtin_avr_delay_cycles(BIT_OFFSET_2_CYCLES);
+
+//                 PIN_DX_OUTPUT;
+//                 __builtin_avr_delay_cycles(OVERRIDE_2_CYCLES);
+//                 PIN_DX_INPUT;
+
+//                 PIN_AY_INTERRUPT_DISABLE;
+//                 PIN_LED_OFF;
+//                 patch = 2;                       // patch is set to 2, indicating that the second patch is completed.
+//             }
+//         }
+//     #endif
+
+// // --- BIOS Patching Main Function ---
+// void Bios_Patching(void) {
+
+//     uint8_t current_confirms = 0;
+//     uint8_t count = 0;
+//     patch = 0;
+//     sei();
+//     PIN_AX_INPUT;
+//   // --- PHASE 1: Signal Stabilization & Alignment (AX) ---
+//   if (PIN_AX_READ != 0) {
+//       while  (WAIT_AX_FALLING);  // Wait for falling edge
+//       while  (WAIT_AX_RISING);   // Wait for next rising edge to sync
+//   } else {
+//       while (WAIT_AX_RISING);   // Wait for first rising edge
+//   }
+
+//   // --- PHASE 2: Silence Detection (AX) ---
+
+//   while (current_confirms < CONFIRM_COUNTER_TARGET) {
+//       uint16_t count = SILENCE_THRESHOLD;
+
+//       // --- Scan for ONE continuous block of silence ---
+//       while (count > 0) {
+//           if (PIN_AX_READ != 0) {
+//               while  (WAIT_AX_FALLING); // Pulse detected: wait for bus to clear
+//               break;                  // Reset and try a new silence block
+//           }
+//           count--;
+//       }
+
+//       // If count reaches 0, a silent block is validated
+//       if (count == 0) {
+//           current_confirms++;
+//       }
+//   }
+//     impulse = PULSE_COUNT;
+//   PIN_LED_ON;
+//     PIN_AX_INTERRUPT_RISING;
+//     PIN_AX_INTERRUPT_ENABLE;
+//     while (patch != 1);                   // Wait for the first stage of the patch to complete:
+
+//         //PIN_LED_OFF;
+//         // -------- Secondary Patch ----------
+//         #ifdef PHASE_TWO_PATCH
+
+//             current_confirms = 0;
+//             while (current_confirms < CONFIRM_COUNTER_TARGET_2) {
+//                 uint16_t count = SILENCE_THRESHOLD;
+
+//                 while (count > 0) {
+//                     if (PIN_AX_READ != 0) {
+
+//                         while  (WAIT_AX_FALLING);
+//                         break;
+//                     }
+//                     count--;
+//                 }
+
+//                 if (count == 0) {
+//                     current_confirms++;
+//                 }
+//             }
+
+//             PIN_LED_ON;
+//             impulse = PULSE_COUNT_2;
+//             PIN_AY_INTERRUPT_RISING;
+//             PIN_AY_INTERRUPT_ENABLE;
+
+//             while (patch != 2);                 // Wait for the second stage of the patch to complete:
+
+//         #endif
+
+//         cli();
+//     }
+// #endif
+
 
 

@@ -46,7 +46,7 @@
 //                                       D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series,
 //                                       ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
 
- #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
+// #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
 
 /******************************************************************************************************************
  *  Requires compilation with Arduino libs!
@@ -105,8 +105,6 @@
 
 #include "MCU.h"
 #include "settings.h"
-#include "BIOS_patching.h"
-
 
 uint8_t wfck_mode = 0;  //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
 uint8_t SUBQBuffer[12]; // Global buffer to store the 12-byte SUBQ channel data
@@ -124,7 +122,201 @@ uint8_t hysteresis = 0;
 /*******************************************************************************************************************
  *                         Code section
  ********************************************************************************************************************/
+/****************************************************************************************
+ *         FUNCTION    : Bios_Patching()
+ * **************************************************************************************
+ * 
+ * OPERATION   : Real-time Data Bus (DX) override via Address Bus (AX / AY)
+ *
+ * KEY PHASES:
+ *    1. STABILIZATION & ALIGNMENT (AX): 
+ *       Synchronizes the execution pointer with the AX rising edge to establish 
+ *        a deterministic hardware timing reference.
+ *
+ *    2. SILENCE DETECTION (BOOT STAGE): 
+ *       Validates consecutive silent windows (SILENCE_THRESHOLD) to identify 
+ *       the specific boot stage before the target address call.
+ *
+ *    3. HARDWARE COUNTING & OVERDRIVE (AX): 
+ *       Engages INT0 to count AX pulses. On the final pulse, triggers a 
+ *       bit-aligned delay to force a custom state on the DX line.
+ *
+ *    4. SECONDARY SILENCE (GAP DETECTION): 
+ *       If PHASE_TWO_PATCH is active, monitors for a secondary silent gap 
+ *       (CONFIRM_COUNTER_TARGET_2) between patching windows.
+ *
+ *    5. SECONDARY OVERDRIVE (AY): 
+ *       Engages INT1 (AY) for the final injection stage, synchronizing the 
+ *       patch with the secondary memory address cycles.
+ *
+ *  CRITICAL TIMING & TIMER-LESS ALIGNMENT:
+ *    - DETERMINISTIC SILENCE: Uses cycle-accurate polling to filter boot jitter 
+ *      and PS1 initialization noise, replacing unstable hardware timers.
+ *
+ *    - CYCLE STABILIZATION (16MHz LIMIT): Uses '__builtin_avr_delay_cycles' to 
+ *      prevent compiler reordering. At 16MHz, the CPU has zero margin; a single 
+ *      instruction displacement would break high-speed bus alignment.
+ *
+ **************************************************************************************/
 
+
+#ifdef BIOS_PATCH
+
+  /**
+  * Shared state variables between ISRs and the main patching loop.
+  * Declared 'volatile' to prevent compiler optimization during busy-wait loops.
+  */
+  volatile uint8_t impulse = 0; // Down-counter for physical address pulses
+  volatile uint8_t patch = 0;   // Synchronization flag (0: Idle, 1: AX Done, 2: AY Done)
+
+  /**
+  * PHASE 3: Primary Interrupt Service Routine (AX)
+  * Triggered on rising edges to perform the real-time bus override.
+  */
+  ISR(PIN_AX_INTERRUPT_VECTOR) {
+      if (--impulse == 0) {
+          // Precise bit-alignment delay within the memory cycle
+          __builtin_avr_delay_cycles(BIT_OFFSET_CYCLES);
+
+          #ifdef PHASE_TWO_PATCH
+              PIN_DX_SET; // Pre-drive high if required by specific logic
+          #endif
+
+          // DATA OVERDRIVE: Pull the DX bus to the custom state
+          PIN_DX_OUTPUT;
+          __builtin_avr_delay_cycles(OVERRIDE_CYCLES);
+
+          #ifdef PHASE_TWO_PATCH
+              PIN_DX_CLEAR;
+          #endif
+
+          // BUS RELEASE: Return DX to High-Z (Input) mode
+          PIN_DX_INPUT;
+
+          PIN_AX_INTERRUPT_DISABLE; // Stop tracking AX pulses
+          PIN_LED_OFF;
+          patch = 1; // Signal Phase 3 completion
+      }
+  }
+
+  #ifdef PHASE_TWO_PATCH
+  /**
+  * PHASE 5: Secondary Interrupt Service Routine (AY)
+  * Handles the second injection stage if multi-patching is active.
+  */
+  ISR(PIN_AY_INTERRUPT_VECTOR) {
+      if (--impulse == 0) {
+          __builtin_avr_delay_cycles(BIT_OFFSET_2_CYCLES);
+
+          PIN_DX_OUTPUT;
+          __builtin_avr_delay_cycles(OVERRIDE_2_CYCLES);
+          PIN_DX_INPUT;
+
+          PIN_AY_INTERRUPT_DISABLE;
+          PIN_LED_OFF;
+          patch = 2; // Signal Phase 5 completion
+      }
+  }
+  #endif
+
+  void Bios_Patching(void) {
+
+      // --- HARDWARE BYPASS OPTION (SCPH-7000 specific) ---
+      #if defined(SCPH_7000)
+          PIN_SWITCH_INPUT;              // Configure Pin D5 as Input
+          PIN_SWITCH_SET;                // Enable internal Pull-up (D5 defaults to HIGH)
+          __builtin_avr_delay_cycles(10); // Short delay for voltage stabilization
+          
+          /** 
+          * Exit immediately if the switch pulls the pin to GND (Logic LOW).
+          * This allows the user to disable the BIOS patch on-the-fly.
+          */
+          if (PIN_SWITCH_READ == 0) { 
+              return; 
+          }
+      #endif
+
+      uint8_t current_confirms = 0;
+      //uint16_t count;
+
+      patch = 0;     // Reset sync flag
+      sei();         // Enable Global Interrupts
+      PIN_AX_INPUT;  // Set AX to monitor mode
+
+      // --- PHASE 1: STABILIZATION & ALIGNMENT (AX) ---
+      // Establish a deterministic hardware timing reference.
+      if (PIN_AX_READ != 0) {
+          while (WAIT_AX_FALLING); // Wait if bus is busy
+          while (WAIT_AX_RISING);  // Sync with next pulse start
+      } else {
+          while (WAIT_AX_RISING);  // Sync with upcoming pulse
+      }
+
+      // --- PHASE 2: SILENCE DETECTION ---
+      // Validate the exact number of silence windows to identify the boot stage.
+      while (current_confirms < CONFIRM_COUNTER_TARGET) {
+          uint16_t count = SILENCE_THRESHOLD; 
+          while (count > 0) {
+              if (PIN_AX_READ != 0) {
+                  while (WAIT_AX_FALLING);
+                  break; // Impulse detected: retry current silence block
+              }
+              #ifdef IS_32U4_FAMILY
+              __asm__ __volatile__ ("nop"); 
+              #endif
+
+              count--;
+          }
+          if (count == 0) {
+              current_confirms++; // Validated one silence window
+          }
+      }
+
+      // --- PHASE 3: LAUNCH HARDWARE COUNTING (AX) ---
+      impulse = PULSE_COUNT;
+      PIN_LED_ON;
+      PIN_AX_INTERRUPT_CLEAR;
+      PIN_AX_INTERRUPT_RISING; // Setup rising-edge trigger
+      PIN_AX_INTERRUPT_ENABLE; // Engage ISR
+
+      while (patch != 1);
+
+
+      // --- PHASE 4 & 5: SECONDARY PATCHING SEQUENCE ---
+      #ifdef PHASE_TWO_PATCH
+          PIN_AY_INPUT;
+          current_confirms = 0;
+          impulse = PULSE_COUNT_2;
+          // Monitor for the specific silent gap before the second patch window
+          while (current_confirms < CONFIRM_COUNTER_TARGET_2) {
+              uint16_t count = SILENCE_THRESHOLD;
+              while (count > 0) {
+                  if (PIN_AX_READ != 0) {
+                      while (WAIT_AX_FALLING);
+                      break;
+                  }
+
+                  #ifdef IS_32U4_FAMILY
+                  __asm__ __volatile__ ("nop"); 
+                  #endif
+
+                  count--;
+              }
+              if (count == 0) {
+                  current_confirms++;
+              }
+          }
+
+          PIN_LED_ON;
+          PIN_AY_INTERRUPT_CLEAR;
+          PIN_AY_INTERRUPT_FALLING;
+          PIN_AY_INTERRUPT_ENABLE;
+      
+          while (patch != 2); // Busy-wait for secondary ISR completion
+          return;
+      #endif
+  }
+#endif
 
 /*******************************************************************************************************************
  * FUNCTION    : BoardDetection
@@ -390,7 +582,7 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
   
   const uint16_t BIT_DELAY = 4000; // 4000us is the standard bit timing for SCEx signal (approx. 250 bps)
   const uint8_t isWfck = wfck_mode; // Cache wfck_mode to save CPU cycles during the bit loop
-  hysteresis = (HYSTERESIS_MAX - 10);  // Reset hysteresis to mid-point after triggering
+  hysteresis = (HYSTERESIS_MAX - 6);  // Reset hysteresis to mid-point after triggering
 
   #ifdef LED_RUN
       PIN_LED_ON;
@@ -524,10 +716,14 @@ void Init() {
   // --- Debug Interface Setup ---
   #if defined(DEBUG_SERIAL_MONITOR) && defined(IS_ATTINY_FAMILY)
     pinMode(debugtx, OUTPUT); // software serial tx pin
-    mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
-  #elif defined(DEBUG_SERIAL_MONITOR) && !defined(IS_ATTINY_FAMILY)
-    Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
+    mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial
+  #elif defined(DEBUG_SERIAL_MONITOR) && defined(IS_32U4_FAMILY)
+    // On 32U4, Serial1 is the hardware UART on pins D0 (RX) and D1 (TX)
+    Serial1.begin(500000); 
+  #elif defined(DEBUG_SERIAL_MONITOR) && defined(IS_328_168_FAMILY)
+    Serial.begin(500000); // Standard hardware UART for 328/168
   #endif
+
 
   // --- Console Analysis ---
   // Identify board revision (PU-7 to PU-22+) to set correct injection timings
