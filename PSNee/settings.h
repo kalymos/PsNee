@@ -217,7 +217,7 @@
 #if defined(DEBUG_SERIAL_MONITOR)
 extern uint8_t hysteresis;
 
-void BoardDetectionLog (uint16_t debounce, uint8_t Wfck_mode, uint8_t region){          //Information about the MCU, and old or late console mode.
+void BoardDetectionLog (uint16_t window_result, uint8_t Wfck_mode, uint8_t region){          //Information about the MCU, and old or late console mode.
 
 #if  defined(IS_ATTINY_FAMILY)
   mySerial.print("m "); mySerial.println(Wfck_mode);
@@ -228,11 +228,14 @@ void BoardDetectionLog (uint16_t debounce, uint8_t Wfck_mode, uint8_t region){  
     "PAL",       // 2
     "Universal"  // 3
   };
+  Serial.println(" ");
   Serial.print(F(" MCU frequency: ")); Serial.print(F_CPU / 1000000L); Serial.println(F(" MHz"));
-  Serial.print(" debounce: "); Serial.println(debounce);
+  Serial.print(F(" Window remaining: ")); Serial.println(window_result); // Real-time diagnostic
   Serial.print(" wfck_mode: "); Serial.println(Wfck_mode);
   Serial.print(" region: "); Serial.print(regionNames[region]);
+  Serial.println(" ");
 #endif
+
 }
 
 
@@ -356,13 +359,13 @@ void InjectLog(){
 // --- RESOURCE CONFLICT CHECK (ATtiny) ---
 #if defined(IS_ATTINY_FAMILY) && \
     defined(LED_RUN)        && \
-    defined(PSNEE_DEBUG_SERIAL_MONITOR)
+    defined(DEBUG_SERIAL_MONITOR)
   #error "Resource conflict: LED_RUN and DEBUG_SERIAL are incompatible on ATtiny."
 #endif
 
 // --- Feature Status ---
 
-#ifdef PSNEE_DEBUG_SERIAL_MONITOR
+#ifdef DEBUG_SERIAL_MONITOR
   #pragma message "Feature: Serial Debug Monitor ENABLED"
 #endif
 

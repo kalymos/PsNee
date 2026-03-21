@@ -9,7 +9,7 @@
  *
  *  SCPH model number //  region code | region
  *--------------------------------------------------------------------------------------------------------------------*/
- #define SCPH_xxx1  //  NTSC U/C    | America.
+// #define SCPH_xxx1  //  NTSC U/C    | America.
 // #define SCPH_xxx2  //  PAL         | Europ.
 // #define SCPH_xxx3  //  NTSC J      | Asia.
 // #define SCPH_xxxx  //  Universal
@@ -46,7 +46,7 @@
 //                                       D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series,
 //                                       ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
 
-// #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
+ #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
 
 /******************************************************************************************************************
  *  Requires compilation with Arduino libs!
@@ -90,7 +90,7 @@
  * ATtiny | PSNee        | ISP   |
  * ---------------------------------------------------
  * Pin1   |              | RESET |
- * Pin2   | LED ^ serial |       | serial only for PSNEE_DEBUG_SERIAL_MONITOR
+ * Pin2   | LED ^ serial |       | serial only for DEBUG_SERIAL_MONITOR
  * Pin3   | WFCK         |       |
  * Pin4   | GND          | GND   |
  * Pin5   | SQCK         | MOSI  |
@@ -117,7 +117,9 @@ uint8_t SUBQBuffer[12]; // Global buffer to store the 12-byte SUBQ channel data
 
 uint8_t hysteresis = 0;
 
-
+#if defined(DEBUG_SERIAL_MONITOR)
+  uint16_t global_window = 0; // Stores the remaining cycles from the detection window
+#endif
 
 /*******************************************************************************************************************
  *                         Code section
@@ -152,49 +154,59 @@ uint8_t hysteresis = 0;
  *
  *******************************************************************************************************************/
 
+/**
+ * FUNCTION    : BoardDetection
+ * 
+ * DESCRIPTION : 
+ *    Distinguishes motherboard generations (PU-7 through PU-22+) by analyzing 
+ *    the behavior of the WFCK signal.
+ * 
+ * SIGNAL CHARACTERISTICS:
+ *    - Legacy Boards (PU-7 to PU-20): WFCK acts as a static GATE signal. 
+ *      It remains HIGH (continuous) during the region-check window.
+ *    - Modern Boards (PU-22 or newer): WFCK is an oscillating clock signal 
+ *      (Frequency-based).
+ * 
+ * WFCK: __-----------------------  // CONTINUOUS (PU-7 .. PU-20)(GATE)
+ *
+ * WFCK: __-_-_-_-_-_-_-_-_-_-_-_-  // FREQUENCY  (PU-22 or newer)
+ */
 void BoardDetection() {
-  // Default state: 0 (Static/GATE mode for PU-7 to PU-20)
-  wfck_mode = 0;
-  uint8_t debounce = 100;
-
-  /**
-    * INITIAL STABILIZATION DELAY (300ms)
-    * - PU-7/20: Voltage ramp-up takes ~54ms before stabilizing at a logic HIGH.
-    * - PU-22+: Clock oscillation (~7.3kHz) typically begins after ~297ms.
-    * This delay ensures all power-up transients and initial noise are bypassed.
-    */
-  _delay_ms(300); 
-
-  // Define a sampling window to capture potential oscillations
+  wfck_mode = 0;           // Default: Legacy (GATE)
+  uint8_t pulse_hits = 25; // We need to see 25 oscillations to confirm FREQUENCY mode
   uint16_t detectionWindow = 10000; 
-  
+  _delay_ms(300);          // Wait for WFCK to stabilize (High on Legacy, Oscillation on Modern)
+
   while (--detectionWindow) {
-     /**
-      * DETECTION LOGIC:
-      * On legacy boards (PU-7/20), WFCK is now a steady HIGH. 
-      * Detecting a LOW state indicates a potential clock cycle from a newer board.
-      */
-    if (!PIN_WFCK_READ) {
-      // Software debounce to filter out micro-glitches or parasitic noise
-      while (--debounce);
+    /**
+     * LOGIC BASED ON YOUR ANALYSIS:
+     * If WFCK is "CONTINUOUS" (Legacy), it stays HIGH. PIN_WFCK_READ will always be 1.
+     * If WFCK is "FREQUENCY" (Modern), it will hit 0 (LOW) periodically.
+     */
+    if (!PIN_WFCK_READ) {  // Detect a LOW state (only possible in FREQUENCY mode)
+      
+      pulse_hits--;        // Record one oscillation hit
+
+      if (pulse_hits == 0) {
+        wfck_mode = 1;     // Confirmed: FREQUENCY mode (PU-22 or newer)
+        #if defined(DEBUG_SERIAL_MONITOR)
+          global_window = detectionWindow;
+        #endif
+        return;            // Exit as soon as we are sure
+      }
 
       /**
-       * VERIFICATION:
-       * If the signal remains LOW after the debounce, we confirm a genuine 
-       * clock oscillation (WFCK). Legacy boards never transition to LOW 
-       * once stabilized at HIGH during this phase.
+       * SYNC: Wait for the signal to go HIGH again.
+       * This ensures we count each pulse of the "FREQUENCY" signal only once.
        */
-      if (!PIN_WFCK_READ) {
-        wfck_mode = 1; // Target confirmed: PU-22 or newer (Frequency mode)
-        return;
+      while (!PIN_WFCK_READ && detectionWindow > 0) {
+        detectionWindow--;
       }
     }
   }
-
-  #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
-    BoardDetectionLog(debounce, wfck_mode, INJECT_SCEx);
-  #endif
+  // If the window expires without seeing enough LOW pulses, it remains wfck_mode = 0 (GATE)
 }
+
 
 
 
@@ -240,7 +252,7 @@ void CaptureSUBQ(void) {
 
   } while (--bytesRemaining); // Efficient countdown for AVR binary size
 
-  #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  #if defined(DEBUG_SERIAL_MONITOR)
     CaptureSUBQLog(SUBQBuffer);
   #endif
 }
@@ -476,7 +488,7 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
   #endif
 
 
-  #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  #if defined(DEBUG_SERIAL_MONITOR)
   InjectLog();
   #endif
 }
@@ -501,9 +513,6 @@ void Init() {
 
   // Execute BIOS patching 
   Bios_Patching();
-
-  cli();
-
 // #ifdef LED_RUN
 //   PIN_LED_OFF;
 // #endif
@@ -513,10 +522,10 @@ void Init() {
   PIN_SUBQ_INPUT;
 
   // --- Debug Interface Setup ---
-  #if defined(PSNEE_DEBUG_SERIAL_MONITOR) && defined(IS_ATTINY_FAMILY)
-    //pinMode(debugtx, OUTPUT); // software serial tx pin
+  #if defined(DEBUG_SERIAL_MONITOR) && defined(IS_ATTINY_FAMILY)
+    pinMode(debugtx, OUTPUT); // software serial tx pin
     mySerial.begin(115200); // 13,82 bytes in 12ms, max for softwareserial. (expected data: ~13 bytes / 12ms) // update: this is actually quicker
-  #elif defined(PSNEE_DEBUG_SERIAL_MONITOR) && !defined(IS_ATTINY_FAMILY)
+  #elif defined(DEBUG_SERIAL_MONITOR) && !defined(IS_ATTINY_FAMILY)
     Serial.begin(500000); // 60 bytes in 12ms (expected data: ~26 bytes / 12ms) // update: this is actually quicker
   #endif
 
@@ -528,6 +537,10 @@ void Init() {
 int main() {
 
   Init();
+
+  #if defined(DEBUG_SERIAL_MONITOR)
+    BoardDetectionLog( global_window, wfck_mode, INJECT_SCEx);
+  #endif
 
   while (1) {
 

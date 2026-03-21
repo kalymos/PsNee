@@ -163,7 +163,7 @@
               (1 << PRTIM3) | // Timer 3 Off
               (1 << PRTIM4);  // Timer 4 Off
 
-      PRR2  = (1 << PRTIM5);  // Timer 5 Off (Spécifique au 128PB)
+      PRR2  = (1 << PRTIM5);  // Timer 5 Off 
 
     #else
       PRR   = (1 << PRTWI)  | // I2C Off
@@ -183,7 +183,7 @@
       TCCR3B = 0; TIMSK3 = 0; // Timer 3 (série PB)
       TCCR4B = 0; TIMSK4 = 0; // Timer 4 (série PB)
     #endif
-
+  }
 
   #include <stdint.h>
   #include <stdbool.h>
@@ -192,7 +192,6 @@
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
 
-  }
 
 
   // Main pin configuration
@@ -275,7 +274,7 @@
 
   #endif
 
-  // #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  // #if defined(DEBUG_SERIAL_MONITOR)
   //   #define DEBUG_PRINT(x)     Serial.print(x)
   //   #define DEBUG_PRINTHEX(x)  Serial.print(x, HEX)
   //   #define DEBUG_PRINTLN(x)   Serial.println(x)
@@ -499,7 +498,7 @@
   #endif
 
   // --- Debug Serial (Software Serial) ---
-  #if defined(PSNEE_DEBUG_SERIAL_MONITOR)
+  #if defined(DEBUG_SERIAL_MONITOR)
     #include <SoftwareSerial.h>
     // SoftwareSerial(RX, TX): RX set to -1 (disabled), TX on PB3
     // Note: Resource conflict if LED_RUN is also on PB3
