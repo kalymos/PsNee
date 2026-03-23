@@ -106,7 +106,7 @@
 #include "MCU.h"
 #include "settings.h"
 
-#define HYSTERESIS_MAX 25  // Now coupled with post-injection reset; allows for higher 
+#define HYSTERESIS_MAX 25 // Now coupled with post-injection reset; allows for higher 
                            // initial accumulation targets without the alignment drift 
                            // (desync) previously affecting SCPH-100x models.
 

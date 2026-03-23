@@ -55,7 +55,7 @@ menu.variant=Variant
 
 328.menu.variant.modelPB=328PB
 # 328.menu.variant.modelPB.bootloader.cksel_bits=1111
-328.menu.variant.modelPB.bootloader.extended_value=11111011
+328.menu.variant.modelPB.bootloader.extended_value=11110111
 328.menu.variant.modelPB.build.variant=pb-variant
 328.menu.variant.modelPB.build.mcu=atmega328pb
 
@@ -75,7 +75,7 @@ menu.variant=Variant
 328.menu.clock.16MHz_external=External 16 MHz
 328.menu.clock.16MHz_external.upload.default_speed=115200
 # 328.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-328.menu.clock.16MHz_external.bootloader.low_fuses=EE
+328.menu.clock.16MHz_external.bootloader.low_fuses=0xEE
 328.menu.clock.16MHz_external.build.clkpr=
 328.menu.clock.16MHz_external.build.f_cpu=16000000L
 
@@ -83,7 +83,7 @@ menu.variant=Variant
 328.menu.clock.8MHz_external=External 8 MHz
 328.menu.clock.8MHz_external.upload.default_speed=57600
 # 328.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-328.menu.clock.16MHz_external.bootloader.low_fuses=EE
+328.menu.clock.8MHz_external.bootloader.low_fuses=0xEE
 328.menu.clock.8MHz_external.build.clkpr=
 328.menu.clock.8MHz_external.build.f_cpu=8000000L
 
@@ -138,7 +138,7 @@ menu.variant=Variant
 168.menu.variant.modelNonP.build.mcu=atmega168
 
 168.menu.variant.modelPB=168PB
-168.menu.variant.modelPB.bootloader.extended_value=11111011
+168.menu.variant.modelPB.bootloader.extended_value=11110101
 168.menu.variant.modelPB.build.variant=pb-variant
 168.menu.variant.modelPB.build.mcu=atmega168pb
 
@@ -179,85 +179,85 @@ menu.variant=Variant
 ############################
 
 # General
-##88.name=ATmega88
-88.upload.tool=avrdude
-88.upload.maximum_data_size=1024
-88.bootloader.tool=avrdude
-88.bootloader.unlock_bits=0xff
-88.bootloader.lock_bits=0xff
-88.bootloader.extended_fuses=0xff
-88.build.core=MCUdude_corefiles
-88.build.board=AVR_ATmega88
-88.build.bootloader_led=led+b5
-88.build.extra_flags={build.clkpr}
+#88.name=ATmega88
+#88.upload.tool=avrdude
+#88.upload.maximum_data_size=1024
+#88.bootloader.tool=avrdude
+#88.bootloader.unlock_bits=0xff
+#88.bootloader.lock_bits=0xff
+#88.bootloader.extended_fuses=0xff
+#88.build.core=MCUdude_corefiles
+#88.build.board=AVR_ATmega88
+#88.build.bootloader_led=led+b5
+#88.build.extra_flags={build.clkpr}
 
 # Upload port select
-88.upload.maximum_size=8192
-88.build.export_merged_output=false
-88.bootloader.file=empty/empty.hex
+#88.upload.maximum_size=8192
+#88.build.export_merged_output=false
+#88.bootloader.file=empty/empty.hex
 
 # EEPROM
-88.menu.eeprom.keep=EEPROM retained
-88.menu.eeprom.keep.bootloader.eesave_bit=0
-88.menu.eeprom.erase=EEPROM not retained
-88.menu.eeprom.erase.bootloader.eesave_bit=1
+#88.menu.eeprom.keep=EEPROM retained
+#88.menu.eeprom.keep.bootloader.eesave_bit=0
+#88.menu.eeprom.erase=EEPROM not retained
+#88.menu.eeprom.erase.bootloader.eesave_bit=1
 
 # Baud rate
-88.upload.speed={upload.default_speed}
+#88.upload.speed={upload.default_speed}
 
 
 # Variants
-88.menu.variant.modelP=88P / 88PA
-88.menu.variant.modelP.bootloader.cksel_bits=0111
-88.menu.variant.modelP.build.variant=standard
-88.menu.variant.modelP.build.mcu=atmega88p
+#88.menu.variant.modelP=88P / 88PA
+#88.menu.variant.modelP.bootloader.cksel_bits=0111
+#88.menu.variant.modelP.build.variant=standard
+#88.menu.variant.modelP.build.mcu=atmega88p
 
-88.menu.variant.modelNonP=88 / 88A
-88.menu.variant.modelNonP.bootloader.cksel_bits=0111
-88.menu.variant.modelNonP.build.variant=standard
-88.menu.variant.modelNonP.build.mcu=atmega88
+#88.menu.variant.modelNonP=88 / 88A
+#88.menu.variant.modelNonP.bootloader.cksel_bits=0111
+#88.menu.variant.modelNonP.build.variant=standard
+#88.menu.variant.modelNonP.build.mcu=atmega88
 
-88.menu.variant.modelPB=88PB
-88.menu.variant.modelPB.bootloader.cksel_bits=1111
-88.menu.variant.modelPB.build.variant=pb-variant
-88.menu.variant.modelPB.build.mcu=atmega88pb
+#88.menu.variant.modelPB=88PB
+#88.menu.variant.modelPB.bootloader.cksel_bits=1111
+#88.menu.variant.modelPB.build.variant=pb-variant
+#88.menu.variant.modelPB.build.mcu=atmega88pb
 
 # Brown out detection
 
-88.bootloader.high_fuses=0b1101{bootloader.eesave_bit}101
+#88.bootloader.high_fuses=0b1101{bootloader.eesave_bit}101
 
 
 # Compiler link time optimization
-88.compiler.c.extra_flags=-Wextra -flto -g
-88.compiler.c.elf.extra_flags=-w -flto -g
-88.compiler.cpp.extra_flags=-Wextra -flto -g
-88.ltoarcmd=avr-gcc-ar
+#88.compiler.c.extra_flags=-Wextra -flto -g
+#88.compiler.c.elf.extra_flags=-w -flto -g
+#88.compiler.cpp.extra_flags=-Wextra -flto -g
+#88.ltoarcmd=avr-gcc-ar
 
 
 # Clock frequencies
-88.menu.clock.16MHz_external=External 16 MHz
-88.menu.clock.16MHz_external.upload.default_speed=115200
-88.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-88.menu.clock.16MHz_external.build.clkpr=
-88.menu.clock.16MHz_external.build.f_cpu=16000000L
+#88.menu.clock.16MHz_external=External 16 MHz
+#88.menu.clock.16MHz_external.upload.default_speed=115200
+#88.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+#88.menu.clock.16MHz_external.build.clkpr=
+#88.menu.clock.16MHz_external.build.f_cpu=16000000L
+#
+#88.menu.clock.20MHz_external=External 20 MHz
+#88.menu.clock.20MHz_external.upload.default_speed=115200
+#88.menu.clock.20MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+#88.menu.clock.20MHz_external.build.clkpr=
+#88.menu.clock.20MHz_external.build.f_cpu=20000000L
 
-88.menu.clock.20MHz_external=External 20 MHz
-88.menu.clock.20MHz_external.upload.default_speed=115200
-88.menu.clock.20MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-88.menu.clock.20MHz_external.build.clkpr=
-88.menu.clock.20MHz_external.build.f_cpu=20000000L
+#88.menu.clock.8MHz_external=External 8 MHz
+#88.menu.clock.8MHz_external.upload.default_speed=57600
+#88.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+#88.menu.clock.8MHz_external.build.clkpr=
+#88.menu.clock.8MHz_external.build.f_cpu=8000000L
 
-88.menu.clock.8MHz_external=External 8 MHz
-88.menu.clock.8MHz_external.upload.default_speed=57600
-88.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-88.menu.clock.8MHz_external.build.clkpr=
-88.menu.clock.8MHz_external.build.f_cpu=8000000L
-
-88.menu.clock.8MHz_internal=Internal 8 MHz
-88.menu.clock.8MHz_internal.upload.default_speed=38400
-88.menu.clock.8MHz_internal.bootloader.low_fuses=0xe2
-88.menu.clock.8MHz_internal.build.clkpr=
-88.menu.clock.8MHz_internal.build.f_cpu=8000000L
+#88.menu.clock.8MHz_internal=Internal 8 MHz
+#88.menu.clock.8MHz_internal.upload.default_speed=38400
+#88.menu.clock.8MHz_internal.bootloader.low_fuses=0xe2
+#88.menu.clock.8MHz_internal.build.clkpr=
+#88.menu.clock.8MHz_internal.build.f_cpu=8000000L
 
 
 ############################
@@ -312,7 +312,7 @@ X5.menu.clock.internal_8m.upload.default_speed=38400
 
 
 ############################
-####    ATmega32U4      ####
+####  ATmega 32U4/32U2  ####
 ############################
 
 32U4.name=ATmega 32U4/32U2
@@ -330,7 +330,7 @@ X5.menu.clock.internal_8m.upload.default_speed=38400
 32U4.bootloader.unlock_bits=0x3F
 32U4.bootloader.lock_bits=0x2F
 32U4.bootloader.high_fuses=0xDF
-32U4.bootloader.extended_fuses=0xFB
+32U4.bootloader.extended_fuses=0xFE
 
 32U4.menu.variant.32U4=ATmega32U4
 32U4.menu.variant.32U4.build.mcu=atmega32u4
@@ -338,11 +338,11 @@ X5.menu.clock.internal_8m.upload.default_speed=38400
 32U4.menu.variant.32U4.upload.maximum_data_size=2560
 32U4.menu.variant.32U4.build.variant=32u
 
-32U2.menu.variant.32U2=ATmega32U2
-32U2.menu.variant.32U2.build.mcu=atmega32u2
-32U2.menu.variant.32U2.upload.maximum_size=28672   
-32U2.menu.variant.32U2.upload.maximum_data_size=2560  
-32U2.menu.variant.32U2.build.variant=32u2
+32U4.menu.variant.32U2=ATmega32U2
+32U4.menu.variant.32U2.build.mcu=atmega32u2
+32U4.menu.variant.32U2.upload.maximum_size=28672
+32U4.menu.variant.32U2.upload.maximum_data_size=2560
+32U4.menu.variant.32U2.build.variant=32u
 
 # Compiler flags
 32U4.compiler.c.extra_flags=

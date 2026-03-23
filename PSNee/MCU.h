@@ -284,7 +284,7 @@
 #endif
 
 
-#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega32U2__)
 #define IS_32U4_FAMILY
 
   static inline void OptimizePeripherals(void) {
