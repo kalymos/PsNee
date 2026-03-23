@@ -42,26 +42,26 @@ menu.variant=Variant
 
 # Variants
 328.menu.variant.modelP=328P / 328PA
-328.menu.variant.modelP.bootloader.cksel_bits=0111
-328.menu.variant.modelP.bootloader.cfd_bit=1
+# 328.menu.variant.modelP.bootloader.cksel_bits=0111
+328.menu.variant.modelP.bootloader.extended_value=11111101
 328.menu.variant.modelP.build.variant=standard
 328.menu.variant.modelP.build.mcu=atmega328p
 
 328.menu.variant.modelNonP=328 / 328A
-328.menu.variant.modelNonP.bootloader.cksel_bits=0111
-328.menu.variant.modelNonP.bootloader.cfd_bit=1
+# 328.menu.variant.modelNonP.bootloader.cksel_bits=0111
+328.menu.variant.modelNonP.bootloader.extended_value=11111101
 328.menu.variant.modelNonP.build.variant=standard
 328.menu.variant.modelNonP.build.mcu=atmega328
 
 328.menu.variant.modelPB=328PB
-328.menu.variant.modelPB.bootloader.cksel_bits=1111
-328.menu.variant.modelPB.bootloader.cfd_bit=0
+# 328.menu.variant.modelPB.bootloader.cksel_bits=1111
+328.menu.variant.modelPB.bootloader.extended_value=11111011
 328.menu.variant.modelPB.build.variant=pb-variant
 328.menu.variant.modelPB.build.mcu=atmega328pb
 
 # Brown out detection
 
-328.bootloader.extended_fuses=0b1111{bootloader.cfd_bit}101
+328.bootloader.extended_fuses=0b{bootloader.extended_value}
 
 
 # Compiler link time optimization
@@ -74,21 +74,23 @@ menu.variant=Variant
 # Clock frequencies
 328.menu.clock.16MHz_external=External 16 MHz
 328.menu.clock.16MHz_external.upload.default_speed=115200
-328.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+# 328.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+328.menu.clock.16MHz_external.bootloader.low_fuses=EE
 328.menu.clock.16MHz_external.build.clkpr=
 328.menu.clock.16MHz_external.build.f_cpu=16000000L
 
 
 328.menu.clock.8MHz_external=External 8 MHz
 328.menu.clock.8MHz_external.upload.default_speed=57600
-328.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+# 328.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+328.menu.clock.16MHz_external.bootloader.low_fuses=EE
 328.menu.clock.8MHz_external.build.clkpr=
 328.menu.clock.8MHz_external.build.f_cpu=8000000L
 
 
 328.menu.clock.8MHz_internal=Internal 8 MHz
 328.menu.clock.8MHz_internal.upload.default_speed=38400
-328.menu.clock.8MHz_internal.bootloader.low_fuses=0xe2
+328.menu.clock.8MHz_internal.bootloader.low_fuses=0xC2
 328.menu.clock.8MHz_internal.build.clkpr=
 328.menu.clock.8MHz_internal.build.f_cpu=8000000L
 
@@ -126,22 +128,22 @@ menu.variant=Variant
 
 # Variants
 168.menu.variant.modelP=168P / 168PA
-168.menu.variant.modelP.bootloader.cksel_bits=0111
+168.menu.variant.modelP.bootloader.extended_value=11111101
 168.menu.variant.modelP.build.variant=standard
 168.menu.variant.modelP.build.mcu=atmega168p
 
 168.menu.variant.modelNonP=168 / 168A
-168.menu.variant.modelNonP.bootloader.cksel_bits=0111
+168.menu.variant.modelNonP.bootloader.extended_value=11111101
 168.menu.variant.modelNonP.build.variant=standard
 168.menu.variant.modelNonP.build.mcu=atmega168
 
 168.menu.variant.modelPB=168PB
-168.menu.variant.modelPB.bootloader.cksel_bits=1111
+168.menu.variant.modelPB.bootloader.extended_value=11111011
 168.menu.variant.modelPB.build.variant=pb-variant
 168.menu.variant.modelPB.build.mcu=atmega168pb
 
 # Brown out detection
-168.bootloader.high_fuses=0b1101{bootloader.eesave_bit}101
+168.bootloader.high_fuses=0b{.extended_value=11111011}
 
 
 # Compiler link time optimization
@@ -154,20 +156,20 @@ menu.variant=Variant
 # Clock frequencies
 168.menu.clock.16MHz_external=External 16 MHz
 168.menu.clock.16MHz_external.upload.default_speed=115200
-168.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+168.menu.clock.16MHz_external.bootloader.low_fuses=low_fuses=EE
 168.menu.clock.16MHz_external.build.clkpr=
 168.menu.clock.16MHz_external.build.f_cpu=16000000L
 
 168.menu.clock.8MHz_external=External 8 MHz
 168.menu.clock.8MHz_external.upload.default_speed=57600
-168.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
+168.menu.clock.8MHz_external.bootloader.low_fuses=low_fuses=EE
 168.menu.clock.8MHz_external.build.clkpr=
 168.menu.clock.8MHz_external.build.f_cpu=8000000L
 
 
 168.menu.clock.8MHz_internal=Internal 8 MHz
 168.menu.clock.8MHz_internal.upload.default_speed=38400
-168.menu.clock.8MHz_internal.bootloader.low_fuses=0xe2
+168.menu.clock.8MHz_internal.bootloader.low_fuses=0xC2
 168.menu.clock.8MHz_internal.build.clkpr=
 168.menu.clock.8MHz_internal.build.f_cpu=8000000L
 
@@ -177,7 +179,7 @@ menu.variant=Variant
 ############################
 
 # General
-88.name=ATmega88
+##88.name=ATmega88
 88.upload.tool=avrdude
 88.upload.maximum_data_size=1024
 88.bootloader.tool=avrdude
@@ -273,7 +275,7 @@ X5.build.board=AVR_ATtinyX5
 X5.build.extra_flags=
 X5.build.export_merged_output=false
 X5.bootloader.file=empty/empty.hex
-X5.bootloader.high_fuses=0xFF
+X5.bootloader.high_fuses=0xDD
 X5.bootloader.extended_fuses=0xFF
 X5.upload.speed={upload.default_speed}
 
@@ -313,7 +315,7 @@ X5.menu.clock.internal_8m.upload.default_speed=38400
 ####    ATmega32U4      ####
 ############################
 
-32U4.name=ATmega32U4
+32U4.name=ATmega 32U4/32U2
 32U4.vid=0x2341
 32U4.pid=0x8036
 32U4.manufacturer=PSNee
@@ -327,14 +329,20 @@ X5.menu.clock.internal_8m.upload.default_speed=38400
 #32U4.bootloader.file=caterina/Caterina-Leonardo.hex
 32U4.bootloader.unlock_bits=0x3F
 32U4.bootloader.lock_bits=0x2F
-32U4.bootloader.high_fuses=0xD8
-32U4.bootloader.extended_fuses=0xCB
+32U4.bootloader.high_fuses=0xDF
+32U4.bootloader.extended_fuses=0xFB
 
 32U4.menu.variant.32U4=ATmega32U4
 32U4.menu.variant.32U4.build.mcu=atmega32u4
-32U4.menu.variant.32U4.upload.maximum_size=28672
+32U4.menu.variant.32U4.upload.maximum_size=32768
 32U4.menu.variant.32U4.upload.maximum_data_size=2560
 32U4.menu.variant.32U4.build.variant=32u
+
+32U2.menu.variant.32U2=ATmega32U2
+32U2.menu.variant.32U2.build.mcu=atmega32u2
+32U2.menu.variant.32U2.upload.maximum_size=28672   
+32U2.menu.variant.32U2.upload.maximum_data_size=2560  
+32U2.menu.variant.32U2.build.variant=32u2
 
 # Compiler flags
 32U4.compiler.c.extra_flags=
@@ -344,7 +352,7 @@ X5.menu.clock.internal_8m.upload.default_speed=38400
 
 # Clock frequencies
 32U4.menu.clock.external_16m=16 MHz (external)
-32U4.menu.clock.external_16m.bootloader.low_fuses=0xFF
+32U4.menu.clock.external_16m.bootloader.low_fuses=0xEE
 32U4.menu.clock.external_16m.build.f_cpu=16000000UL
 32U4.menu.clock.external_16m.upload.default_speed=57600
 
