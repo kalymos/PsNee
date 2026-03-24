@@ -555,13 +555,14 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
       1: NTSC-U/C | SCEA | Sony Computer Entertainment America
       2: PAL      | SCEE | Sony Computer Entertainment Europe
       Stored in 6 bytes (48 bits); only the first 44 bits are used during injection.
+      0x59, 0xC9, 0x4B, 0x5D, 0x9A, 0x02 | SCEW | Worldwide / Net Yaroze
   */
   static const uint8_t allRegionsSCEx[3][6] = {
       { 0x59, 0xC9, 0x4B, 0x5D, 0xDA, 0x02 }, // SCEI
       { 0x59, 0xC9, 0x4B, 0x5D, 0xFA, 0x02 }, // SCEA
       { 0x59, 0xC9, 0x4B, 0x5D, 0xEA, 0x02 }  // SCEE
   };
-  
+
   const uint16_t BIT_DELAY = 4000; // 4000us is the standard bit timing for SCEx signal (approx. 250 bps)
   const uint8_t isWfck = wfck_mode; // Cache wfck_mode to save CPU cycles during the bit loop
  /**
