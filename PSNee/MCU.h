@@ -199,8 +199,8 @@
   // Define the main pins as inputs
   #define PIN_DATA_INPUT DDRB &= ~(1 << DDB0)  // Set DDRB register to configure PINB0 as input
   #define PIN_WFCK_INPUT DDRB &= ~(1 << DDB1)  // Set DDRB register to configure PINB1 as input
-  #define PIN_SQCK_INPUT DDRD &= ~(1 << DDD6)  // Set DDRB register to configure PINB6 as input
-  #define PIN_SUBQ_INPUT DDRD &= ~(1 << DDD7)  // Set DDRB register to configure PINB7 as input
+  #define PIN_SQCK_INPUT DDRD &= ~(1 << DDD6)  // Set DDRD register to configure PINB6 as input
+  #define PIN_SUBQ_INPUT DDRD &= ~(1 << DDD7)  // Set DDRD register to configure PINB7 as input
 
   // Configure lines as outputs (for injection/override)
   #define PIN_DATA_OUTPUT DDRB |= (1 << DDB0)  // Set DDRB register to configure PINB0 as output
@@ -214,7 +214,7 @@
   // Direct Register Reading (High-speed polling)
   #define PIN_SQCK_READ (!!(PIND & (1 << PIND6)))  // Check if the value of PIND6 is high (1)
   #define PIN_SUBQ_READ (!!(PIND & (1 << PIND7)))  // Check if the value of PIND7 is high (1)
-  #define PIN_WFCK_READ (!!(PINB & (1 << PINB1)))  // Check if the value of PIND1 is high (1)
+  #define PIN_WFCK_READ (!!(PINB & (1 << PINB1)))  // Check if the value of PINB1 is high (1)
 
   // --- Status Indication (LED) ---
   #ifdef LED_RUN
@@ -244,7 +244,7 @@
     #define PIN_AX_READ   (!!(PIND & (1 << PIND2))) 
 
     // Hardware Interrupt (INT0) for AX pulse counting
-    #define PIN_AX_INTERRUPT_ENABLE     EIMSK  |=  (1<<INT0)      // Enable external interrupt on INT0 (PINB2)
+    #define PIN_AX_INTERRUPT_ENABLE     EIMSK  |=  (1<<INT0)      // Enable external interrupt on INT0 (PINB3)
     #define PIN_AX_INTERRUPT_DISABLE    EIMSK  &= ~(1<<INT0)      // Disable external interrupt on INT0
     #define PIN_AX_INTERRUPT_RISING     EICRA  |=  (1<<ISC01)|(1<<ISC00)                  // Configure INT0 for rising edge trigger
     #define PIN_AX_INTERRUPT_VECTOR     INT0_vect               // Interrupt vector for INT0 (external interrupt)

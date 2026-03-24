@@ -321,13 +321,13 @@ uint8_t hysteresis = 0;
  * FUNCTION    : BoardDetection
  * 
  * DESCRIPTION : 
- *    Distinguishes motherboard generations (PU-7 through PU-22+) by analyzing 
+ *    Distinguishes motherboard generations (PU-7 through PU-18) by analyzing 
  *    the behavior of the WFCK signal.
  *
  * SIGNAL CHARACTERISTICS:
- *    - Legacy Boards (PU-7 to PU-20): WFCK acts as a static GATE signal. 
+ *    - Legacy Boards (PU-7 to PU-18): WFCK acts as a static GATE signal. 
  *      It remains HIGH.
- *    - Modern Boards (PU-22 or newer): WFCK is an oscillating clock signal 
+ *    - Modern Boards (PU-20 or newer): WFCK is an oscillating clock signal 
  *      (Frequency-based).
  * 
  * 
@@ -383,17 +383,13 @@ void BoardDetection() {
   // If the window expires without seeing enough LOW pulses, it remains wfck_mode = 0 (GATE)
 }
 
-
-
-
 /******************************************************************************************************************
  * FUNCTION    : CaptureSUBQ
  * 
  * DESCRIPTION : 
  *    Captures a complete 12-byte SUBQ frame from the CD controller.
- *    Synchronizes with the SQCK (SUBQ Clock) pin to shift in serial data from 
- *    the SUBQ pin. This implementation follows the standard PlayStation CDIC 
- *    protocol (Synchronous Serial, LSB first).
+ *    Synchronizes with the SQCK (SUBQ Clock) pin to shift in serial data.
+ *    Implementation: Synchronous Serial, LSB first reconstruction.
  ******************************************************************************************************************/
 
 void CaptureSUBQ(void) {
@@ -403,7 +399,7 @@ void CaptureSUBQ(void) {
   do {
     uint8_t bitsToRead = 8;
     
-    // Direct byte initialization to save a register copy
+    // Clear current byte to avoid garbage data
     *bufferPtr = 0; 
 
     while (bitsToRead--) {
@@ -415,8 +411,8 @@ void CaptureSUBQ(void) {
       while (!PIN_SQCK_READ);  // Wait for rising edge
       
       /**
-        * PHASE 2: BIT ACQUISITION & SHIFTING
-        * LSB first: shift the buffer pointer directly to avoid 'currentByte' overhead.
+        * PHASE 2: BIT ACQUISITION & LSB RECONSTRUCTION
+        * Shift right to move previous bits toward LSB and inject new bit at 0x80.
         */
       *bufferPtr >>= 1; 
       if (PIN_SUBQ_READ) {
@@ -510,11 +506,14 @@ void CaptureSUBQ(void) {
     if (SUBQBuffer[1] == 0x00 && SUBQBuffer[6] == 0x00) {
 
         /*
-          * HIT INCREMENT CONDITIONS:
-          * A. LEAD-IN PATTERNS: Detects TOC markers (A0-A2) or Track 01 at spiral start.
-          *    (uint8_t)(SUBQBuffer[3] - 0x03) >= 0xF5 handles the 0x98 to 0x02 wrap-around.
-          * B. TRACKING LOCK: Maintains count if already synced and reading valid sectors.
-          */
+         * HIT INCREMENT CONDITIONS:
+         * A. LEAD-IN PATTERNS: Detects TOC markers (A0-A2) or Track 01 at the spiral start.
+         *    The calculation (uint8_t)(SUBQBuffer[3] - 0x03) >= 0xF5 handles 
+         *    the 0x98 to 0x02 wrap-around near the TOC boundary.
+         * B. TRACKING LOCK: Maintains the counter if already synced and reading 
+         *    valid sectors (Audio or Data).
+         */
+
         if ( (isDataSector && (SUBQBuffer[2] >= 0xA0 || (SUBQBuffer[2] == 0x01 && ( (uint8_t)(SUBQBuffer[3] - 0x03) >= 0xF5)))) || 
               (hysteresis > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
         {
@@ -731,7 +730,7 @@ int main() {
     CaptureSUBQ();
 
     // Confidence Filtering: Accumulate hits toward HYSTERESIS_MAX
-    // Validation and Data/TOC masking (0xD0) are handled inside the filter.
+    // Control byte masking (0xD0) and TOC pattern matching are handled inside the filter.
     FilterSUBQSamples(SUBQBuffer[0]);
 
     // Execution: Trigger SCEx injection once confidence (hysteresis) is reached
