@@ -65,12 +65,32 @@
 #define BIOS_PATCH
 #define HOLD _delay_us(2.75)
 #define PATCHING _delay_us(0.2)
-#define CHECKPOINT 76130
+#define CHECKPOINT 76100
 #define TRIGGER 21
 #define LOW_TRIGGER
 #endif
 
 #ifdef  SCPH_3500_5000
+#define SCEI
+#define BIOS_PATCH
+#define HOLD _delay_us(2.75)
+#define PATCHING _delay_us(0.2)
+#define CHECKPOINT 75260
+#define TRIGGER 21
+#define LOW_TRIGGER
+#endif
+
+#ifdef  SCPH_5500
+#define SCEI
+#define BIOS_PATCH
+#define HOLD _delay_us(2.75)
+#define PATCHING _delay_us(0.2)
+#define CHECKPOINT 76130
+#define TRIGGER 21
+#define LOW_TRIGGER
+#endif
+
+#ifdef  SCPH_5000
 #define SCEI
 #define BIOS_PATCH
 #define HOLD _delay_us(2.85)
@@ -80,10 +100,19 @@
 #define LOW_TRIGGER
 #endif
 
+#ifdef  SCPH_3500   
+#define SCEI     
+#define BIOS_PATCH
+#define LOW_TRIGGER
+#define CHECKPOINT 75200               //75.12 - 75.27
+#define TRIGGER 21
+#define HOLD _delay_us(2.75)                    //2.65  - 2.85
+#define PATCHING _delay_us(0.2)
+#endif
 #ifdef  SCPH_3000
 #define SCEI
 #define BIOS_PATCH                                                    
-#define HOLD _delay_us(2.75)
+#define HOLD _delay_us(2.70)
 #define PATCHING _delay_us(0.15)
 #define CHECKPOINT 83000      
 #define TRIGGER 60                                               
