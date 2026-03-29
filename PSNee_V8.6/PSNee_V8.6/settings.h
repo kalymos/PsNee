@@ -70,25 +70,25 @@
 #define LOW_TRIGGER
 #endif
 
-#ifdef  SCPH_3500_5000
-#define SCEI
-#define BIOS_PATCH
-#define HOLD _delay_us(2.75)
-#define PATCHING _delay_us(0.2)
-#define CHECKPOINT 75260
-#define TRIGGER 21
-#define LOW_TRIGGER
-#endif
+// #ifdef  SCPH_3500_5000
+// #define SCEI
+// #define BIOS_PATCH
+// #define HOLD _delay_us(2.75)
+// #define PATCHING _delay_us(0.2)
+// #define CHECKPOINT 75260
+// #define TRIGGER 21
+// #define LOW_TRIGGER
+// #endif
 
-#ifdef  SCPH_5500
-#define SCEI
-#define BIOS_PATCH
-#define HOLD _delay_us(2.75)
-#define PATCHING _delay_us(0.2)
-#define CHECKPOINT 76130
-#define TRIGGER 21
-#define LOW_TRIGGER
-#endif
+// #ifdef  SCPH_5500
+// #define SCEI
+// #define BIOS_PATCH
+// #define HOLD _delay_us(2.75)
+// #define PATCHING _delay_us(0.2)
+// #define CHECKPOINT 76130
+// #define TRIGGER 21
+// #define LOW_TRIGGER
+// #endif
 
 #ifdef  SCPH_5000
 #define SCEI
@@ -109,6 +109,7 @@
 #define HOLD _delay_us(2.75)                    //2.65  - 2.85
 #define PATCHING _delay_us(0.2)
 #endif
+
 #ifdef  SCPH_3000
 #define SCEI
 #define BIOS_PATCH                                                    
@@ -159,12 +160,12 @@ const char region[3] = {'a', 'e', 'i'};
 
 #if !defined(SCPH_xxx1) && !defined(SCPH_xxx2) && !defined(SCPH_103) && \
     !defined(SCPH_102) && !defined(SCPH_100) && !defined(SCPH_7000_9000) && \
-    !defined(SCPH_5500) && !defined(SCPH_3500_5000) && !defined(SCPH_3000) && \
+    !defined(SCPH_5500) && !defined(SCPH_5000) && !defined(SCPH_3500) && !defined(SCPH_3000) && \
     !defined(SCPH_1000) && !defined(SCPH_xxxx)
  #error "Console not selected! Please uncoment #define with SCPH model number."
 #elif !(defined(SCPH_xxx1) ^ defined(SCPH_xxx2) ^ defined(SCPH_103) ^ \
       defined(SCPH_102) ^ defined(SCPH_100) ^ defined(SCPH_7000_9000) ^ \
-      defined(SCPH_5500) ^ defined(SCPH_3500_5000) ^ defined(SCPH_3000) ^ \
+      defined(SCPH_5500) ^ defined(SCPH_5000) ^ defined(SCPH_3500) ^ defined(SCPH_3000) ^ \
       defined(SCPH_1000) ^ defined(SCPH_xxxx))
  #error "May be selected only one console! Please check #define with SCPH model number."
 #endif
