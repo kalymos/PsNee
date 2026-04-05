@@ -42,9 +42,27 @@
  *                           Options
  *******************************************************************************************************************/
 
-#define LED_RUN                       // Turns on the LED when injections occur.
-//                                       D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series,
-//                                       ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series.
+#define REQUEST_INJECT_TRIGGER 15 // Now coupled with REQUEST_INJECT_GAP; allows for higher trigger
+/*
+ * TRIGGER CALIBRATION:
+ * - Lower values (<15): Possible, but not beneficial.
+ * - Higher values (20-30): Possible for older or weak CD-ROM laser units.
+ */
+
+#define REQUEST_INJECT_GAP 4      // Stealth interval (must be 4-8 AND < REQUEST_INJECT_TRIGGER)
+/*
+ * NOTE: REQUEST_INJECT_GAP defines the "cool-off" period between injections.
+ * - Optimal range: 4 to 8 (for natural CD timing & anti-mod bypass).
+ * - Constraint: Must ALWAYS be lower than REQUEST_INJECT_TRIGGER.
+ */
+
+#define LED_RUN           // Enable visual feedback during injections.
+/*
+ * LED CONNECTION GUIDE (1k ohm resistor recommended in series):
+ * - Arduino Uno/Nano: Uses onboard D13 LED.
+ * - ATtiny85/45: Connect LED between PB3 (Pin 2) and GND.
+ * - ATmega32U4 (Pro Micro): Connect LED between PB6 (Pin 10) and GND.
+ */
 
 // #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
 
@@ -106,14 +124,10 @@
 #include "MCU.h"
 #include "settings.h"
 
-#define HYSTERESIS_MAX 25 // Now coupled with post-injection reset; allows for higher 
-                           // initial accumulation targets without the alignment drift 
-                           // (desync) previously affecting SCPH-100x models.
-
 uint8_t wfck_mode = 0;  //Flag initializing for automatic console generation selection 0 = old, 1 = pu-22 end  ++
 uint8_t SUBQBuffer[12]; // Global buffer to store the 12-byte SUBQ channel data
 
-uint8_t hysteresis = 0;
+uint8_t request_counter = 0;
 
 #if defined(DEBUG_SERIAL_MONITOR)
   uint16_t global_window = 0; // Stores the remaining cycles from the detection window
@@ -325,9 +339,9 @@ uint8_t hysteresis = 0;
  *    the behavior of the WFCK signal.
  *
  * SIGNAL CHARACTERISTICS:
- *    - Legacy Boards (PU-7 to PU-18): WFCK acts as a static GATE signal. 
+ *    - Legacy Boards (PU-7 to PU-20): WFCK acts as a static GATE signal. 
  *      It remains HIGH.
- *    - Modern Boards (PU-20 or newer): WFCK is an oscillating clock signal 
+ *    - Modern Boards (PU-22 or newer): WFCK is an oscillating clock signal 
  *      (Frequency-based).
  * 
  * 
@@ -387,40 +401,41 @@ void BoardDetection() {
  * FUNCTION    : CaptureSUBQ
  * 
  * DESCRIPTION : 
- *    Captures a complete 12-byte SUBQ frame from the CD controller.
+ *    Captures a complete 12-byte SUBQ frame.
  *    Synchronizes with the SQCK (SUBQ Clock) pin to shift in serial data.
  *    Implementation: Synchronous Serial, LSB first reconstruction.
  ******************************************************************************************************************/
+
 
 void CaptureSUBQ(void) {
   uint8_t bytesRemaining = 12; // Total frame size for a complete SUBQ
   uint8_t* bufferPtr = SUBQBuffer;
 
   do {
+    uint8_t currentByte = 0;
     uint8_t bitsToRead = 8;
     
-    // Clear current byte to avoid garbage data
-    *bufferPtr = 0; 
-
     while (bitsToRead--) {
       /**
         * PHASE 1: BIT SYNCHRONIZATION (SQCK)
-        * Wait for falling edge then sample on the RISING EDGE of SQCK.
+        * The CD controller signals a new bit by toggling the Clock line.
+        * Data is sampled on the RISING EDGE of SQCK for maximum stability.
         */
       while (PIN_SQCK_READ);   // Wait for falling edge
       while (!PIN_SQCK_READ);  // Wait for rising edge
       
       /**
-        * PHASE 2: BIT ACQUISITION & LSB RECONSTRUCTION
-        * Shift right to move previous bits toward LSB and inject new bit at 0x80.
+        * PHASE 2: BIT ACQUISITION & SHIFTING
+        * The PlayStation SUBQ bus transmits data LSB (Least Significant Bit) first.
+        * We shift the current byte right and inject the new bit into the MSB (0x80).
         */
-      *bufferPtr >>= 1; 
+      currentByte >>= 1; 
       if (PIN_SUBQ_READ) {
-        *bufferPtr |= 0x80; 
+        currentByte |= 0x80; 
       }
     }
-    // Advance pointer for the next byte
-    bufferPtr++;
+    // Store reconstructed byte and advance pointer
+    *bufferPtr++ = currentByte;
 
   } while (--bytesRemaining); // Efficient countdown for AVR binary size
 
@@ -438,7 +453,7 @@ void CaptureSUBQ(void) {
  * 
  *    1. VCD EXCLUSION: Specifically filters out VCD Lead-In patterns (sub-mode 0x02) 
  *       to prevent incorrect region injection on non-game media.
- *    2. SUBQ HIT COUNTING: Increments 'hysteresis' for valid PlayStation TOC (A0-A2) 
+ *    2. SUBQ HIT COUNTING: Increments 'request_counter' for valid PlayStation TOC (A0-A2) 
  *       markers or active game tracking.
  *    3. SIGNAL DECAY: Decrements the counter when SUBQ samples match VCD patterns 
  *       or unknown data, ensuring stable disc identification.
@@ -464,17 +479,17 @@ void CaptureSUBQ(void) {
           * B. TRACKING MAINTENANCE: Keeps count if already synced and reading Mode 0x01 or Data.
           */
           if ( (isDataSector && (uint8_t)(SUBQBuffer[2] - 0xA0) <= 2 && SUBQBuffer[3] != 0x02) ||
-              (hysteresis > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
+              (request_counter > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
           {
-              hysteresis++; // Direct increment: faster on 16MHz AVR
+              request_counter++; // Direct increment: faster on 16MHz AVR
               return;
           }
       }
 
       // --- STEP 2: Signal Decay / Pattern Mismatch ---
       // Decrement the hit counter if no valid PSX pattern is detected in the SUBQ stream.
-      if (hysteresis > 0) {
-          hysteresis--; // Direct decrement: saves CPU cycles
+      if (request_counter > 0) {
+          request_counter--; // Direct decrement: saves CPU cycles
       }
   }
 #else
@@ -484,7 +499,7 @@ void CaptureSUBQ(void) {
  * 
  * DESCRIPTION : 
  *    Parses and filters the raw serial data stream from the SUBQ pin.
- *    Increments a hit counter (hysteresis) when specific patterns are identified 
+ *    Increments a hit counter (request_counter) when specific patterns are identified 
  *    in the SUBQ stream, confirming the laser is reading the region-check area.
  * 
  *    1. RAW BUS FILTERING: Validates SUBQ framing by checking sync markers (index 1 & 6).
@@ -515,17 +530,17 @@ void CaptureSUBQ(void) {
          */
 
         if ( (isDataSector && (SUBQBuffer[2] >= 0xA0 || (SUBQBuffer[2] == 0x01 && ( (uint8_t)(SUBQBuffer[3] - 0x03) >= 0xF5)))) || 
-              (hysteresis > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
+              (request_counter > 0 && (SUBQBuffer[0] == 0x01 || isDataSector)) ) 
         {
-            hysteresis++; // Direct increment: saves CPU cycles
+            request_counter++; // Direct increment: saves CPU cycles
             return;
         }
     }
 
     // --- STEP 2: Signal Decay / Missed Hits ---
     // Reduce the hit counter if the current SUBQ sample fails validation.
-    if (hysteresis > 0) {
-        hysteresis--; // Direct decrement: faster on 16MHz AVR
+    if (request_counter > 0) {
+        request_counter--; // Direct decrement: faster on 16MHz AVR
     }
   }
 
@@ -539,8 +554,11 @@ void CaptureSUBQ(void) {
  * 
  *    1. Legacy Gate Mode (PU-7 to PU-20): Modchip acts as a logic gate to pull 
  *       the signal down. WFCK is simulated by the chip if necessary.
- *    2. WFCK Modulation (PU-22+): Modchip modulates the DATA signal in 
- *       sync with the console's real WFCK clock (7.3 kHz or 14.6 kHz).
+ *
+ *    2. WFCK SYNC MODE (PU-22 and later): 
+ *       Synchronizes data injection with the console's hardware WFCK clock.
+ *       The signal is modulated on every clock edge to ensure  
+ *       alignment with the CD-ROM controller's internal timing.
  * 
  * NOTE: WFCK frequency is approx. 7.3 kHz during initialization/region check, 
  *       but doubles to 14.6 kHz during normal data reading. The modulation loop 
@@ -548,124 +566,93 @@ void CaptureSUBQ(void) {
  *********************************************************************************************/
 
 void PerformInjectionSequence(uint8_t injectSCEx) {
-  /* 
-      Security strings (44-bit SCEx) for the three main regions:
-      0: NTSC-J   | SCEI | Sony Computer Entertainment Inc
-      1: NTSC-U/C | SCEA | Sony Computer Entertainment America
-      2: PAL      | SCEE | Sony Computer Entertainment Europe
-      Stored in 6 bytes (48 bits); only the first 44 bits are used during injection.
-      0x59, 0xC9, 0x4B, 0x5D, 0x9A, 0x02 | SCEW | Worldwide / Net Yaroze
-  */
   static const uint8_t allRegionsSCEx[3][6] = {
-      { 0x59, 0xC9, 0x4B, 0x5D, 0xDA, 0x02 }, // SCEI
-      { 0x59, 0xC9, 0x4B, 0x5D, 0xFA, 0x02 }, // SCEA
-      { 0x59, 0xC9, 0x4B, 0x5D, 0xEA, 0x02 }  // SCEE
+      { 0x59, 0xC9, 0x4B, 0x5D, 0xDA, 0x02 }, // SCEI (Jap)
+      { 0x59, 0xC9, 0x4B, 0x5D, 0xFA, 0x02 }, // SCEA (USA)
+      { 0x59, 0xC9, 0x4B, 0x5D, 0xEA, 0x02 }  // SCEE (PAL)
   };
+  
+   #ifdef LED_RUN
+       PIN_LED_ON;
+   #endif
 
-  const uint16_t BIT_DELAY = 4000; // 4000us is the standard bit timing for SCEx signal (approx. 250 bps)
-  const uint8_t isWfck = wfck_mode; // Cache wfck_mode to save CPU cycles during the bit loop
- /**
-    * HYSTERESIS COUPLING:
-    * Resets hysteresis close to MAX after injection. This allows for a wider 
-    * tuning range of HYSTERESIS_MAX without drifting out of synchronization 
-    * on SCPH-100x models.
-    */
-  hysteresis = (HYSTERESIS_MAX - 6);
+  const uint16_t BIT_DELAY = 4000;
 
-  #ifdef LED_RUN
-      PIN_LED_ON;
-  #endif
+  PIN_DATA_OUTPUT;  
+  PIN_DATA_CLEAR;   
 
-  PIN_DATA_OUTPUT; 
-  PIN_DATA_CLEAR;
-
-  // Legacy boards require the chip to drive the simulated WFCK/Gate
-  if (!isWfck) { 
-      PIN_WFCK_OUTPUT; 
-      PIN_WFCK_CLEAR; 
+  if (!wfck_mode) { // Legacy timing mode
+    PIN_WFCK_OUTPUT;  
+    PIN_WFCK_CLEAR;  
   }
 
-  // Loop through the selected region(s)
-  for (uint8_t i = 0; i < 3; i++) {
-    uint8_t regionIndex = (injectSCEx == 3) ? i : injectSCEx;
-    const uint8_t* bytePtr = allRegionsSCEx[regionIndex];
-    
-    uint8_t currentByte = *bytePtr++;
-    uint8_t bitIdx = 0;
+  for (uint8_t regionCycle = 0; regionCycle < 3; regionCycle++) {
+      // Select the current region index to inject (Use cycle index if Universal mode 3)
+      uint8_t regionIndex = (injectSCEx == 3) ? regionCycle : injectSCEx;
 
-    // Process the 44-bit SCEx stream
-    for (uint8_t totalBits = 44; totalBits > 0; totalBits--) {
-      uint8_t currentBit = currentByte & 0x01;
-      currentByte >>= 1;
-      bitIdx++;
 
-      // Reload next byte every 8 bits (except the last partial one)
-      if (bitIdx == 8 && totalBits > 4) {
-          currentByte = *bytePtr++;
-          bitIdx = 0;
-      }
+    // 44-bit Loop (LSB first)
+    for (uint8_t bitPosition = 0; bitPosition < 44; bitPosition++) {
+     // Direct bit extraction from the array (Index >> 3 = Byte, Index & 0x07 = Bit)
+      uint8_t currentBit = (allRegionsSCEx[regionIndex][bitPosition >> 3] >> (bitPosition & 0x07)) & 0x01;
 
-      if (currentBit == 0) {
-          // BIT 0: Pull DATA low-
-          PIN_DATA_CLEAR;
-          if (!isWfck) PIN_DATA_OUTPUT; 
-          _delay_us(BIT_DELAY);
-      } else {
-        // BIT 1: Handle based on board generation
-        if (!isWfck) {
-          // Legacy Mode: Set DATA to High-Z (floating)
-            PIN_DATA_INPUT; 
-            _delay_us(BIT_DELAY);
+       if (wfck_mode) {
+            /* METHOD 1: PULSE COUNTING (WFCK SYNC) */
+            for (uint8_t count = 30; count > 0; count--) {
+                // Wait for falling edge (HIGH to LOW)
+                while (PIN_WFCK_READ);
+                PIN_DATA_CLEAR; // Pulse start
+
+                // Wait for rising edge (LOW to HIGH)
+                while (!PIN_WFCK_READ);
+                if (currentBit) {
+                    PIN_DATA_SET; // Modulate if Bit is 1
+                }
+            }
         } else {
-          /* 
-              WFCK Modulation Loop: Syncs to 7.3kHz or 14.6kHz.
-              Follows hardware edges to stay bit-perfect with the console.
-          */
-          uint8_t count = 30; 
-          while (count--) {
-              while (PIN_WFCK_READ); // Wait for Falling Edge
-              PIN_DATA_CLEAR;
-              while (!PIN_WFCK_READ); // Wait for Rising Edge
-              PIN_DATA_SET;
-          }
+            /* METHOD 2: TIME REFERENCE (FIXED DELAY) */
+            if (currentBit == 0) {
+                PIN_DATA_CLEAR;
+                PIN_DATA_OUTPUT;
+            } else {
+                // High-Z mode (Input) for Bit 1
+                PIN_DATA_INPUT;
+            }
+            _delay_us(BIT_DELAY);
         }
-      }
     }
 
     // EXIT CONDITION: Stop after the first successful region unless Universal mode (3)
     if (injectSCEx != 3) {
-
-      PIN_DATA_OUTPUT; 
+      PIN_DATA_OUTPUT;
       PIN_DATA_CLEAR;
 
-      if (!isWfck) {
-        PIN_WFCK_INPUT;
-        PIN_DATA_INPUT;
+      if (!wfck_mode)  // Set WFCK pin input
+      {
+        PIN_WFCK_INPUT;  
       }
-      break;
+      break; // Stop immediately after the first region injection
     }
 
-
-    // Inter-region delay for Universal mode
+    // Inter-region delay for Universel (3)
     PIN_DATA_OUTPUT; 
     PIN_DATA_CLEAR;
-    _delay_ms(180);
-
+    _delay_ms(90);
   }
 
-  // Restore pins to Input/High-Z to avoid signal interference after injection
-  if (!isWfck) {
-      PIN_WFCK_INPUT;
-      PIN_DATA_INPUT;
+
+  if (!wfck_mode)  // Set WFCK pin input
+  {
+    PIN_WFCK_INPUT;  
   }
 
   #ifdef LED_RUN
-      PIN_LED_OFF;
+    PIN_LED_OFF;
   #endif
 
 
   #if defined(DEBUG_SERIAL_MONITOR)
-  InjectLog();
+    InjectLog();
   #endif
 }
 
@@ -723,19 +710,27 @@ int main() {
 
   while (1) {
 
-    // Timing Sync: Prevent reading the tail end of the previous SUBQ packet
-    _delay_ms(1); 
+    _delay_ms(1);        // Timing Sync: Prevent reading the tail end of the previous SUBQ packet
+    
+    CaptureSUBQ();       // DATA ACQUISITION: Capture the 12-byte SUBQ stream.
 
-    // Data Acquisition: Capture 12-byte SUBQ channel stream into buffer
-    CaptureSUBQ();
-
-    // Confidence Filtering: Accumulate hits toward HYSTERESIS_MAX
-    // Control byte masking (0xD0) and TOC pattern matching are handled inside the filter.
+    /** 
+     * REQUEST FILTERING: Analyze the SUBQ Control byte (SUBQBuffer[0]).
+     * If valid, 'request_counter' is incremented inside the filter.
+     * Masking (0xD0) and pattern matching are handled internally.
+     */
     FilterSUBQSamples(SUBQBuffer[0]);
 
-    // Execution: Trigger SCEx injection once confidence (hysteresis) is reached
-    if (hysteresis >= HYSTERESIS_MAX) {
-        PerformInjectionSequence(INJECT_SCEx);
+    /** 
+     * INJECTION TRIGGER: Once enough valid requests are detected, 
+     * trigger the SCEx injection sequence.
+     */
+    if (request_counter >= REQUEST_INJECT_TRIGGER) {
+      
+        PerformInjectionSequence(INJECT_SCEx);      // Execute the SCEx injection burst
+
+        // STEALTH GAP: Mimics natural CD behavior to bypass anti-mod detection.
+        request_counter = (REQUEST_INJECT_TRIGGER - REQUEST_INJECT_GAP);   
     }
   }
   return 0;

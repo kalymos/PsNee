@@ -77,7 +77,7 @@
     #define CONFIRM_COUNTER_TARGET 9
     #define PULSE_COUNT 59
     #define BIT_OFFSET_CYCLES 45
-    #define OVERRIDE_CYCLES 3
+    #define OVERRIDE_CYCLES 4
     #define CONFIRM_COUNTER_TARGET_2 206 
     #define PULSE_COUNT_2 42
     #define BIT_OFFSET_2_CYCLES 48
@@ -92,7 +92,7 @@
     #define SILENCE_THRESHOLD 1100
     #define CONFIRM_COUNTER_TARGET 9
     #define PULSE_COUNT 91             
-    #define BIT_OFFSET_CYCLES 45      
+    #define BIT_OFFSET_CYCLES 43      
     #define OVERRIDE_CYCLES 3
     #define CONFIRM_COUNTER_TARGET_2 222   
     #define PULSE_COUNT_2 70
@@ -215,7 +215,7 @@
 ------------------------------------------------------------------------------------------------*/
 
 #if defined(DEBUG_SERIAL_MONITOR)
-extern uint8_t hysteresis;
+extern uint8_t request_counter;
 
   #if defined(IS_32U4_FAMILY)
     #define DEBUG_OUT Serial1
@@ -259,18 +259,8 @@ void CaptureSUBQLog(uint8_t *dataBuffer) {
     return;
   }
 
-  // --- ERROR REPORTING ---
-  // If errors occurred before this valid read, report the total count
-  if (errorCount > 0) {
-    #if defined(IS_ATTINY_FAMILY)
-      mySerial.print(F(" [Err x")); mySerial.print(errorCount); mySerial.println(F("]"));
-    #else
-      DEBUG_OUT.print(F(" [Missed sectors: ")); DEBUG_OUT.print(errorCount); DEBUG_OUT.println(F("]"));
-    #endif
-    errorCount = 0; // Reset counter after reporting
-  }
 
-  // --- DATA & HYSTERESIS DISPLAY ---
+  // --- DATA & request_counter DISPLAY ---
   #if defined(IS_ATTINY_FAMILY)
     // Compact hex output for ATtiny to maintain 12ms timing
     for (uint8_t i = 0; i < 12; i++) {
@@ -278,9 +268,9 @@ void CaptureSUBQLog(uint8_t *dataBuffer) {
       if (val < 0x10) mySerial.print("0"); 
       mySerial.print(val, HEX);
     }
-    // Append global hysteresis on the same line
+    // Append global request_counter on the same line
     mySerial.print(F(" h:")); 
-    mySerial.println(hysteresis); 
+    mySerial.println(request_counter); 
   #else
     // Formatted hex output for ATmega
     for (uint8_t i = 0; i < 12; i++) {
@@ -289,9 +279,9 @@ void CaptureSUBQLog(uint8_t *dataBuffer) {
       DEBUG_OUT.print(val, HEX); 
       DEBUG_OUT.print(" ");
     }
-    // Append global hysteresis on the same line
+    // Append global request_counter on the same line
     DEBUG_OUT.print(F("| Hyst: ")); 
-    DEBUG_OUT.println(hysteresis); 
+    DEBUG_OUT.println(request_counter); 
   #endif
 }
 
@@ -311,6 +301,9 @@ void InjectLog(){
 /*------------------------------------------------------------------------------------------------
                Compilation message
 -----------------------------------------------------------------------------------------------*/
+#if (REQUEST_INJECT_GAP >= REQUEST_INJECT_TRIGGER)
+  #error "Critical Error: REQUEST_INJECT_GAP must be smaller than REQUEST_INJECT_TRIGGER!"
+#endif
 
 #ifdef LED_RUN
   #pragma message "Feature: Status LED ENABLED"

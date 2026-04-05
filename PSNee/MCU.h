@@ -348,6 +348,8 @@
   #define PIN_SQCK_INPUT  DDRD &= ~(1 << DDD7) // SQCK Clock (PD7)
   #define PIN_SUBQ_INPUT  DDRE &= ~(1 << DDE6) // SUBQ Data (PE6)
 
+  
+
   // Configure lines as outputs (for injection/override)
   #define PIN_DATA_OUTPUT DDRB |= (1 << DDB4)
   #define PIN_WFCK_OUTPUT DDRB |= (1 << DDB5)
@@ -411,6 +413,8 @@
       #define PIN_AY_INTERRUPT_RISING   EICRA  |=  (1 << ISC01) | (1 << ISC00)
       #define PIN_AY_INTERRUPT_VECTOR   INT0_vect
       #define PIN_AY_INTERRUPT_CLEAR    EIFR |= (1 << INTF0)
+      #define PIN_AY_INTERRUPT_FALLING    EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | (1 << ISC01) // Configure INT1 for falling edge trigger
+
     #endif
 
     // Hardware Bypass Switch (On-the-fly deactivation)
