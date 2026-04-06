@@ -32,7 +32,7 @@
  *------------------------------------------------------------------------------------------------------------------*/
 // #define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
 // #define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
-// #define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+ #define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
 // #define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
 // #define SCPH_3500_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
 // #define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
@@ -657,11 +657,6 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
 }
 
 void Init() {
-
-  // --- Hardware Power & Peripheral Optimization ---
-
-  OptimizePeripherals();
-
 
   #ifdef LED_RUN
     PIN_LED_OUTPUT;

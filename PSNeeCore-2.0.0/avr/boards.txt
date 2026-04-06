@@ -8,7 +8,7 @@
 ###########################################################################################################
 
 # Menu options
-menu.clock=Clock
+
 menu.variant=Variant
 
 #############################
@@ -26,10 +26,13 @@ menu.variant=Variant
 328.build.board=AVR_ATmega328
 328.build.bootloader_led=led+b5
 328.build.extra_flags={build.clkpr}
+328.build.f_cpu=16000000L
+328.build.clkpr=
 
 # Upload port select
 
 328.upload.maximum_size=32768
+328.upload.default_speed=115200
 328.build.export_merged_output=false
 328.bootloader.file=empty/empty.hex
 
@@ -46,18 +49,24 @@ menu.variant=Variant
 328.menu.variant.modelP.bootloader.extended_value=11111101
 328.menu.variant.modelP.build.variant=standard
 328.menu.variant.modelP.build.mcu=atmega328p
+328.menu.variant.modelP.bootloader.low_fuses=0xDF
+
 
 328.menu.variant.modelNonP=328 / 328A
 # 328.menu.variant.modelNonP.bootloader.cksel_bits=0111
 328.menu.variant.modelNonP.bootloader.extended_value=11111101
 328.menu.variant.modelNonP.build.variant=standard
 328.menu.variant.modelNonP.build.mcu=atmega328
+328.menu.variant.modelNonP.bootloader.low_fuses=0xDF
 
 328.menu.variant.modelPB=328PB
 # 328.menu.variant.modelPB.bootloader.cksel_bits=1111
-328.menu.variant.modelPB.bootloader.extended_value=11110111
+328.menu.variant.modelPB.bootloader.extended_value=11110101
 328.menu.variant.modelPB.build.variant=pb-variant
 328.menu.variant.modelPB.build.mcu=atmega328pb
+328.menu.variant.modelPB.bootloader.low_fuses=0xDF
+
+
 
 # Brown out detection
 
@@ -71,28 +80,6 @@ menu.variant=Variant
 328.ltoarcmd=avr-gcc-ar
 
 
-# Clock frequencies
-328.menu.clock.16MHz_external=External 16 MHz
-328.menu.clock.16MHz_external.upload.default_speed=115200
-# 328.menu.clock.16MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-328.menu.clock.16MHz_external.bootloader.low_fuses=0xEE
-328.menu.clock.16MHz_external.build.clkpr=
-328.menu.clock.16MHz_external.build.f_cpu=16000000L
-
-
-328.menu.clock.8MHz_external=External 8 MHz
-328.menu.clock.8MHz_external.upload.default_speed=57600
-# 328.menu.clock.8MHz_external.bootloader.low_fuses=0b1111{bootloader.cksel_bits}
-328.menu.clock.8MHz_external.bootloader.low_fuses=0xEE
-328.menu.clock.8MHz_external.build.clkpr=
-328.menu.clock.8MHz_external.build.f_cpu=8000000L
-
-
-328.menu.clock.8MHz_internal=Internal 8 MHz
-328.menu.clock.8MHz_internal.upload.default_speed=38400
-328.menu.clock.8MHz_internal.bootloader.low_fuses=0xC2
-328.menu.clock.8MHz_internal.build.clkpr=
-328.menu.clock.8MHz_internal.build.f_cpu=8000000L
 
 #############################
 #### ATmega168/A/P/PA/PB ####

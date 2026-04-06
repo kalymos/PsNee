@@ -113,13 +113,21 @@
   *    3. CLOCK GATING (PRR): Shuts down clocks to TWI, SPI, and all Timers (0, 1, 2).
   *    4. UART MAINTENANCE: Keeps PRUSART0 active to allow Serial communication.
   ------------------------------------------------------------------------------------------------*/
+  void OptimizePeripherals(void) __attribute__((naked, section(".init3")));
 
-  static inline void OptimizePeripherals(void) {
-    // 1. Disable Interrupts during setup
+  void OptimizePeripherals(void) {
+    
+    // Watchdog Timer Shutdown (Prevent Boot-Loop) 
+    MCUSR = 0;
+    WDTCSR |= (1 << WDCE) | (1 << WDE);
+    WDTCSR = 0x00;
+
+
+    // Disable Interrupts during setup
     cli();
 
-    // 2. Analog Modules Shutdown (Critical for Power)
-    ADCSRA &= ~(1 << ADEN); // Disable ADC
+    // Analog Modules Shutdown (Critical for Power)
+    ADCSRA = 0;             // Disable ADC
     ACSR   |= (1 << ACD);   // Disable Analog Comparator
 
     DIDR0 = 0xFF; // Pins A0 to A7
@@ -127,13 +135,13 @@
       DIDR2 = 0xFF;
     #endif
 
-    // 4. GPIO Strategy (Unused pins to Pull-up)
+    // GPIO Strategy (Unused pins to Pull-up)
     // PORTx = 0xFF (Pull-ups) | DDRx = 0x00 (Inputs)
     PORTC |= 0xFF;
     #if defined(__AVR_ATmega328PB__) || defined(__AVR_ATmega128PB__)
       PORTE |= 0x0F; // Le Port E existe sur la série PB (PE0 à PE3)
     #endif
-    // 5. Power Reduction Register (PRR)
+    // Power Reduction Register (PRR)
     // We KEEP PRUSART0 (UART) and shut down EVERYTHING else.
     // _delay_ms() will still work (it's cycle-based, not timer-based).
 
@@ -175,7 +183,7 @@
     #endif
 
 
-    // 6. Double Security for Timer 0
+    // Double Security for Timer 0
     TCCR0B = 0; TIMSK0 = 0; // Timer 0
     TCCR1B = 0; TIMSK1 = 0; // Timer 1
     TCCR2B = 0; TIMSK2 = 0; // Timer 2
