@@ -58,6 +58,7 @@
 #define PATCHING _delay_us(0.1)
 #define CHECKPOINT 75270
 #define TRIGGER 16
+#define FAT
 #endif
 
 #ifdef  SCPH_5500
@@ -68,6 +69,7 @@
 #define CHECKPOINT 76100
 #define TRIGGER 21
 #define LOW_TRIGGER
+#define FAT
 #endif
 
 // #ifdef  SCPH_3500_5000
@@ -78,6 +80,7 @@
 // #define CHECKPOINT 75260
 // #define TRIGGER 21
 // #define LOW_TRIGGER
+// #define FAT
 // #endif
 
 // #ifdef  SCPH_5500
@@ -88,6 +91,7 @@
 // #define CHECKPOINT 76130
 // #define TRIGGER 21
 // #define LOW_TRIGGER
+// #define FAT
 // #endif
 
 #ifdef  SCPH_5000
@@ -98,6 +102,7 @@
 #define CHECKPOINT 75260
 #define TRIGGER 21
 #define LOW_TRIGGER
+#define FAT
 #endif
 
 #ifdef  SCPH_3500   
@@ -108,6 +113,7 @@
 #define TRIGGER 21
 #define HOLD _delay_us(2.75)                    //2.65  - 2.85
 #define PATCHING _delay_us(0.2)
+#define FAT
 #endif
 
 #ifdef  SCPH_3000
@@ -123,7 +129,8 @@
 #define HOLD2 _delay_us(2.88)
 #define PATCHING2 _delay_us(0.15)
 #define CHECKPOINT2 253300
-#define TRIGGER2 43  
+#define TRIGGER2 43
+#define FAT
 #endif
 
 #ifdef  SCPH_1000
@@ -140,6 +147,7 @@
 #define PATCHING2 _delay_us(0.15)
 #define CHECKPOINT2 272800
 #define TRIGGER2 71
+#define FAT
 #endif
 
 #ifdef SCEA

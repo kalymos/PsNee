@@ -17,7 +17,7 @@
 //#define SCPH_102         // DX - D0, AX - A7. BIOS ver. 4.4e, CRC 0BAD7EA9 | 4.5e, CRC 76B880E5
 //#define SCPH_100         // DX - D0, AX - A7. BIOS ver. 4.3j, CRC F2AF798B
 //#define SCPH_7000_9000   // DX - D0, AX - A7. BIOS ver. 4.0j, CRC EC541CD0
-//#define SCPH_5500        // DX - D0, AX - A5. BIOS ver. 3.0j, CRC FF3EEB8C
+#define SCPH_5500        // DX - D0, AX - A5. BIOS ver. 3.0j, CRC FF3EEB8C
 //#define SCPH_5000        // DX - D0, for 40-pin BIOS: AX - A4, for 32-pin BIOS: AX - A5. BIOS ver. 2.2j, CRC 24FC7E17 | 2.1j, CRC BC190209
 //#define SCPH_3500         // DX - D0, for 40-pin BIOS: AX - A4, for 32-pin BIOS: AX - A5. BIOS ver. 2.2j, CRC 24FC7E17 | 2.1j, CRC BC190209
 //#define SCPH_3000        // DX - D5, for 40-pin BIOS: AX - A6, AY - A7, for 32-pin BIOS: AX - A7, AY - A8. BIOS ver. 1.1j, CRC 3539DEF6
@@ -49,7 +49,7 @@
   D7-SUBQ
   D8-DATA
   D9-WFCK
-  RST-RESET* (Only for JAP_FAT)
+  RST-RESET* (Only for JAP_FAT). If using ENABLE_HOLD_RESET_ON_BOOT see description below.
   GND-GND
 
   Pinout ATtiny:
@@ -68,8 +68,17 @@
 //                         Options
 //------------------------------------------------------------------------------------------------
 
-#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
-//#define PATCH_SWITCHE  // Enables hardware support for disabling BIOS patching, to allow access to the console memory card menu for model 7000. Useful in rare cases where the BIOS patch prevents the playback of original games
+//#define LED_RUN         // Turns on the LED when injections occur. D13 for Arduino, ATtiny add a led between PB3 (pin 2) and gnd with a 1k resistor in series, ATmega32U4 (Pro Micro) add a led between PB6 (pin 10) and gnd with a 1k resistor in series
+//#define PATCH_SW  // Enables hardware support for disabling BIOS patching, to allow access to the console memory card menu for model 7000. Useful in rare cases where the BIOS patch prevents the playback of original games
+
+// Holds PS1 reset on boot for more stability in BIOS PATCH for all JAP PS1 and European SCHP-102. D10 for ATMEGA328. A0 for ATMEGA32U4. 
+// This also makes possible to preserve the bootloader without needing a programmer.
+// Caution: 
+// FAT Models. Instead of connecting PS1's reset line to RST connect it to D10 (ATMEGA328) or A0 (ATMEGA32U4) in Arduino.
+// This needs a power cycle for stability. The use of manually pressing PS1's reset button or IGR mod leads to instability in BIOS PATCH (hit and miss). 
+//
+// SLIM Models. Connect PS1's reset line to D10 (ATMEGA328) or A0 (ATMEGA32U4) in Arduino.
+#define ENABLE_HOLD_RESET_ON_BOOT
 
 //------------------------------------------------------------------------------------------------
 //                         pointer and variable section
@@ -289,30 +298,75 @@ void inject_SCEX(const char region) {
   _delay_ms(DELAY_BETWEEN_INJECTIONS);
 }
 
+void hold_reset(uint8_t hold_rst_time){
+    // AUTO BOOT RESET - PIN D10 ATMEGA328/ A0 ATMEGA32U4
+    PIN_RESET_OUTPUT;         // Set as output
+    PIN_RESET_LOW;            // Set GND
+    _delay_ms(hold_rst_time); // Hold reset
+    PIN_RESET_INPUT;          // Set High Impedance
+}
+
 void Init() {
-#if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
-  TIMER_TCNT_CLEAR;
-  SET_OCROA_DIV;
-  SET_TIMER_TCCROA;
-  SET_TIMER_TCCROB;
-#endif
+  // Disable watchdog after reset
+  #if defined(ENABLE_HOLD_RESET_ON_BOOT) && defined(BIOS_PATCH) && (defined(ATmega328_168) || defined(ATmega32U4_16U4))
+    MCUSR = 0;
+    wdt_disable();
+  #endif
 
-#if defined(PATCH_SWITCHE) && defined(BIOS_PATCH)
-  PIN_SWITCH_INPUT;
-  PIN_SWITCH_SET;
-  if (PIN_SWICHE_READ == 0){
-   Flag_Switch =1;
-  }
-#endif
+  #if defined(ATmega328_168) || defined(ATmega32U4_16U4) || defined(ATtiny85_45_25)
+    TIMER_TCNT_CLEAR;
+    SET_OCROA_DIV;
+    SET_TIMER_TCCROA;
+    SET_TIMER_TCCROB;
+  #endif
 
-#ifdef LED_RUN
-  PIN_LED_OUTPUT;
-#endif
+  #if defined(PATCH_SW) && defined(BIOS_PATCH) && (defined(ATmega328_168) || defined(ATmega32U4_16U4))
+    PIN_SWITCH_INPUT;
+    PIN_SWITCH_SET;
+    if (PIN_SWITCH_READ == 0){
+    Flag_Switch =1;
+    }
+  #endif
+
+    // Reset PS1 when booting
+  #if defined(ENABLE_HOLD_RESET_ON_BOOT) && defined(BIOS_PATCH) && (defined(ATmega328_168) || defined(ATmega32U4_16U4))
+    #ifdef PATCH_SW
+      if (Flag_Switch == 0) {
+        #ifdef FAT
+          hold_reset(1000);
+        #else
+          hold_reset(300);
+        #endif
+      }
+    #else
+      #ifdef FAT
+        hold_reset(1000);
+      #else
+        hold_reset(300);
+      #endif
+    #endif
+  #endif
+
+  #ifdef LED_RUN
+    PIN_LED_OUTPUT;
+  #endif
 
   GLOBAL_INTERRUPT_ENABLE;
   
   PIN_SQCK_INPUT;
   PIN_SUBQ_INPUT;
+}
+
+// CAPTURE MANUAL RESET FOR JAP FAT MODELS THAT REQUIRE BIOS PATCH
+void capture_reset(){
+  _delay_ms(50);
+  if (IS_RESET_PRESSED) {
+    while (IS_RESET_PRESSED);
+    PIN_RESET_OUTPUT;
+    PIN_RESET_LOW;
+    wdt_enable(WDTO_250MS); 
+    while(1);
+  }
 }
 
 int main() {
@@ -326,21 +380,25 @@ int main() {
 
   Init();
 
-#if defined(BIOS_PATCH)
+  #if defined(BIOS_PATCH) && (defined(ATmega328_168) || defined(ATmega32U4_16U4))
 
-#ifdef LED_RUN
-  PIN_LED_ON;
-#endif
+    #ifdef LED_RUN
+      PIN_LED_ON;
+    #endif
 
-  if (Flag_Switch == 0) {
-    Bios_Patching();
-  }
+      #if defined(PATCH_SW)
+        if (Flag_Switch == 0) {
+          Bios_Patching();
+        }
+      #else
+          Bios_Patching();
+      #endif
 
-#ifdef LED_RUN
-  PIN_LED_OFF;
-#endif
+    #ifdef LED_RUN
+      PIN_LED_OFF;
+    #endif
 
-#endif
+  #endif
 
   Timer_Start();
   //************************************************************************
@@ -375,7 +433,15 @@ int main() {
   }
 
   while (1) {
-
+    // CAPTURE MANUAL RESET FOR JAP FAT MODELS THAT REQUIRE BIOS PATCH
+    #if defined(FAT) && defined(ENABLE_HOLD_RESET_ON_BOOT) && (defined(ATmega328_168) || defined(ATmega32U4_16U4))
+      #ifdef PATCH_SW
+        if (Flag_Switch == 0 && IS_RESET_PRESSED) capture_reset();
+      #else
+        if (IS_RESET_PRESSED) capture_reset();
+      #endif
+    #endif
+    
     _delay_ms(1); /* Start with a small delay, which can be necessary 
                     in cases where the MCU loops too quickly and picks up the laster SUBQ trailing end*/
 
