@@ -21,8 +21,8 @@ Critical for PSOne (SCPH-102), Japanese models, and known problematic boards usi
 > **DO NOT connect the console's Reset point to the Arduino’s physical RST pin.**
 > Reason: This creates a feedback loop. When the Arduino pulls the line LOW to sync the console, it would simultaneously trigger its own physical reset. This causes the MCU to restart before finishing the sync pulse, leading to an infinite reset cycle.
 > Correct Connection:
-> - ATmega328/168 (Nano, Uno): Connect console Reset to D10.
-> - ATmega32u4 (Pro Micro, Leonardo): Connect console Reset to A0.
+> - ATmega328/168: Connect console Reset to D10.
+> - ATmega32u4: Connect console Reset to A0.
 >#### Manual Reset Behavior
 > Known Limitations: While cold boot BIOS patching is highly reliable, manual resets remain "hit & miss" on Japanese FAT boards due to potential residual hardware states. A full power cycle is still recommended for best reliability on these models.
 >#### Bootloader Preservation
