@@ -32,7 +32,7 @@
  *------------------------------------------------------------------------------------------------------------------*/
 // #define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
 // #define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
- #define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+// #define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
 // #define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
 // #define SCPH_3500_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
 // #define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
@@ -42,14 +42,16 @@
  *                           Options
  *******************************************************************************************************************/
 
-#define REQUEST_INJECT_TRIGGER 15 // Now coupled with REQUEST_INJECT_GAP; allows for higher trigger
+#define REQUEST_INJECT_TRIGGER 10 // Now coupled with REQUEST_INJECT_GAP; allows for higher trigger
 /*
  * TRIGGER CALIBRATION:
- * - Lower values (<15): Possible, but not beneficial.
- * - Higher values (20-30): Possible for older or weak CD-ROM laser units.
+ * - Lower values (<5): Possible, but not beneficial.
+ * - The value of 11 for REQUEST_INJECT_TRIGGER must not be exceeded on Japanese models.
+ *   This causes problems with disks that have anti-mod protection; it's less noticeable on other models.
+ * - Higher values (15-20-25-30): Possible for older or weak CD-ROM laser units.
  */
 
-#define REQUEST_INJECT_GAP 4      // Stealth interval (must be 4-8 AND < REQUEST_INJECT_TRIGGER)
+#define REQUEST_INJECT_GAP 5      // Stealth interval (must be 4-8 AND < REQUEST_INJECT_TRIGGER)
 /*
  * NOTE: REQUEST_INJECT_GAP defines the "cool-off" period between injections.
  * - Optimal range: 4 to 8 (for natural CD timing & anti-mod bypass).
