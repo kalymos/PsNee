@@ -234,9 +234,9 @@
   // --- BIOS Patching Configuration ---
   #if defined(SCPH_102)       || \
       defined(SCPH_100)       || \
-      defined(SCPH_7500_9000) || \
+      defined(SCPH_7000_7500_9000) || \
       defined(SCPH_7000)      || \
-      defined(SCPH_3500_5500) || \
+      defined(SCPH_3500_5000_5500) || \
       defined(SCPH_3000)      || \
       defined(SCPH_1000)
 
@@ -274,7 +274,7 @@
     #endif
 
      // Hardware Bypass Switch (On-the-fly deactivation)
-    #if defined(SCPH_7000)
+    #ifdef PATCH_SWITCHE
       #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
       #define PIN_SWITCH_SET   PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
       #define PIN_SWITCH_READ (!!(PIND & (1 << PIND5)))  // Read the state of PIND5 (switch input)
@@ -295,47 +295,62 @@
 #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega32U2__)
 #define IS_32U4_FAMILY
 
-  static inline void OptimizePeripherals(void) {
-      // 1. Global Interrupt Disable during hardware reconfiguration
-      cli();
+  void OptimizePeripherals(void) __attribute__((naked, section(".init3")));
+  
+   void OptimizePeripherals(void) {
 
-      // 2. Analog Front-End Shutdown
-      ADCSRA &= ~(1 << ADEN); // Disable ADC
-      ACSR   |= (1 << ACD);   // Disable Analog Comparator
+    // Ultra-Fast Boot (Clock & Watchdog)
+    CLKPR = 0x80;
+    CLKPR = 0x00;
+    MCUSR = 0;
 
-      // 3. Digital Input Buffer Disable (DIDR0 & DIDR2)
-      // 32U4 has more analog channels (ADC0-ADC7 and ADC8-ADC13)
-      DIDR0 = 0xFF; // Disable digital buffers on F0-F7
-      //DIDR2 = 0x3F; // Disable digital buffers on D4, D6, D7, B4, B5, B6
+    // Global Interrupt Disable during hardware reconfiguration
+    cli();
 
-      // 4. GPIO Strategy (Unused pins to Pull-up)
-      // On 32U4, Port C is small (only PC6/PC7). Adjusting to cover most unused pins.
-      PORTC |= 0xFF;
-      PORTE |= 0xFF; // Extra port on 32U4
+    // USB Hard-Shutdown (Kills USB Serial, use Hardware UART RX1/TX1 instead)
+    USBCON &= ~(1 << USBE);
+    USBCON &= ~(1 << OTGPADE);
+    UHWCON &= ~(1 << UVREGE);
+    PLLCSR &= ~(1 << PLLE);
+    UDINT   = 0;
 
-      // 5. Power Reduction Registers (PRR0 & PRR1)
-      // PRR0 handles TWI, SPI, Timers 0, 1 and ADC.
-      PRR0 = (1 << PRTWI)  | // I2C Off
-             (1 << PRSPI)  | // SPI Off
-             (1 << PRTIM0) | // Timer 0 Off
-             (1 << PRTIM1) | // Timer 1 Off
-             (1 << PRADC);   // ADC Clock Off
-      
-      // PRR1 handles Timer 3, Timer 4 and USB.
-      // We KEEP PRUSART1 (Serial1) and PRUSB active for communication.
-      PRR1 = (1 << PRUSB)   | // Disable USB Controller (Stops SOF interrupts)
-             (1 << PRTIM3)  | // Timer 3 Off
-             (1 << 4)       | // Timer 4 Off (High speed timer)
-             (0 << PRUSART1); // KEEP SERIAL1 ACTIVE (PD1/TX1) - Must be 0
+    // Analog Front-End Shutdown
+    ADCSRA &= ~(1 << ADEN); // Disable ADC
+    ACSR   |= (1 << ACD);   // Disable Analog Comparator
 
-      // 6. Double Security for Timer 0 (Redundancy)
-      TCCR0B = 0;
-      TIMSK0 = 0;
-      TCCR1B = 0;
-      TIMSK1 = 0;
-      TCCR3B = 0;
-      TIMSK3 = 0;
-      TCCR4B = 0;
+    // Digital Input Buffer Disable (DIDR0 & DIDR2)
+    // 32U4 has more analog channels (ADC0-ADC7 and ADC8-ADC13)
+    DIDR0 = 0xFF; // Disable digital buffers on F0-F7
+    //DIDR2 = 0x3F; // Disable digital buffers on D4, D6, D7, B4, B5, B6
+
+    // GPIO Strategy (Unused pins to Pull-up)
+    // On 32U4, Port C is small (only PC6/PC7). Adjusting to cover most unused pins.
+    PORTC |= 0xFF;
+    PORTE |= 0xFF; // Extra port on 32U4
+
+    // Power Reduction Registers (PRR0 & PRR1)
+    // PRR0 handles TWI, SPI, Timers 0, 1 and ADC.
+    PRR0 =  (1 << PRTWI)  | // I2C Off
+            (1 << PRSPI)  | // SPI Off
+            (1 << PRTIM0) | // Timer 0 Off
+            (1 << PRTIM1) | // Timer 1 Off
+            (1 << PRADC);   // ADC Clock Off
+    
+    // PRR1 handles Timer 3, Timer 4 and USB.
+    // We KEEP PRUSART1 (Serial1) and PRUSB active for communication.
+    PRR1 =  (1 << PRUSB)   | // Disable USB Controller (Stops SOF interrupts)
+            (1 << PRTIM3)  | // Timer 3 Off
+           // (1 << PRTIM4)  | // Timer 4 Off (High speed timer)
+            (0 << PRUSART1); // KEEP SERIAL1 ACTIVE (PD1/TX1) - Must be 0
+
+    // Double Security for Timer 0 (Redundancy)
+    TCCR0B = 0;
+    TIMSK0 = 0;
+    TCCR1B = 0;
+    TIMSK1 = 0;
+    TCCR3B = 0;
+    TIMSK3 = 0;
+    TCCR4B = 0;
   }
 
 
@@ -383,9 +398,8 @@
 
   #if defined(SCPH_102)       || \
       defined(SCPH_100)       || \
-      defined(SCPH_7500_9000) || \
-      defined(SCPH_7000)      || \
-      defined(SCPH_3500_5500) || \
+      defined(SCPH_7000_7500_9000) || \
+      defined(SCPH_3500_5000_5500) || \
       defined(SCPH_3000)      || \
       defined(SCPH_1000)
 
@@ -426,7 +440,7 @@
     #endif
 
     // Hardware Bypass Switch (On-the-fly deactivation)
-    #ifdef SCPH_7000
+    #ifdef PATCH_SWITCHE
       #define PIN_SWITCH_INPUT DDRC  &= ~(1 << DDC6) // Bypass on PC6
       #define PIN_SWITCH_SET   PORTC |=  (1 << PC6)  // Enable pull-up
       #define PIN_SWITCH_READ  (!!(PINC & (1 << PINC6)))
@@ -439,35 +453,40 @@
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
   #define IS_ATTINY_FAMILY
 
-  static inline void OptimizePeripherals(void) {
-      // 1. Global Interrupt Disable during reconfiguration
-      cli();
+  void OptimizePeripherals(void) __attribute__((naked, section(".init3")));
 
-      // 2. Analog Modules Shutdown
-      ADCSRA = 0;             // Power off ADC completely
-      ACSR   |=  (1 << ACD);  // Disable Analog Comparator
+  void OptimizePeripherals(void) {
 
-      // 3. Digital Input Buffer Disable (DIDR0)
-      // Disconnects digital buffers on PB0-PB5 to prevent leakage
-      DIDR0 = 0x00;  
+    // Ultra-Fast Boot (Clock & Watchdog)
+    // Forced 8MHz is mandatory for stable SoftwareSerial baudrate
+    CLKPR = 0x80;
+    CLKPR = 0x00;
+    MCUSR = 0;
 
-      // 4. Power Reduction Register (PRR)
-      // Shuts down clocks to ADC and Timer 0.
-      // We KEEP USI or Timer 1 if required for specific logic.
-      PRR |= (1 << PRADC) | \
-             (1 << PRTIM0)| \
-             (1 << PRUSI);
+    //Global Interrupt Disable during reconfiguration
+    cli();
 
-      // 5. Timer 0 Specific Shutdown (Hardware Redundancy)
-      TCCR0B = 0;
-      TCCR0B = 0;
-      //TIMSK &= ~((1 << OCIE0A) | (1 << OCIE0B) | (1 << TOIE0)); // Disable Timer 0 interrupts
-      TIMSK  = 0; // Disable ALL timer interrupts (OCIE0A, OCIE0B, TOIE0, etc.)
+    // Analog Modules Shutdown
+    ADCSRA = 0;             // Power off ADC completely
+    ACSR   |=  (1 << ACD);  // Disable Analog Comparator
 
-      // 6. Watchdog: Ensure it's disabled to prevent random resets
-      MCUSR &= ~(1 << WDRF);
-      WDTCR |= (1 << WDCE) | (1 << WDE);
-      WDTCR = 0x00;
+    // Power Reduction Register (PRR)
+    // Shuts down clocks to ADC and Timer 0.
+    // We KEEP USI or Timer 1 if required for specific logic.
+    PRR |= (1 << PRADC)  | 
+           (0 << PRTIM0) | // KEEP TIMER 0 FOR SOFTWARE SERIAL 
+           (1 << PRTIM1) |
+           (1 << PRUSI);
+
+    // Timer 0 Specific Shutdown (Hardware Redundancy)
+    TCCR0B = 0;
+    TCCR0B = 0;
+    TIMSK  = 0; // Disable ALL timer interrupts (OCIE0A, OCIE0B, TOIE0, etc.)
+
+    // Watchdog: Ensure it's disabled to prevent random resets
+    MCUSR &= ~(1 << WDRF);
+    WDTCR |= (1 << WDCE) | (1 << WDE);
+    WDTCR = 0x00;
 
   }
 
@@ -519,14 +538,12 @@
   #endif
 
   // --- Safety Check: BIOS Patch Compatibility ---
-  #if defined(SCPH_1000)      || \
-      defined(SCPH_3000)      || \
-      defined(SCPH_3500_5000) || \
-      defined(SCPH_5500)      || \
-      defined(SCPH_7000)      || \
-      defined(SCPH_7500_9000) || \
-      defined(SCPH_100)       || \
-      defined(SCPH_102) 
+  #if defined(SCPH_1000)           || \
+      defined(SCPH_3000)           || \
+      defined(SCPH_3500_5000_5500) || \
+      defined(SCPH_7000_7500_9000) || \
+      defined(SCPH_100)            || \
+      defined(SCPH_102)  
     #error "ATtiny85/45/25 architecture is not compatible with the BIOS patch feature."
   #endif
 #endif

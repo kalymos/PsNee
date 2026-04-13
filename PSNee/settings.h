@@ -1,20 +1,9 @@
 #pragma once
 
 /*
- The _delay_us function uses loops to generate an approximate delay for the specified number of microseconds.
- It calculates the number of clock cycles required to achieve the requested delay and loops the corresponding number of times.
- 
- The temporal precision of _delay_us depends on the microcontroller's clock frequency (F_CPU).
- For the ATmega328 operating at a typical frequency of 16 MHz, here are some details on the precision.
-
- Clock Frequency: F_CPU must be defined correctly before using the function. For an ATmega328 operating at 16 MHz:
-    1 clock cycle = 1 / 16,000,000 s ≈ 62.5 ns
-    1 µs ≈ 16 clock cycles
-
-   BIT_OFFSET _delay_us(2.75)    = 44  clock cycles
-   OVERRIDE _delay_us(0.2) = 3,2 clock cycles
-
-*/
+ *
+ *
+ */
 
 /*------------------------------------------------------------------------------------------------
            Specific parameter section for BIOS patches
@@ -31,41 +20,29 @@
     #define BIOS_PATCH
     #define SILENCE_THRESHOLD 1100
     #define CONFIRM_COUNTER_TARGET 8
-    #define PULSE_COUNT 47         //47
-    #define BIT_OFFSET_CYCLES 47   //60
+    #define PULSE_COUNT 47         
+    #define BIT_OFFSET_CYCLES 47   
     #define OVERRIDE_CYCLES 3       
   #endif
 
 
-  // // -------- SCPH 7500 / 9000 --------
-  #ifdef SCPH_7500_9000
+  // // -------- SCPH 7000 / 7500 / 9000 --------
+  #ifdef SCPH_7000_7500_9000
     #define BIOS_PATCH
     #define SILENCE_THRESHOLD 1100
     #define CONFIRM_COUNTER_TARGET 1
-    #define PULSE_COUNT 15          //15
-    #define BIT_OFFSET_CYCLES 47    //60
+    #define PULSE_COUNT 15          
+    #define BIT_OFFSET_CYCLES 47    
     #define OVERRIDE_CYCLES 3       
   #endif
-
-
-  // -------- SCPH 7000 --------
-  #ifdef SCPH_7000
-    #define BIOS_PATCH
-    #define SILENCE_THRESHOLD 1100
-    #define CONFIRM_COUNTER_TARGET 1
-    #define PULSE_COUNT 15
-    #define BIT_OFFSET_CYCLES 47
-    #define OVERRIDE_CYCLES 3
-  #endif
-
 
   // // ----- SCPH 3500 / 5000 / 5500 -----
-  #ifdef SCPH_3500_5500
+  #ifdef SCPH_3500_5000_5500
     #define BIOS_PATCH
     #define SILENCE_THRESHOLD 25000
     #define CONFIRM_COUNTER_TARGET 1
-    #define PULSE_COUNT 84         //84
-    #define BIT_OFFSET_CYCLES 47    //60
+    #define PULSE_COUNT 84
+    #define BIT_OFFSET_CYCLES 47
     #define OVERRIDE_CYCLES 3
   #endif
 
@@ -109,41 +86,29 @@
     #define BIOS_PATCH
     #define SILENCE_THRESHOLD 1500
     #define CONFIRM_COUNTER_TARGET 8
-    #define PULSE_COUNT 47         //47
-    #define BIT_OFFSET_CYCLES 47   //60
+    #define PULSE_COUNT 47 
+    #define BIT_OFFSET_CYCLES 47 
     #define OVERRIDE_CYCLES 3       
   #endif
 
 
-  // // -------- SCPH 7500 / 9000 --------
-  #ifdef SCPH_7500_9000
+  // // -------- SCPH 7000 / 7500 / 9000 --------
+  #ifdef SCPH_7000_7500_9000
     #define BIOS_PATCH
     #define SILENCE_THRESHOLD 1500
     #define CONFIRM_COUNTER_TARGET 1
-    #define PULSE_COUNT 15          //15
-    #define BIT_OFFSET_CYCLES 47    //60
+    #define PULSE_COUNT 15    
+    #define BIT_OFFSET_CYCLES 47  
     #define OVERRIDE_CYCLES 3       
   #endif
-
-
-  // -------- SCPH 7000 --------
-  #ifdef SCPH_7000
-    #define BIOS_PATCH
-    #define SILENCE_THRESHOLD 1500
-    #define CONFIRM_COUNTER_TARGET 1
-    #define PULSE_COUNT 15
-    #define BIT_OFFSET_CYCLES 47
-    #define OVERRIDE_CYCLES 3
-  #endif
-
 
   // // ----- SCPH 3500 / 5000 / 5500 -----
-  #ifdef SCPH_3500_5500
+  #ifdef SCPH_3500_5000_5500
     #define BIOS_PATCH
     #define SILENCE_THRESHOLD 32000
     #define CONFIRM_COUNTER_TARGET 1
-    #define PULSE_COUNT 84         //84
-    #define BIT_OFFSET_CYCLES 47    //60
+    #define PULSE_COUNT 84      
+    #define BIT_OFFSET_CYCLES 47 
     #define OVERRIDE_CYCLES 3
   #endif
 
@@ -183,14 +148,12 @@
                   Region Settings Section
 ------------------------------------------------------------------------------------------------*/
 
-#if defined(SCPH_100)       || \
-    defined(SCPH_7500_9000) || \
-    defined(SCPH_7000)      || \
-    defined(SCPH_3500_5500) || \
-    defined(SCPH_3500)      || \
-    defined(SCPH_3000)      || \
-    defined(SCPH_1000)      || \
-    defined(SCPH_xxx3)      || \
+#if defined(SCPH_100)            || \
+    defined(SCPH_7000_7500_9000) || \
+    defined(SCPH_3500_5000_5500) || \
+    defined(SCPH_3000)           || \
+    defined(SCPH_1000)           || \
+    defined(SCPH_xxx3)           || \
     defined(SCPH_5903)
 
   #define INJECT_SCEx 0   // NTSC-J
@@ -311,8 +274,8 @@ void InjectLog(){
 
 // SECURITY CHECK: Ensure only one console is selected
 // If you get "not portable" warnings here, it's only because multiple models are active.
-#if (defined(SCPH_1000) + defined(SCPH_3000) + defined(SCPH_3500_5500) + \
-     defined(SCPH_7000) + defined(SCPH_7500_9000) + defined(SCPH_100) + \
+#if (defined(SCPH_1000) + defined(SCPH_3000) + defined(SCPH_3500_5000_5500) + \
+     defined(SCPH_7000_7500_9000) + defined(SCPH_100) + \
      defined(SCPH_102) + defined(SCPH_xxx1) + defined(SCPH_xxx2) + \
      defined(SCPH_xxx3) + defined(SCPH_5903) + defined(SCPH_xxxx)) > 1
   #error "Too many consoles selected! Please uncomment ONLY ONE model."
@@ -323,11 +286,9 @@ void InjectLog(){
   #pragma message "Target Console: SCPH-1000 (NTSC-J)"
 #elif defined(SCPH_3000)
   #pragma message "Target Console: SCPH-3000 (NTSC-J)"
-#elif defined(SCPH_3500_5500)
+#elif defined(SCPH_3500_5000_5500)
   #pragma message "Target Console: SCPH-3500/5000/5500 (NTSC-J)"
-#elif defined(SCPH_7000)
-  #pragma message "Target Console: SCPH-7000 (Internal Switch enabled)"
-#elif defined(SCPH_7500_9000)
+#elif defined(SCPH_7000_7500_9000)
   #pragma message "Target Console: SCPH-7500/9000 (NTSC-J)"
 #elif defined(SCPH_100)
   #pragma message "Target Console: SCPH-100 (NTSC-J)"

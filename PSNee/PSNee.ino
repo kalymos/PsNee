@@ -27,16 +27,15 @@
  * Note: BIOS version is more critical than the SCPH number for patch success.
  *-------------------------------------------------------------------------------------------------------------------
  *
- *                                    |                Adres pin            |
- *   SCPH model number    // Data pin |    32-pin BIOS   |   40-pin BIOS    | BIOS version
- *------------------------------------------------------------------------------------------------------------------*/
-// #define SCPH_102        // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
-// #define SCPH_100        // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
-// #define SCPH_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
-// #define SCPH_7000       // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0  Enables hardware support for disabling BIOS patching.
-// #define SCPH_3500_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
-// #define SCPH_3000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
-// #define SCPH_1000       // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
+ *                              // Data pin |                Adres pin            |
+ *   SCPH model number          //          |    32-pin BIOS   |   40-pin BIOS    | BIOS version
+ *-------------------------------------------------------------------------------------------------------------------*/
+// #define SCPH_102             // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
+// #define SCPH_100             // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
+// #define SCPH_7000_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
+// #define SCPH_3500_5000_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
+// #define SCPH_3000            // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
+// #define SCPH_1000            // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
 /*******************************************************************************************************************
  *                           Options
@@ -66,9 +65,16 @@
  * - ATmega32U4 (Pro Micro): Connect LED between PB6 (Pin 10) and GND.
  */
 
-// #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
+//#define PATCH_SWITCHE    // This allows the user to disable the BIOS patch on-the-fly.
+/*
+ * This allows you to bypass the memory card blocking problems on the SCPH-7000.
+ * - Configure Pin D5 as Input.
+ * - Enable internal Pull-up.
+ * - Exit immediately the patch BIOS if the switch pulls the pin to GND
+ */
 
-/******************************************************************************************************************
+// #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
+/*
  *  Requires compilation with Arduino libs!
  *  For Arduino connect TXD and GND, for ATtiny PB3 (pin 2) and GND, to your serial card RXD and GND.
  *
@@ -80,16 +86,16 @@
  *   Pin 2 (PB3) ----->  RX (Serial Card)
  *   Pin 4 (GND) ----->  GND
  *
- *******************************************************************************************************************/
+ */
 
 /******************************************************************************************************************
  *           Summary of practical information. Fuses. Pinout
  *******************************************************************************************************************
  * Fuses  
- * MCU    | High | Low | Extended
+ * MCU        | High | Low | Extended
  * --------------------------------------------------
- * ATmega | DF   | EE  | FF 
- * ATtiny | DF   | E2  | FF
+ * ATmega32U4 | DF   | EE  | D7 
+ * ATtiny     | DF   | E2  | FF
  *
  * Pinout
  * Arduino   | PSNee     |
@@ -105,7 +111,7 @@
  * D7        | SUBQ      |
  * D8        | DATA      |
  * D9        | WFCK      |
- * D13 ^ D10 | LED       | D10 only for ATmega32U4_16U4
+ * D13 ^ D10 | LED       | D10 only for ATmega32U4
  *
  * ATtiny | PSNee        | ISP   |
  * ---------------------------------------------------
@@ -236,10 +242,10 @@ uint8_t request_counter = 0;
 
   void Bios_Patching(void) {
 
-      // --- HARDWARE BYPASS OPTION (SCPH-7000 specific) ---
-      #if defined(SCPH_7000)
-          PIN_SWITCH_INPUT;              // Configure Pin D5 as Input
-          PIN_SWITCH_SET;                // Enable internal Pull-up (D5 defaults to HIGH)
+      // --- HARDWARE BYPASS OPTION ---
+      #if defined(PATCH_SWITCHE)
+          PIN_SWITCH_INPUT;               // Configure Pin D5 as Input
+          PIN_SWITCH_SET;                 // Enable internal Pull-up (D5 defaults to HIGH)
           __builtin_avr_delay_cycles(10); // Short delay for voltage stabilization
           
           /** 
