@@ -34,7 +34,7 @@ PSNee is compatible with all retail PlayStation 1 models and various AVR microco
 ![gray](images/issue/gray-screens.png)
 
 ### Verified Hardware (Personal Test Collection)
-![test](images/test-mat.png)
+![test](https://github.com/kalymos/PsNee/blob/master/images/my%20test%20material/test-mat.png)
 *From left to right: NTSC-J, PAL, and NTSC-U/C & Asia models.*
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/B0B81WGP0Z)
