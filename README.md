@@ -13,7 +13,7 @@ PSNee is compatible with all retail PlayStation 1 models and various AVR microco
 > [!IMPORTANT]
 > **Video Signal Note:** This modchip does not handle PAL/NTSC video signal conversion. Playing games from a different region may result in an incorrect display (e.g., NTSC games on early PAL consoles, or PAL games on NTSC-U/C or NTSC-J consoles).
 >
-> *European models from **SCPH-7002 onwards** typically handle NTSC signals correctly. However, **SCPH-102** requires a BIOS patch to support it.*
+> European models from SCPH-5502 to SCPH-9002 typically handle NTSC signals correctly. However, **SCPH-102** requires a BIOS patch to support it.
 >
 > See the Example of a distorted image at the bottom of the page.
 
@@ -24,7 +24,8 @@ PSNee is compatible with all retail PlayStation 1 models and various AVR microco
 - **ATtiny25/45/85** @8MHz *(No BIOS patch support!)*
 
 > [!CAUTION]
-> **BIOS Patching:** Timing for **PB-series** (328PB/128PB) is currently unoptimized. For stable BIOS patching, please use A/P/PA or 32U4 variants.
+> **SCPH-7000 NTSF J (BIOS Patch & Memory Cards):** 
+> On SCPH-7000 models, the BIOS patch has an issue with memory cards. The only way to bypass it is to install a switch on the mod to disable the BIOS patch. This is done according to the available diagram.
 
 ---
 

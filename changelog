@@ -1,7 +1,23 @@
+Update: April 19, 2026
+
+- Total code refactor, division into functions.
+- Elimination of the patchbios file.
+- MCU optimization improvements.
+- Bios_Patching: function improvement by eliminating the initial timer and replacing it with a wait for silence on the AX pin;
+  elimination of timers in ISRs by replacing them with NOPs.
+- BoardDetection: function optimization.
+- FilterSUBQSamples: logic optimization.
+- PerformInjectionSequence: logic optimization and addition of a mode for synchronization with the WFCK clock.
+- Init & Main: code cleanup.
+
+-------------------------------------------------------------
+
 Update:mars 2025
 
 -Added led support for ATtiny
 -Added card support to simplify fuse management
+
+-------------------------------------------------------------
 
 Update:july 2024
 
