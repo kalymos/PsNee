@@ -1,7 +1,7 @@
 # PSNee V9.0
 PSNee is compatible with all retail PlayStation 1 models and various AVR microcontrollers.   
 
-## For all useful information, please consult the [Wiki](https://github.com).
+## For all useful information, please consult the [Wiki](https://github.com/kalymos/PsNee/wiki).
 
 ![Logo](/images/PSNee-9.0-logo.png)
 
