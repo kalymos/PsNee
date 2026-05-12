@@ -199,7 +199,7 @@
   #include <avr/interrupt.h>
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
-
+  #include <avr/wdt.h>
 
 
   // Main pin configuration
@@ -256,7 +256,7 @@
     #define PIN_AX_INTERRUPT_DISABLE    EIMSK  &= ~(1<<INT0)      // Disable external interrupt on INT0
     #define PIN_AX_INTERRUPT_RISING     EICRA  |=  (1<<ISC01)|(1<<ISC00)                  // Configure INT0 for rising edge trigger
     #define PIN_AX_INTERRUPT_VECTOR     INT0_vect               // Interrupt vector for INT0 (external interrupt)
-    #define PIN_AX_INTERRUPT_CLEAR      EIFR |= (1 << INTF0)  
+    #define PIN_AX_INTERRUPT_CLEAR      EIFR |= (1 << INTF0)
 
     // Secondary Address line (AY) for multi-stage patching (INT1)
     #if defined(SCPH_3000) || \
@@ -274,12 +274,19 @@
     #endif
 
      // Hardware Bypass Switch (On-the-fly deactivation)
-    #ifdef PATCH_SWITCHE
+    #ifdef PATCH_SWITCH
       #define PIN_SWITCH_INPUT DDRD &= ~(1 << DDD5)  // Configure PIND5 as input for switch
       #define PIN_SWITCH_SET   PORTD |= (1 << PD5)     // Set PIND5 high (enable pull-up)
       #define PIN_SWITCH_READ (!!(PIND & (1 << PIND5)))  // Read the state of PIND5 (switch input)
     #endif
 
+    // AUTO BOOT RESET (D10 / PB2)
+    #ifdef ENABLE_HOLD_RESET_ON_BOOT
+      #define PIN_HRS_OUTPUT DDRB |= (1 << DDB2)  // Set PINB2 as output
+      #define PIN_HRS_INPUT  DDRB &= ~(1 << DDB2) // Set PINB2 as input -High Impedance-
+      #define PIN_HRS_LOW    PORTB &= ~(1 << PB2) // Set PINB2 low (force reset active)
+      #define PIN_HRS_PRESSED (!(PINB & (1 << PB2))) 
+    #endif
   #endif
 
   // #if defined(DEBUG_SERIAL_MONITOR)
@@ -360,6 +367,7 @@
   #include <avr/interrupt.h>
   #include <avr/sfr_defs.h>
   #include <util/delay.h>
+  #include <avr/wdt.h>
 
 
 
@@ -440,10 +448,18 @@
     #endif
 
     // Hardware Bypass Switch (On-the-fly deactivation)
-    #ifdef PATCH_SWITCHE
+    #ifdef PATCH_SWITCH
       #define PIN_SWITCH_INPUT DDRC  &= ~(1 << DDC6) // Bypass on PC6
       #define PIN_SWITCH_SET   PORTC |=  (1 << PC6)  // Enable pull-up
       #define PIN_SWITCH_READ  (!!(PINC & (1 << PINC6)))
+    #endif
+
+    // AUTO BOOT RESET (A0 / PF7)
+    #ifdef ENABLE_HOLD_RESET_ON_BOOT
+      #define PIN_HRS_OUTPUT DDRF |= (1 << DDF7)  // Set A0 as output
+      #define PIN_HRS_INPUT  DDRF &= ~(1 << DDF7) // Set A0 as input -High Impedance-
+      #define PIN_HRS_LOW    PORTF &= ~(1 << PF7) // Set A0 low (active force reset)
+      #define PIN_HRS_PRESSED (!(PINF & (1 << PF7)))
     #endif
   #endif
 #endif
