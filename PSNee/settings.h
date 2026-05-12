@@ -23,6 +23,7 @@
     #define PULSE_COUNT 47         
     #define BIT_OFFSET_CYCLES 47   
     #define OVERRIDE_CYCLES 3       
+    #define SLIM
   #endif
 
 
@@ -33,7 +34,8 @@
     #define CONFIRM_COUNTER_TARGET 1
     #define PULSE_COUNT 15          
     #define BIT_OFFSET_CYCLES 47    
-    #define OVERRIDE_CYCLES 3       
+    #define OVERRIDE_CYCLES 3
+    #define FAT
   #endif
 
   // // ----- SCPH 3500 / 5000 / 5500 -----
@@ -44,6 +46,7 @@
     #define PULSE_COUNT 84
     #define BIT_OFFSET_CYCLES 47
     #define OVERRIDE_CYCLES 3
+    #define FAT
   #endif
 
   // // -------- SCPH 3000 --------
@@ -59,6 +62,7 @@
     #define PULSE_COUNT_2 42
     #define BIT_OFFSET_2_CYCLES 48
     #define OVERRIDE_2_CYCLES 3
+    #define FAT
   #endif
 
 
@@ -75,6 +79,7 @@
     #define PULSE_COUNT_2 70
     #define BIT_OFFSET_2_CYCLES 48
     #define OVERRIDE_2_CYCLES 3
+    #define FAT
   #endif
 #endif
 
@@ -88,7 +93,8 @@
     #define CONFIRM_COUNTER_TARGET 8
     #define PULSE_COUNT 47 
     #define BIT_OFFSET_CYCLES 47 
-    #define OVERRIDE_CYCLES 3       
+    #define OVERRIDE_CYCLES 3
+    #define SLIM   
   #endif
 
 
@@ -99,7 +105,8 @@
     #define CONFIRM_COUNTER_TARGET 1
     #define PULSE_COUNT 15    
     #define BIT_OFFSET_CYCLES 47  
-    #define OVERRIDE_CYCLES 3       
+    #define OVERRIDE_CYCLES 3
+    #define FAT
   #endif
 
   // // ----- SCPH 3500 / 5000 / 5500 -----
@@ -110,6 +117,7 @@
     #define PULSE_COUNT 84      
     #define BIT_OFFSET_CYCLES 47 
     #define OVERRIDE_CYCLES 3
+    #define FAT
   #endif
 
   // // -------- SCPH 3000 --------
@@ -125,6 +133,7 @@
     #define PULSE_COUNT_2 42
     #define BIT_OFFSET_2_CYCLES 48
     #define OVERRIDE_2_CYCLES 3
+    #define FAT
   #endif
 
 
@@ -141,6 +150,7 @@
     #define PULSE_COUNT_2 70
     #define BIT_OFFSET_2_CYCLES 48
     #define OVERRIDE_2_CYCLES 3
+    #define FAT
   #endif
 #endif
 

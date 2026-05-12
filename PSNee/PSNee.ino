@@ -33,7 +33,7 @@
 // #define SCPH_102             // DX - D0  | AX - A7          |                  | 4.4e - CRC 0BAD7EA9, 4.5e -CRC 76B880E5
 // #define SCPH_100             // DX - D0  | AX - A7          |                  | 4.3j - CRC F2AF798B
 // #define SCPH_7000_7500_9000  // DX - D0  | AX - A7          |                  | 4.0j - CRC EC541CD0
-// #define SCPH_3500_5000_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
+#define SCPH_3500_5000_5500  // DX - D0  | AX - A16         | AX - A15         | 3.0j - CRC FF3EEB8C, 2.2j - CRC 24FC7E17, 2.1j - CRC BC190209 
 // #define SCPH_3000            // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.1j - CRC 3539DEF6 
 // #define SCPH_1000            // DX - D5  | AX - A7, AY - A8 | AX - A6, AY - A7 | 1.0j - CRC 3B601FC8
 
@@ -65,12 +65,22 @@
  * - ATmega32U4 (Pro Micro): Connect LED between PB6 (Pin 10) and GND.
  */
 
-//#define PATCH_SWITCHE    // This allows the user to disable the BIOS patch on-the-fly.
+//#define PATCH_SWITCH    // This allows the user to disable the BIOS patch on-the-fly.
 /*
  * This allows you to bypass the memory card blocking problems on the SCPH-7000.
  * - Configure Pin D5 as Input.
  * - Enable internal Pull-up.
  * - Exit immediately the patch BIOS if the switch pulls the pin to GND
+ */
+
+#define ENABLE_HOLD_RESET_ON_BOOT
+ /* 
+ * Holds PS1 reset on boot for more stability in BIOS PATCH for all JAP PS1 and European SCHP-102. D10 for ATMEGA328. A0 for ATMEGA32U4. 
+ * This also makes possible to preserve the bootloader without needing a programmer.
+ * Caution: 
+ * FAT Models. Instead of connecting PS1's reset line to RST connect it to D10 (ATMEGA328) or A0 (ATMEGA32U4) in Arduino.
+ * This needs a power cycle for stability. The use of manually pressing PS1's reset button or IGR mod leads to instability in BIOS PATCH (hit and miss). 
+ * SLIM Models. Connect PS1's reset line to D10 (ATMEGA328) or A0 (ATMEGA32U4) in Arduino.
  */
 
 // #define DEBUG_SERIAL_MONITOR  // Enables serial monitor output. 
@@ -136,6 +146,8 @@ uint8_t wfck_mode = 0;  //Flag initializing for automatic console generation sel
 uint8_t SUBQBuffer[12]; // Global buffer to store the 12-byte SUBQ channel data
 
 uint8_t request_counter = 0;
+
+uint8_t flag_switch = 0;
 
 #if defined(DEBUG_SERIAL_MONITOR)
   uint16_t global_window = 0; // Stores the remaining cycles from the detection window
@@ -243,18 +255,12 @@ uint8_t request_counter = 0;
   void Bios_Patching(void) {
 
       // --- HARDWARE BYPASS OPTION ---
-      #if defined(PATCH_SWITCHE)
-          PIN_SWITCH_INPUT;               // Configure Pin D5 as Input
-          PIN_SWITCH_SET;                 // Enable internal Pull-up (D5 defaults to HIGH)
-          __builtin_avr_delay_cycles(10); // Short delay for voltage stabilization
-          
-          /** 
-          * Exit immediately if the switch pulls the pin to GND (Logic LOW).
-          * This allows the user to disable the BIOS patch on-the-fly.
-          */
-          if (PIN_SWITCH_READ == 0) { 
-              return; 
-          }
+      #if defined(PATCH_SWITCH)
+        if (flag_switch) return;
+      #endif
+
+      #if defined(ENABLE_HOLD_RESET_ON_BOOT)
+        hold_reset(300);
       #endif
 
       uint8_t current_confirms = 0;
@@ -664,10 +670,38 @@ void PerformInjectionSequence(uint8_t injectSCEx) {
   #endif
 }
 
+void hold_reset(uint8_t hold_rst_time){
+    // AUTO BOOT RESET - PIN D10 ATMEGA328/ A0 ATMEGA32U4
+    PIN_HRS_OUTPUT;         // Set as output
+    PIN_HRS_LOW;            // Set GND
+    _delay_ms(hold_rst_time); // Hold reset
+    PIN_HRS_INPUT;          // Set High Impedance
+}
+
 void Init() {
+  // Disable watchdog after reset
+  #if defined(ENABLE_HOLD_RESET_ON_BOOT) && defined(BIOS_PATCH) && (defined(IS_328_168_FAMILY) || defined(IS_32U4_FAMILY))
+    MCUSR = 0;
+    wdt_disable();
+  #endif
 
   #ifdef LED_RUN
     PIN_LED_OUTPUT;
+  #endif
+
+  #if defined(PATCH_SWITCH)
+    flag_switch = 0;
+    PIN_SWITCH_INPUT;               // Configure Pin D5 as Input
+    PIN_SWITCH_SET;                 // Enable internal Pull-up (D5 defaults to HIGH)
+    __builtin_avr_delay_cycles(10); // Short delay for voltage stabilization
+    
+    /** 
+    * Exit immediately if the switch pulls the pin to GND (Logic LOW).
+    * This allows the user to disable the BIOS patch on-the-fly.
+    */
+    if (PIN_SWITCH_READ == 0) { 
+        flag_switch = 1; // saves disable state
+    }
   #endif
 
   // --- Critical Boot Patching ---
@@ -702,8 +736,17 @@ void Init() {
   BoardDetection();
 }
 
-int main() {
+// CAPTURE MANUAL RESET FOR JAP FAT MODELS THAT REQUIRE BIOS PATCH
+void capture_reset(){
+  _delay_ms(50);
+  if (PIN_HRS_PRESSED) {
+    while (PIN_HRS_PRESSED);
+    wdt_enable(WDTO_15MS); 
+    while(1);
+  }
+}
 
+int main() {
   Init();
 
   #if defined(DEBUG_SERIAL_MONITOR)
@@ -712,6 +755,15 @@ int main() {
   #endif
 
   while (1) {
+    // CAPTURE MANUAL RESET FOR JAP FAT MODELS THAT REQUIRE BIOS PATCH
+    #if defined(FAT) && defined(ENABLE_HOLD_RESET_ON_BOOT) && (defined(IS_328_168_FAMILY) || defined(IS_32U4_FAMILY))
+      #ifdef PATCH_SWITCH
+        if (!flag_switch && PIN_HRS_PRESSED) capture_reset();
+      #else
+        if (PIN_HRS_PRESSED) capture_reset();
+      #endif
+    #endif
+
 
     _delay_ms(1);        // Timing Sync: Prevent reading the tail end of the previous SUBQ packet
     
