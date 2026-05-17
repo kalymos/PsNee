@@ -449,6 +449,78 @@
 #endif
 
 
+#if defined(__AVR_ATmega4809__) || defined(__AVR_atmega4809__)
+#define IS_4809_FAMILY
+
+  #ifndef F_CPU
+    #define F_CPU 16000000UL
+  #endif
+
+  #include <stdint.h>
+  #include <stdbool.h>
+  #include <avr/io.h>
+  #include <avr/interrupt.h>
+  #include <avr/sfr_defs.h>
+  #include <util/delay.h>
+
+  // --- Main Bus Interface (Arduino Nano Every / ATmega4809) ---
+
+  // Define the main pins as inputs
+  #if defined(AVR_NANO_4809_328MODE) || defined(UNO_WIFI_REV2_328MODE)
+    #define PIN_DATA_INPUT  VPORTE.DIR &= ~PIN3_bm // D8 -> PE3
+    #define PIN_WFCK_INPUT  VPORTB.DIR &= ~PIN0_bm // D9 -> PB0
+    #define PIN_SQCK_INPUT  VPORTF.DIR &= ~PIN4_bm // D6 -> PF4
+    #define PIN_SUBQ_INPUT  VPORTA.DIR &= ~PIN1_bm // D7 -> PA1
+
+    // Configure lines as outputs (for injection/override)
+    #define PIN_DATA_OUTPUT VPORTE.DIR |= PIN3_bm
+    #define PIN_WFCK_OUTPUT VPORTB.DIR |= PIN0_bm
+
+    // Bus line state control (Set High / Clear Low)
+    #define PIN_DATA_SET    VPORTE.OUT |= PIN3_bm
+    #define PIN_DATA_CLEAR  VPORTE.OUT &= ~PIN3_bm
+    #define PIN_WFCK_CLEAR  VPORTB.OUT &= ~PIN0_bm
+
+    // Direct Register Reading (High-speed polling)
+    #define PIN_SQCK_READ   (!!(VPORTF.IN & PIN4_bm))
+    #define PIN_SUBQ_READ   (!!(VPORTA.IN & PIN1_bm))
+    #define PIN_WFCK_READ   (!!(VPORTB.IN & PIN0_bm))
+
+    // --- Status Indication (LED) ---
+    #ifdef LED_RUN
+      #define PIN_LED_OUTPUT VPORTE.DIR |= PIN2_bm // D13 -> PE2
+      #define PIN_LED_ON     VPORTE.OUT |= PIN2_bm
+      #define PIN_LED_OFF    VPORTE.OUT &= ~PIN2_bm
+    #endif
+  #else
+    #define PIN_DATA_INPUT  PORTE.DIRCLR = PIN3_bm // D8 -> PE3
+    #define PIN_WFCK_INPUT  PORTB.DIRCLR = PIN0_bm // D9 -> PB0
+    #define PIN_SQCK_INPUT  PORTF.DIRCLR = PIN4_bm // D6 -> PF4
+    #define PIN_SUBQ_INPUT  PORTA.DIRCLR = PIN1_bm // D7 -> PA1
+
+    // Configure lines as outputs (for injection/override)
+    #define PIN_DATA_OUTPUT PORTE.DIRSET = PIN3_bm
+    #define PIN_WFCK_OUTPUT PORTB.DIRSET = PIN0_bm
+
+    // Bus line state control (Set High / Clear Low)
+    #define PIN_DATA_SET    PORTE.OUTSET = PIN3_bm
+    #define PIN_DATA_CLEAR  PORTE.OUTCLR = PIN3_bm
+    #define PIN_WFCK_CLEAR  PORTB.OUTCLR = PIN0_bm
+
+    // Direct Register Reading (High-speed polling)
+    #define PIN_SQCK_READ   (!!(PORTF.IN & PIN4_bm))
+    #define PIN_SUBQ_READ   (!!(PORTA.IN & PIN1_bm))
+    #define PIN_WFCK_READ   (!!(PORTB.IN & PIN0_bm))
+
+    // --- Status Indication (LED) ---
+    #ifdef LED_RUN
+      #define PIN_LED_OUTPUT PORTE.DIRSET = PIN2_bm // D13 -> PE2
+      #define PIN_LED_ON     PORTE.OUTSET = PIN2_bm
+      #define PIN_LED_OFF    PORTE.OUTCLR = PIN2_bm
+    #endif
+  #endif
+#endif
+
 
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
   #define IS_ATTINY_FAMILY
