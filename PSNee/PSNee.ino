@@ -10,7 +10,7 @@
  *  SCPH model number //  region code | region
  *--------------------------------------------------------------------------------------------------------------------*/
 // #define SCPH_xxx1  //  NTSC U/C    | America.
-// #define SCPH_xxx2  //  PAL         | Europ.
+#define SCPH_xxx2  //  PAL         | Europ.
 // #define SCPH_xxx3  //  NTSC J      | Asia.
 // #define SCPH_xxxx  //  Universal
 
